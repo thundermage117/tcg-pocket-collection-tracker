@@ -14,6 +14,7 @@ import { Progress } from '@/components/ui/progress'
 import { expansions } from '@/lib/CardsDB.ts'
 import { getFilteredCards } from '@/lib/filters'
 import { pullRate } from '@/lib/stats'
+import { CompletionHeatmap } from '@/pages/overview/components/CompletionHeatmap.tsx'
 import { GradientCard } from '@/pages/overview/components/GradientCard.tsx'
 import { useCollection } from '@/services/collection/useCollection'
 import type { Card, CollectionRow, Rarity } from '@/types'
@@ -133,6 +134,8 @@ function Overview() {
             <h2 className="text-balance text-center text-base sm:text-lg md:text-2xl">{t('cardsTotal')}</h2>
           </div>
         </section>
+
+        <CompletionHeatmap availableCards={availableCards} collectedCards={collectedCards} />
 
         <div className="w-full mx-auto mt-4 overflow-hidden rounded-lg border border-neutral-700 bg-neutral-800">
           <table className="w-full table-fixed">
