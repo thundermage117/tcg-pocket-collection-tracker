@@ -3,8 +3,9 @@
 A single-user fork of [marcelpanse/tcg-pocket-collection-tracker](https://github.com/marcelpanse/tcg-pocket-collection-tracker) (GPL-3.0). It keeps collection tracking and adds:
 
 - **Card value**: ☆☆ community vote Elo, trade-board demand/supply, and wishlist/offer counts on the card detail page, plus "Sort by value" on the collection.
-- **Packs page** (`/packs`): which booster to open if the pull were a guaranteed ☆☆. It covers overall value, chance of a top-50 card, trainer/rainbow odds, and personalised "new for me" columns.
-- **Discord trade list** (`/trade`): LF / FT messages for one rarity at a time, grouped by expansion and built from your keep/collect settings. Sort by List (set order) or Value. Split under Discord's 2,000-character limit.
+- **Packs page** (`/packs`): which booster to open if the pull were a guaranteed ☆☆. A card per pack shows its top ☆☆ cards and bars for overall value, chance of a top-50 card, trainer/rainbow odds and the personalised "new for me" stats, with a "best pick" banner for the current sort.
+- **Rankings page** (`/rankings`): card leaderboards from the same value data. "☆☆ Elo" ranks every ☆☆ by vote-adjusted community Elo. "Most wanted" ranks every rarity by trade demand (only ☆☆ has real Elo votes).
+- **Trade page** (`/trade`): "Looking for" and "For trade" card grids built from your keep/collect settings, filtered by rarity, set, pack and name and sorted by card number or value. "Copy for Discord" turns the filtered lists into LF / FT messages grouped by expansion, split under Discord's 2,000-character limit.
 
 Removed from navigation (files left in place so upstream merges stay clean): friends, chat, trade offers/matching, community/blog links, analytics, donation widget.
 
