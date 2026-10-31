@@ -1,74 +1,93 @@
-// Personal fork: trade settings + copy-paste Discord lists (replaces upstream's offers/matches tabs).
-import { Check, Copy } from 'lucide-react'
-import { useMemo, useState } from 'react'
+// Personal fork: LF / FT card grids with filters, Discord export and trade settings (replaces upstream's offers/matches tabs).
+import { ChevronDown } from 'lucide-react'
+import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { DropdownFilter, TabsFilter } from '@/components/Filters'
+import SearchInput from '@/components/filters/SearchInput'
 import { Spinner } from '@/components/Spinner'
-import { Button } from '@/components/ui/button'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { formatRarity } from '@/components/utils'
 import { expansions, getCardByInternalId, getExpansionById } from '@/lib/CardsDB'
-import { formatDiscordTradeList, RARITY_ORDER, type TradeGroup } from '@/lib/discordTradeList'
+import { RARITY_ORDER } from '@/lib/discordTradeList'
 import { getCardNameByLang } from '@/lib/utils'
 import { demandRatio, getCardValue, valueSortKey } from '@/lib/ValueDB'
 import TradeSettings from '@/pages/trade/TradeSettings.tsx'
 import { useAccount } from '@/services/account/useAccount'
 import { useCollection, useTradingCards } from '@/services/collection/useCollection'
 import { defaultRaritySettings, type ExpansionId, type Rarity, tradableRarities } from '@/types'
+import { DiscordExport } from './components/DiscordExport'
+import { TradeGrid } from './components/TradeGrid'
+import { cardNumber, groupBySet, type SortMode, type TradeItem } from './tradeGroups'
 
-type SortMode = 'list' | 'value'
+type Side = 'lf' | 'ft'
+type SetOption = 'all' | ExpansionId
+// `${expansionId}|${packName}`; a set's "everypack" cards count as part of every pack
+type PackOption = 'all' | `${ExpansionId}|${string}`
 
-interface Item {
-  expansion: ExpansionId
-  name: string
-  number: number
-  count?: number
-  key: number // value (LF) or demand (FT), higher first
+const rarityOptions = RARITY_ORDER.filter((r) => (tradableRarities as readonly string[]).includes(r)) as Rarity[]
+const sortOptions: SortMode[] = ['list', 'value']
+
+const VIEW_STORAGE_KEY = 'trade-view'
+
+function loadView(): { rarity: Rarity; mode: SortMode } {
+  try {
+    const saved = JSON.parse(localStorage.getItem(VIEW_STORAGE_KEY) ?? '{}')
+    return { rarity: rarityOptions.includes(saved.rarity) ? saved.rarity : '☆', mode: sortOptions.includes(saved.mode) ? saved.mode : 'list' }
+  } catch {
+    return { rarity: '☆', mode: 'list' }
+  }
 }
 
-const releaseOrder = new Map(expansions.map((e, i) => [e.id, i]))
-
-const cardNumber = (cardId: string) => Number(cardId.slice(cardId.lastIndexOf('-') + 1))
-
-// FT (has counts): most copies first. LF: descending card number.
-const listOrder = (a: Item, b: Item) => (a.count === undefined || b.count === undefined ? b.number - a.number : b.count - a.count || a.number - b.number)
-
-/**
- * List: LF newest set first and cards by descending number; FT oldest set first and cards by count.
- * Value: cards by key, sets by their best card.
- */
-function sortGroups(items: Item[], mode: SortMode, newestFirst: boolean, title: (id: ExpansionId) => string): TradeGroup[] {
-  const bySet = [...Map.groupBy(items, (i) => i.expansion)].map(([id, setItems]) => {
-    const sorted = setItems.toSorted(mode === 'value' ? (a, b) => b.key - a.key : listOrder)
-    return { id, items: sorted, best: Math.max(...setItems.map((i) => i.key)) }
-  })
-  const order = (id: ExpansionId) => releaseOrder.get(id) ?? 0
-  bySet.sort((a, b) => (mode === 'value' ? b.best - a.best : newestFirst ? order(b.id) - order(a.id) : order(a.id) - order(b.id)))
-  return bySet.map((s) => ({ title: title(s.id), lines: s.items.map(({ name, count }) => ({ name, count })) }))
+function Collapsible({ title, children, defaultOpen = false }: { title: string; children: ReactNode; defaultOpen?: boolean }) {
+  return (
+    <details open={defaultOpen} className="group rounded-xl border border-neutral-800 bg-neutral-900/60">
+      <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 font-medium hover:bg-neutral-800/60 [&::-webkit-details-marker]:hidden">
+        {title}
+        <ChevronDown className="size-4 text-neutral-400 transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="border-t border-neutral-800 p-4">{children}</div>
+    </details>
+  )
 }
 
 export default function PersonalTrade() {
-  const { t, i18n } = useTranslation('common/sets')
+  const { t, i18n } = useTranslation(['common/sets', 'common/packs'])
   const { data: account } = useAccount()
   const { data: collection } = useCollection()
   const { data: trading, isLoading } = useTradingCards()
-  const [rarity, setRarity] = useState<Rarity>('☆')
-  const [mode, setMode] = useState<SortMode>('list')
-  const [copied, setCopied] = useState<number | undefined>()
+  const [view, setView] = useState(loadView)
+  const [side, setSide] = useState<Side>('lf')
+  const [set, setSet] = useState<SetOption>('all')
+  const [pack, setPack] = useState<PackOption>('all')
+  const [search, setSearch] = useState('')
 
-  const messages = useMemo(() => {
+  const updateView = (next: Partial<typeof view>) => {
+    const merged = { ...view, ...next }
+    setView(merged)
+    try {
+      localStorage.setItem(VIEW_STORAGE_KEY, JSON.stringify(merged))
+    } catch {
+      // storage unavailable: keep the choice for this visit only
+    }
+  }
+
+  // every LF / FT item of the selected rarity, before set / pack / search filters
+  const items = useMemo(() => {
     if (!trading || !collection || !account) {
-      return []
+      return { lf: [], ft: [] }
     }
     const keepByRarity = Object.fromEntries(account.trade_rarity_settings.map((s) => [s.rarity, s.to_keep]))
-    const toItems = (ids: number[], forTrade: boolean): Item[] =>
+    const toItems = (ids: number[], forTrade: boolean): TradeItem[] =>
       ids.flatMap((id) => {
         const card = getCardByInternalId(id)
-        if (!card || card.rarity !== rarity) {
+        if (!card || card.rarity !== view.rarity) {
           return []
         }
         const row = collection.get(card.internal_id)
         const keep = row?.amount_wanted ?? keepByRarity[card.rarity] ?? defaultRaritySettings.to_keep
         return [
           {
-            expansion: card.expansion,
+            card,
             name: getCardNameByLang(card, i18n.language),
             number: cardNumber(card.card_id),
             count: forTrade ? (row?.amount_owned ?? 0) - keep : undefined,
@@ -76,65 +95,108 @@ export default function PersonalTrade() {
           },
         ]
       })
-    const setName = (id: ExpansionId) => t(getExpansionById(id).name)
-    return formatDiscordTradeList([
-      { title: 'LF', groups: sortGroups(toItems(trading.wanted, false), mode, true, setName) },
-      { title: 'FT', groups: sortGroups(toItems(trading.extra, true), mode, false, (id) => `${setName(id)} (${id})`) },
-    ])
-  }, [trading, collection, account, rarity, mode, i18n.language, t])
+    return { lf: toItems(trading.wanted, false), ft: toItems(trading.extra, true) }
+  }, [trading, collection, account, view.rarity, i18n.language])
 
-  const copy = async (i: number) => {
-    await navigator.clipboard.writeText(messages[i])
-    setCopied(i)
-    setTimeout(() => setCopied(undefined), 1500)
+  const all = [...items.lf, ...items.ft]
+  const setOptions: SetOption[] = ['all', ...expansions.filter((e) => all.some((i) => i.card.expansion === e.id)).map((e) => e.id)]
+  const packOptions: PackOption[] = [
+    'all',
+    ...expansions
+      .filter((e) => (set === 'all' ? setOptions.includes(e.id) : e.id === set))
+      .flatMap((e) => e.packs.filter((p) => p.name !== 'everypack').map((p): PackOption => `${e.id}|${p.name}`)),
+  ]
+  const showPack = (option: PackOption) => {
+    if (option === 'all') {
+      return 'All packs'
+    }
+    const [id, name] = option.split('|') as [ExpansionId, string]
+    const packName = t(name, { ns: 'common/packs' })
+    return set === 'all' ? `${t(getExpansionById(id).name, { ns: 'common/sets' })} · ${packName}` : packName
   }
 
-  const chip = (active: boolean) =>
-    `px-3 py-1 rounded-full border text-sm ${active ? 'bg-neutral-200 text-neutral-900 border-neutral-200' : 'border-neutral-700'}`
+  const query = search.trim().toLowerCase()
+  const [packSet, packName] = pack === 'all' ? [] : pack.split('|')
+  const matches = (item: TradeItem) =>
+    (set === 'all' || item.card.expansion === set) &&
+    (pack === 'all' || (item.card.expansion === packSet && (item.card.pack === packName || item.card.pack === 'everypack'))) &&
+    (!query || item.name.toLowerCase().includes(query))
+
+  const lf = groupBySet(items.lf.filter(matches), view.mode, true)
+  const ft = groupBySet(items.ft.filter(matches), view.mode, false)
+  const count = (groups: typeof lf) => groups.reduce((n, g) => n + g.items.length, 0)
+  const spareCopies = ft.reduce((n, g) => n + g.items.reduce((m, i) => m + (i.count ?? 0), 0), 0)
 
   return (
-    <div className="mx-auto max-w-[900px] px-4 pb-12">
-      <section className="mb-10">
-        <h2 className="text-xl text-center mb-2">Discord trade list</h2>
-        <p className="text-sm text-neutral-400 text-center mb-4">
-          Built from your keep/collect settings below, grouped by expansion. List: LF newest set first, FT oldest set first by copies. Value: LF by value, FT by
-          demand. Split into messages under Discord's 2,000-character limit.
-        </p>
-        <div className="flex flex-wrap justify-center gap-2 mb-3">
-          {RARITY_ORDER.filter((r) => (tradableRarities as readonly string[]).includes(r)).map((r) => (
-            <button key={r} type="button" onClick={() => setRarity(r as Rarity)} className={chip(rarity === r)}>
-              {r}
-            </button>
-          ))}
-        </div>
-        <div className="flex justify-center gap-2 mb-4">
-          {(['list', 'value'] as const).map((m) => (
-            <button key={m} type="button" onClick={() => setMode(m)} className={chip(mode === m)}>
-              {m === 'list' ? 'List' : 'Value'}
-            </button>
-          ))}
-        </div>
-        {isLoading && <Spinner size="md" />}
-        {!isLoading && !account && <p className="text-center text-neutral-400">Log in to build your trade list.</p>}
-        {account && messages.length === 0 && !isLoading && <p className="text-center text-neutral-400">Nothing to list for this rarity.</p>}
-        <div className="flex flex-col gap-4">
-          {messages.map((m, i) => (
-            <div key={m} className="rounded-lg border border-neutral-700">
-              <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-700 text-sm text-neutral-400">
-                <span>
-                  Message {i + 1} of {messages.length} · {m.length} chars
-                </span>
-                <Button size="sm" variant="secondary" onClick={() => copy(i)}>
-                  {copied === i ? <Check className="size-4" /> : <Copy className="size-4" />}
-                  {copied === i ? 'Copied' : 'Copy'}
-                </Button>
-              </div>
-              <pre className="whitespace-pre-wrap text-sm p-3 max-h-80 overflow-y-auto">{m}</pre>
+    <main className="mx-auto max-w-6xl px-4 pb-12">
+      <header className="mb-5">
+        <h1 className="text-2xl font-semibold sm:text-3xl">Trade</h1>
+        <p className="mt-1 text-sm text-neutral-400">Cards you're looking for and spares you can offer, based on your keep / collect settings.</p>
+      </header>
+
+      {!account && !isLoading ? (
+        <p className="py-12 text-center text-neutral-400">Log in to see your trade lists.</p>
+      ) : (
+        <>
+          <div className="mb-5 flex flex-col gap-3">
+            <div className="flex flex-wrap items-end gap-3">
+              <TabsFilter label="Rarity" options={rarityOptions} value={view.rarity} onChange={(rarity) => updateView({ rarity })} show={formatRarity} />
+              <TabsFilter
+                label="Sort"
+                options={sortOptions}
+                value={view.mode}
+                onChange={(mode) => updateView({ mode })}
+                show={(m) => (m === 'list' ? 'Card number' : 'Value')}
+              />
             </div>
-          ))}
-        </div>
-      </section>
-      <TradeSettings />
-    </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <SearchInput value={search} setValue={setSearch} />
+              <DropdownFilter
+                label="Set"
+                options={setOptions}
+                value={set}
+                onChange={(x) => {
+                  setSet(x)
+                  setPack('all')
+                }}
+                show={(id) => (id === 'all' ? 'All sets' : t(getExpansionById(id).name, { ns: 'common/sets' }))}
+              />
+              <DropdownFilter label="Pack" options={packOptions} value={pack} onChange={setPack} show={showPack} />
+            </div>
+          </div>
+
+          <Tabs value={side} onValueChange={(v) => setSide(v as Side)} className="mb-5">
+            <TabsList className="inline-flex rounded-md border-1 border-neutral-700 bg-neutral-800">
+              <TabsTrigger className="rounded-sm" value="lf">
+                Looking for <span className="ml-1.5 text-neutral-400 tabular-nums">{count(lf)}</span>
+              </TabsTrigger>
+              <TabsTrigger className="rounded-sm" value="ft">
+                For trade <span className="ml-1.5 text-neutral-400 tabular-nums">{count(ft)}</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {isLoading ? (
+            <Spinner size="md" />
+          ) : side === 'lf' ? (
+            <TradeGrid groups={lf} empty="Nothing you're looking for matches these filters." />
+          ) : (
+            <>
+              {spareCopies > 0 && <p className="-mt-2 mb-4 text-sm text-neutral-400">{spareCopies} spare copies in total.</p>}
+              <TradeGrid groups={ft} empty="No spares match these filters." />
+            </>
+          )}
+
+          <div className="mt-8 flex flex-col gap-3">
+            <Collapsible title="Copy for Discord">
+              <DiscordExport lf={lf} ft={ft} />
+            </Collapsible>
+            <Collapsible title="Keep / collect settings">
+              <TradeSettings />
+            </Collapsible>
+          </div>
+        </>
+      )}
+    </main>
   )
 }

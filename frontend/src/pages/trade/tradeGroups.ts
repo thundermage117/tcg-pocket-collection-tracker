@@ -1,0 +1,41 @@
+// Personal fork: LF / FT items grouped by expansion, shared by the trade grid and the Discord export.
+import { expansions } from '@/lib/CardsDB'
+import type { Card, ExpansionId } from '@/types'
+
+export type SortMode = 'list' | 'value'
+
+export interface TradeItem {
+  card: Card
+  name: string
+  number: number
+  count?: number // FT only: spare copies
+  key: number // value (LF) or demand (FT), higher first
+}
+
+export interface SetGroup {
+  id: ExpansionId
+  items: TradeItem[]
+}
+
+const releaseOrder = new Map(expansions.map((e, i) => [e.id, i]))
+
+export const cardNumber = (cardId: string) => Number(cardId.slice(cardId.lastIndexOf('-') + 1))
+
+// FT (has counts): most copies first. LF: descending card number.
+const listOrder = (a: TradeItem, b: TradeItem) =>
+  a.count === undefined || b.count === undefined ? b.number - a.number : b.count - a.count || a.number - b.number
+
+/**
+ * List: LF newest set first and cards by descending number; FT oldest set first and cards by count.
+ * Value: cards by key, sets by their best card.
+ */
+export function groupBySet(items: TradeItem[], mode: SortMode, newestFirst: boolean): SetGroup[] {
+  const bySet = [...Map.groupBy(items, (i) => i.card.expansion)].map(([id, setItems]) => ({
+    id,
+    items: setItems.toSorted(mode === 'value' ? (a, b) => b.key - a.key : listOrder),
+    best: Math.max(...setItems.map((i) => i.key)),
+  }))
+  const order = (id: ExpansionId) => releaseOrder.get(id) ?? 0
+  bySet.sort((a, b) => (mode === 'value' ? b.best - a.best : newestFirst ? order(b.id) - order(a.id) : order(a.id) - order(b.id)))
+  return bySet.map(({ id, items }) => ({ id, items }))
+}
