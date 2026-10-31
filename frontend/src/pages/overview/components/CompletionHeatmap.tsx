@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useMediaQuery } from 'react-responsive'
 import { useNavigate } from 'react-router'
 import { Tooltip } from 'react-tooltip'
+import { SetLogo } from '@/components/CardThumb'
 import { expansions, getExpansionById } from '@/lib/CardsDB.ts'
 import { pullRate } from '@/lib/stats'
 import { type Card, type Expansion, type ExpansionId, type Pack, type Rarity, rarities } from '@/types'
@@ -346,7 +347,12 @@ export function CompletionHeatmap({ availableCards, collectedCards, wantedCards,
                 return (
                   <tr key={e.id}>
                     <th scope="row" className={`${stickyCol} py-0.5 pr-2 text-left font-normal text-sm md:max-w-36 md:truncate`} title={name}>
-                      <span className="text-neutral-200 text-xs tabular-nums md:mr-1.5 md:text-neutral-500">{e.id}</span>
+                      {/* Mobile: set logo with the code underneath; desktop: code and full name */}
+                      <span className="flex w-15 flex-col items-center md:hidden">
+                        <SetLogo expansionId={e.id} className="h-7 w-full" />
+                        <span className="text-[10px] text-neutral-500 leading-tight tabular-nums">{e.id}</span>
+                      </span>
+                      <span className="hidden text-neutral-500 text-xs tabular-nums md:mr-1.5 md:inline">{e.id}</span>
                       <span className="hidden text-neutral-200 md:inline">{name}</span>
                     </th>
                     {renderBestChance(e.id)}
