@@ -3,7 +3,7 @@
 A single-user fork of [marcelpanse/tcg-pocket-collection-tracker](https://github.com/marcelpanse/tcg-pocket-collection-tracker) (GPL-3.0). It keeps collection tracking and adds:
 
 - **Card value**: ☆☆ community vote Elo, trade-board demand/supply, and wishlist/offer counts on the card detail page, plus "Sort by value" on the collection.
-- **Packs page** (`/packs`): which booster to open if the pull were a guaranteed ☆☆. A card per pack shows its top ☆☆ cards and bars for overall value, chance of a top-50 card, trainer/rainbow odds, real per-pack odds of a top-50 or missing ☆☆, and how many ☆☆ you're missing, with a "best pick" banner for the current sort.
+- **Packs page** (`/packs`): pick a goal (cards you're missing, top-50 cards, best average card, trainers / rainbows) and boosters are ranked by it. Each pack card shows its top ☆☆, one headline stat for the goal (e.g. "1 in 140 packs gives a ☆☆ you're missing"), and pool counts; expanding it shows the other goals' stats and the full ☆☆ pool. A "best pick" banner gives the answer for the current goal.
 - **Rankings page** (`/rankings`): S–D tier lists from the same value data. "☆☆ Elo" ranks every ☆☆ by vote-adjusted community Elo. "Most wanted" ranks every rarity by trade demand (only ☆☆ has real Elo votes). Filters live in the URL, e.g. `/#/rankings?set=B1`.
 - **Trade page** (`/trade`): "Looking for" and "For trade" card grids built from your keep/collect settings, filtered by rarity, set, pack and name and sorted by card number or value. A flame marks the top quarter by demand (FT: easy to trade away, LF: scarce). "Copy for Discord" turns the filtered lists into LF / FT messages grouped by expansion, split under Discord's 2,000-character limit.
 
