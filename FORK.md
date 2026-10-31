@@ -4,7 +4,7 @@ A single-user fork of [marcelpanse/tcg-pocket-collection-tracker](https://github
 
 - **Card value**: ☆☆ community vote Elo, trade-board demand/supply, and wishlist/offer counts on the card detail page, plus "Sort by value" on the collection.
 - **Packs page** (`/packs`): which booster to open if the pull were a guaranteed ☆☆. It covers overall value, chance of a top-50 card, trainer/rainbow odds, and personalised "new for me" columns.
-- **Discord trade list** (`/trade`): "Looking for" / "For trade" messages built from your keep/collect settings, split under Discord's 2,000-character limit.
+- **Discord trade list** (`/trade`): LF / FT messages for one rarity at a time, grouped by expansion and built from your keep/collect settings. Sort by List (set order) or Value. Split under Discord's 2,000-character limit.
 
 Removed from navigation (files left in place so upstream merges stay clean): friends, chat, trade offers/matching, community/blog links, analytics, donation widget.
 
@@ -21,11 +21,14 @@ Work happens on the `personal` branch. `main` mirrors upstream.
    - No global pnpm? Use `npx pnpm@12.4.1 <cmd>`.
    - The dev server is HTTPS via `vite-plugin-mkcert`. The first time, run `~/.vite-plugin-mkcert/mkcert -install` once (needs sudo), and start `dev` from a real terminal.
 3. **Import your collection**: on tcgpocketcollectiontracker.com use Import/Export → export, then import that file on our Import page. Recheck any rarities that were stale.
-4. **Hosting**: Cloudflare Pages connected to this repo, branch `personal`.
-   - Build command `npx pnpm@12.4.1 build`, output `frontend/dist`.
+4. **Hosting**: Vercel (Hobby, personal use) importing this repo, production branch `personal`.
+   - Root directory `frontend`. Framework preset: Vite.
+   - Install command `npx pnpm@12.4.1 install --frozen-lockfile`, build command `npx pnpm@12.4.1 build`, output `dist` (relative to the root directory).
+   - `frontend/.gitignore` ignores `.vercel`; without it the build's Biome check fails on Vercel's generated `package-manifest.json`.
    - Env vars `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
-   - It serves from `/`, so upstream's absolute asset paths work.
-   - Add the Pages URL to Supabase Auth → URL Configuration.
+   - It serves from `/`, so upstream's absolute asset paths work. Not GitHub Pages: a `/repo/` subpath breaks them.
+   - No SPA rewrites needed (hash router).
+   - Set the Vercel URL as Site URL in Supabase Auth → URL Configuration.
 5. **Keepalive**: add repo secrets `SUPABASE_URL` and `SUPABASE_ANON_KEY`. `.github/workflows/supabase-keepalive.yml` pings weekly so the free project doesn't pause.
 6. **Upstream workflows**: disable `deploy.yml`, `build.yml`, `verify-*.yml` in the fork's Actions tab. They target upstream's domain and secrets.
 
