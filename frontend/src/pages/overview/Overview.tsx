@@ -1,7 +1,6 @@
 import { Siren } from 'lucide-react'
-import { Fragment, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router'
 import { DropdownFilter } from '@/components/Filters'
 import Footer from '@/components/Footer.tsx'
 import DeckbuildingFilter from '@/components/filters/DeckbuildingFilter'
@@ -10,7 +9,6 @@ import { RadialChart } from '@/components/RadialChart'
 import { Spinner } from '@/components/Spinner'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTitle } from '@/components/ui/alert.tsx'
-import { Progress } from '@/components/ui/progress'
 import { expansions } from '@/lib/CardsDB.ts'
 import { getFilteredCards } from '@/lib/filters'
 import { pullRate } from '@/lib/stats'
@@ -25,7 +23,6 @@ function getUniqueCount(cards: Card[]) {
 
 function Overview() {
   const { data: ownedCards = new Map<number, CollectionRow>(), isLoading } = useCollection()
-  const navigate = useNavigate()
 
   const { t } = useTranslation(['pages/overview', 'filters', 'common/sets', 'expansion-overview'])
 
@@ -135,91 +132,12 @@ function Overview() {
           </div>
         </section>
 
-        <CompletionHeatmap availableCards={availableCards} collectedCards={collectedCards} />
-
-        <div className="w-full mx-auto mt-4 overflow-hidden rounded-lg border border-neutral-700 bg-neutral-800">
-          <table className="w-full table-fixed">
-            <thead className="z-10 bg-neutral-700">
-              <tr>
-                <th className="text-left w-1/4 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">{t('table.expansion')}</th>
-                <th className="text-left w-1/2 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">{t('table.collectedCards')}</th>
-                <th className="text-left w-1/4 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">{t('table.newCard')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {expansions
-                .toReversed()
-                .filter((expansion) => expansion.openable)
-                .map((expansion, expansionIndex) => {
-                  const collected = collectedCards.filter((c) => c.expansion === expansion.id)
-                  const available = availableCards.filter((c) => c.expansion === expansion.id)
-                  const collectedPack = Object.groupBy(collected, (c) => c.pack)
-                  const availablePack = Object.groupBy(available, (c) => c.pack)
-                  const isEven = expansionIndex % 2 === 0
-                  return (
-                    <Fragment key={expansion.id}>
-                      <tr
-                        className={`${isEven ? 'bg-neutral-800/50' : ''} border-t border-neutral-700 cursor-pointer hover:bg-neutral-700/50 transition-colors`}
-                        onClick={() => navigate(`/collection?expansion=${expansion.id}`)}
-                      >
-                        <td className="px-4 py-3 font-medium">{t(expansion.name, { ns: 'common/sets' })}</td>
-                        <td className="px-4 py-3">
-                          <Progress
-                            className="sm:inline-block sm:w-1/2 sm:mr-2"
-                            value={(collected.length / available.length) * 100}
-                            barColor={expansion.packs[0].color}
-                            title={`${((collected.length / available.length) * 100).toFixed(1)}%`}
-                          />
-                          {collected.length} / {available.length}
-                        </td>
-                        <td className="px-4 py-3">
-                          {expansion.packs.length === 1 &&
-                            (() => {
-                              const pct = 100 * pullRate(wantedCards, expansion, expansion.packs[0], filters.deckbuildingMode)
-                              return <span className={pct >= 10 ? 'text-green-400' : pct >= 3 ? 'text-yellow-400' : 'text-neutral-500'}>{pct.toFixed(1)}%</span>
-                            })()}
-                        </td>
-                      </tr>
-                      {expansion.packs.length > 1 &&
-                        expansion.packs.map((pack) => {
-                          const nCardsOwned = (collectedPack[pack.name] ?? []).length
-                          const nTotalCards = (availablePack[pack.name] ?? []).length
-                          return (
-                            <tr
-                              key={`${expansion.name}-${pack.name}`}
-                              className={`${isEven ? 'bg-neutral-800/50' : ''} cursor-pointer hover:bg-neutral-700/50 transition-colors`}
-                              onClick={() => navigate(`/collection?expansion=${expansion.id}&pack=${pack.name}`)}
-                            >
-                              <td className="pl-8 pr-4 py-2 text-neutral-400 text-sm">{t(pack.name, { ns: 'common/packs' })}</td>
-                              <td className="px-4 py-2">
-                                <Progress
-                                  className="sm:inline-block sm:w-1/2 sm:mr-2"
-                                  value={(nCardsOwned / nTotalCards) * 100}
-                                  barColor={pack.color}
-                                  title={`${((nCardsOwned / nTotalCards) * 100).toFixed(1)}%`}
-                                />
-                                {nCardsOwned} / {nTotalCards}
-                              </td>
-                              <td className="px-4 py-2">
-                                {pack.name !== 'everypack' &&
-                                  (() => {
-                                    const pct = 100 * pullRate(wantedCards, expansion, pack, filters.deckbuildingMode)
-                                    return (
-                                      <span className={pct >= 10 ? 'text-green-400' : pct >= 3 ? 'text-yellow-400' : 'text-neutral-500'}>
-                                        {pct.toFixed(1)}%
-                                      </span>
-                                    )
-                                  })()}
-                              </td>
-                            </tr>
-                          )
-                        })}
-                    </Fragment>
-                  )
-                })}
-            </tbody>
-          </table>
-        </div>
+        <CompletionHeatmap
+          availableCards={availableCards}
+          collectedCards={collectedCards}
+          wantedCards={wantedCards}
+          deckbuildingMode={filters.deckbuildingMode}
+        />
       </article>
 
       <Footer />
