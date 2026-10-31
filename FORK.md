@@ -3,9 +3,9 @@
 A single-user fork of [marcelpanse/tcg-pocket-collection-tracker](https://github.com/marcelpanse/tcg-pocket-collection-tracker) (GPL-3.0). It keeps collection tracking and adds:
 
 - **Card value**: ☆☆ community vote Elo, trade-board demand/supply, and wishlist/offer counts on the card detail page, plus "Sort by value" on the collection.
-- **Packs page** (`/packs`): which booster to open if the pull were a guaranteed ☆☆. A card per pack shows its top ☆☆ cards and bars for overall value, chance of a top-50 card, trainer/rainbow odds and the personalised "new for me" stats, with a "best pick" banner for the current sort.
-- **Rankings page** (`/rankings`): card leaderboards from the same value data. "☆☆ Elo" ranks every ☆☆ by vote-adjusted community Elo. "Most wanted" ranks every rarity by trade demand (only ☆☆ has real Elo votes).
-- **Trade page** (`/trade`): "Looking for" and "For trade" card grids built from your keep/collect settings, filtered by rarity, set, pack and name and sorted by card number or value. "Copy for Discord" turns the filtered lists into LF / FT messages grouped by expansion, split under Discord's 2,000-character limit.
+- **Packs page** (`/packs`): which booster to open if the pull were a guaranteed ☆☆. A card per pack shows its top ☆☆ cards and bars for overall value, chance of a top-50 card, trainer/rainbow odds, real per-pack odds of a top-50 or missing ☆☆, and how many ☆☆ you're missing, with a "best pick" banner for the current sort.
+- **Rankings page** (`/rankings`): S–D tier lists from the same value data. "☆☆ Elo" ranks every ☆☆ by vote-adjusted community Elo. "Most wanted" ranks every rarity by trade demand (only ☆☆ has real Elo votes). Filters live in the URL, e.g. `/#/rankings?set=B1`.
+- **Trade page** (`/trade`): "Looking for" and "For trade" card grids built from your keep/collect settings, filtered by rarity, set, pack and name and sorted by card number or value. A flame marks the top quarter by demand (FT: easy to trade away, LF: scarce). "Copy for Discord" turns the filtered lists into LF / FT messages grouped by expansion, split under Discord's 2,000-character limit.
 
 Removed from navigation (files left in place so upstream merges stay clean): friends, chat, trade offers/matching, community/blog links, analytics, donation widget.
 
@@ -34,6 +34,9 @@ Work happens on the `personal` branch. `main` mirrors upstream.
    - Scheduled workflows only run from the default branch, so the fork's default branch is `personal`.
    - Forks start with Actions off: enable them once in the Actions tab, then test with `gh workflow run supabase-keepalive.yml`.
 6. **Upstream workflows**: disable `deploy.yml`, `build.yml`, `verify-*.yml` in the fork's Actions tab. They target upstream's domain and secrets.
+7. **Value refresh**: `.github/workflows/value-refresh.yml` runs `pnpm value:refresh` on the 1st and 15th of each month and commits `values.json` to `personal`, which Vercel deploys. No secrets needed. Run it by hand with `gh workflow run value-refresh.yml`.
+   - A failed run usually means a new set's PackId is missing from `scripts/value/packs.py` (see below).
+   - The packs, rankings and trade pages show the data's age and turn amber after 21 days, which means the refresh has stopped.
 
 ## When a new set drops
 
@@ -45,7 +48,9 @@ pnpm value:refresh                          # stops and names the new PackId if 
 git commit -am "Refresh value data for <set>" && git push
 ```
 
-The newest set's ☆☆ values are marked *provisional* until its cards have ~200 votes. The next refresh (at the following set) settles them.
+Refreshing by hand gets the new set's values in straight away. Without it, the next scheduled run stops on the unknown PackId until `packs.py` has the line.
+
+The newest set's ☆☆ values are marked *provisional* until its cards have ~200 votes. The twice-monthly refresh settles them.
 
 ## Value data
 
