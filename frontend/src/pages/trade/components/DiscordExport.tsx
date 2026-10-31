@@ -8,17 +8,19 @@ import { formatDiscordTradeList, type TradeGroup } from '@/lib/discordTradeList'
 import type { ExpansionId } from '@/types'
 import type { SetGroup } from '../tradeGroups'
 
-export function DiscordExport({ lf, ft }: { lf: SetGroup[]; ft: SetGroup[] }) {
+export function useDiscordMessages(lf: SetGroup[], ft: SetGroup[]): string[] {
   const { t } = useTranslation('common/sets')
-  const [copied, setCopied] = useState<number | undefined>()
-
   const setName = (id: ExpansionId) => t(getExpansionById(id).name)
   const toGroups = (groups: SetGroup[], title: (id: ExpansionId) => string): TradeGroup[] =>
     groups.map((g) => ({ title: title(g.id), lines: g.items.map(({ name, count }) => ({ name, count })) }))
-  const messages = formatDiscordTradeList([
+  return formatDiscordTradeList([
     { title: 'LF', groups: toGroups(lf, setName) },
     { title: 'FT', groups: toGroups(ft, (id) => `${setName(id)} (${id})`) },
   ])
+}
+
+export function DiscordExport({ messages }: { messages: string[] }) {
+  const [copied, setCopied] = useState<number | undefined>()
 
   const copy = async (i: number) => {
     await navigator.clipboard.writeText(messages[i])

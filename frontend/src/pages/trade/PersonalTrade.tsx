@@ -1,23 +1,27 @@
 // Personal fork: LF / FT card grids with filters, Discord export and trade settings (replaces upstream's offers/matches tabs).
-import { ChevronDown } from 'lucide-react'
+import { Check, ChevronDown, Copy, Flame } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DropdownFilter, TabsFilter } from '@/components/Filters'
 import SearchInput from '@/components/filters/SearchInput'
 import { Spinner } from '@/components/Spinner'
+import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatRarity } from '@/components/utils'
+import { ValueDataAge } from '@/components/ValueDataAge'
 import { expansions, getCardByInternalId, getExpansionById } from '@/lib/CardsDB'
 import { RARITY_ORDER } from '@/lib/discordTradeList'
 import { getCardNameByLang } from '@/lib/utils'
 import { demandRatio, getCardValue, valueSortKey } from '@/lib/ValueDB'
 import TradeSettings from '@/pages/trade/TradeSettings.tsx'
 import { useAccount } from '@/services/account/useAccount'
+import { useLoginDialog } from '@/services/auth/useAuth'
 import { useCollection, useTradingCards } from '@/services/collection/useCollection'
 import { defaultRaritySettings, type ExpansionId, type Rarity, tradableRarities } from '@/types'
-import { DiscordExport } from './components/DiscordExport'
-import { TradeGrid } from './components/TradeGrid'
-import { cardNumber, groupBySet, type SortMode, type TradeItem } from './tradeGroups'
+import { DiscordExport, useDiscordMessages } from './components/DiscordExport'
+import { hotLabel, TradeGrid } from './components/TradeGrid'
+import { cardNumber, groupBySet, markHot, type SortMode, type TradeItem } from './tradeGroups'
 
 type Side = 'lf' | 'ft'
 type SetOption = 'all' | ExpansionId
@@ -38,9 +42,13 @@ function loadView(): { rarity: Rarity; mode: SortMode } {
   }
 }
 
-function Collapsible({ title, children, defaultOpen = false }: { title: string; children: ReactNode; defaultOpen?: boolean }) {
+const DISCORD_SECTION_ID = 'discord-export'
+
+const ratioOf = (item: TradeItem) => demandRatio(getCardValue(item.card.card_id))
+
+function Collapsible({ id, title, children }: { id?: string; title: string; children: ReactNode }) {
   return (
-    <details open={defaultOpen} className="group rounded-xl border border-neutral-800 bg-neutral-900/60">
+    <details id={id} className="group rounded-xl border border-neutral-800 bg-neutral-900/60">
       <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 font-medium hover:bg-neutral-800/60 [&::-webkit-details-marker]:hidden">
         {title}
         <ChevronDown className="size-4 text-neutral-400 transition-transform group-open:rotate-180" />
@@ -60,6 +68,9 @@ export default function PersonalTrade() {
   const [set, setSet] = useState<SetOption>('all')
   const [pack, setPack] = useState<PackOption>('all')
   const [search, setSearch] = useState('')
+  const [hotOnly, setHotOnly] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const { setIsLoginDialogOpen } = useLoginDialog()
 
   const updateView = (next: Partial<typeof view>) => {
     const merged = { ...view, ...next }
@@ -95,7 +106,7 @@ export default function PersonalTrade() {
           },
         ]
       })
-    return { lf: toItems(trading.wanted, false), ft: toItems(trading.extra, true) }
+    return { lf: markHot(toItems(trading.wanted, false), ratioOf), ft: markHot(toItems(trading.extra, true), ratioOf) }
   }, [trading, collection, account, view.rarity, i18n.language])
 
   const all = [...items.lf, ...items.ft]
@@ -120,22 +131,43 @@ export default function PersonalTrade() {
   const matches = (item: TradeItem) =>
     (set === 'all' || item.card.expansion === set) &&
     (pack === 'all' || (item.card.expansion === packSet && (item.card.pack === packName || item.card.pack === 'everypack'))) &&
-    (!query || item.name.toLowerCase().includes(query))
+    (!query || item.name.toLowerCase().includes(query)) &&
+    (!hotOnly || item.hot === true)
 
   const lf = groupBySet(items.lf.filter(matches), view.mode, true)
   const ft = groupBySet(items.ft.filter(matches), view.mode, false)
   const count = (groups: typeof lf) => groups.reduce((n, g) => n + g.items.length, 0)
   const spareCopies = ft.reduce((n, g) => n + g.items.reduce((m, i) => m + (i.count ?? 0), 0), 0)
+  const messages = useDiscordMessages(lf, ft)
+
+  // one message copies straight away; several need picking, so open the export section
+  const copyForDiscord = async () => {
+    if (messages.length === 1) {
+      await navigator.clipboard.writeText(messages[0])
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+      return
+    }
+    const section = document.getElementById(DISCORD_SECTION_ID) as HTMLDetailsElement | null
+    if (section) {
+      section.open = true
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-12">
       <header className="mb-5">
         <h1 className="text-2xl font-semibold sm:text-3xl">Trade</h1>
         <p className="mt-1 text-sm text-neutral-400">Cards you're looking for and spares you can offer, based on your keep / collect settings.</p>
+        <ValueDataAge className="mt-2" />
       </header>
 
       {!account && !isLoading ? (
-        <p className="py-12 text-center text-neutral-400">Log in to see your trade lists.</p>
+        <div className="flex flex-col items-center gap-3 py-12 text-neutral-400">
+          <p>Log in to see your trade lists.</p>
+          <Button onClick={() => setIsLoginDialogOpen(true)}>Log in</Button>
+        </div>
       ) : (
         <>
           <div className="mb-5 flex flex-col gap-3">
@@ -165,31 +197,44 @@ export default function PersonalTrade() {
             </div>
           </div>
 
-          <Tabs value={side} onValueChange={(v) => setSide(v as Side)} className="mb-5">
-            <TabsList className="inline-flex rounded-md border-1 border-neutral-700 bg-neutral-800">
-              <TabsTrigger className="rounded-sm" value="lf">
-                Looking for <span className="ml-1.5 text-neutral-400 tabular-nums">{count(lf)}</span>
-              </TabsTrigger>
-              <TabsTrigger className="rounded-sm" value="ft">
-                For trade <span className="ml-1.5 text-neutral-400 tabular-nums">{count(ft)}</span>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <Tabs value={side} onValueChange={(v) => setSide(v as Side)}>
+              <TabsList className="inline-flex rounded-md border-1 border-neutral-700 bg-neutral-800">
+                <TabsTrigger className="rounded-sm" value="lf">
+                  Looking for <span className="ml-1.5 text-neutral-400 tabular-nums">{count(lf)}</span>
+                </TabsTrigger>
+                <TabsTrigger className="rounded-sm" value="ft">
+                  For trade <span className="ml-1.5 text-neutral-400 tabular-nums">{count(ft)}</span>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <div className="flex flex-wrap items-center gap-4">
+              <label htmlFor="trade-hot-only" className="flex cursor-pointer items-center gap-2 text-sm text-neutral-300" title={hotLabel[side]}>
+                <Switch id="trade-hot-only" checked={hotOnly} onCheckedChange={setHotOnly} />
+                <Flame className="size-3.5 text-orange-500" />
+                {side === 'ft' ? 'In demand only' : 'Scarce only'}
+              </label>
+              <Button variant="outline" size="sm" disabled={messages.length === 0} onClick={copyForDiscord}>
+                {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+                {copied ? 'Copied' : messages.length > 1 ? `Copy for Discord (${messages.length} messages)` : 'Copy for Discord'}
+              </Button>
+            </div>
+          </div>
 
           {isLoading ? (
             <Spinner size="md" />
           ) : side === 'lf' ? (
-            <TradeGrid groups={lf} empty="Nothing you're looking for matches these filters." />
+            <TradeGrid side="lf" groups={lf} empty="Nothing you're looking for matches these filters." />
           ) : (
             <>
               {spareCopies > 0 && <p className="-mt-2 mb-4 text-sm text-neutral-400">{spareCopies} spare copies in total.</p>}
-              <TradeGrid groups={ft} empty="No spares match these filters." />
+              <TradeGrid side="ft" groups={ft} empty="No spares match these filters." />
             </>
           )}
 
           <div className="mt-8 flex flex-col gap-3">
-            <Collapsible title="Copy for Discord">
-              <DiscordExport lf={lf} ft={ft} />
+            <Collapsible id={DISCORD_SECTION_ID} title="Copy for Discord">
+              <DiscordExport messages={messages} />
             </Collapsible>
             <Collapsible title="Keep / collect settings">
               <TradeSettings />

@@ -1,4 +1,5 @@
 // Personal fork: LF / FT cards as an image grid, one block per expansion.
+import { Flame } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { CardThumb, SetLogo } from '@/components/CardThumb'
 import { getExpansionById } from '@/lib/CardsDB'
@@ -17,7 +18,10 @@ function hint(item: TradeItem) {
   return ratio > 0 ? `demand ×${ratio.toFixed(1)}` : ''
 }
 
-export function TradeGrid({ groups, empty }: { groups: SetGroup[]; empty: string }) {
+// FT: lots of people want it. LF: few people offer it.
+export const hotLabel = { ft: 'In demand: easy to trade away', lf: 'Scarce: few people offer it' }
+
+export function TradeGrid({ groups, empty, side }: { groups: SetGroup[]; empty: string; side: 'lf' | 'ft' }) {
   const { t } = useTranslation('common/sets')
   const { setSelectedCardId } = useSelectedCard()
 
@@ -40,6 +44,13 @@ export function TradeGrid({ groups, empty }: { groups: SetGroup[]; empty: string
                 <CardThumb
                   card={item.card}
                   label={item.count !== undefined ? `×${item.count}` : undefined}
+                  badge={
+                    item.hot && (
+                      <span title={hotLabel[side]} className="flex rounded-full bg-orange-500 p-0.5 text-white shadow">
+                        <Flame className="size-3" />
+                      </span>
+                    )
+                  }
                   onClick={() => setSelectedCardId(item.card.internal_id)}
                 />
                 <span className="truncate text-center text-[11px] text-neutral-400 tabular-nums">{hint(item)}</span>

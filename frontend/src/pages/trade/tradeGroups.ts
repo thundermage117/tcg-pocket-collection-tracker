@@ -10,6 +10,7 @@ export interface TradeItem {
   number: number
   count?: number // FT only: spare copies
   key: number // value (LF) or demand (FT), higher first
+  hot?: boolean // top quarter by demand: FT is easy to trade away, LF is scarce
 }
 
 export interface SetGroup {
@@ -18,6 +19,16 @@ export interface SetGroup {
 }
 
 const releaseOrder = new Map(expansions.map((e, i) => [e.id, i]))
+
+/** Flags the top quarter of `items` by demand ratio (needs a few items to mean anything). */
+export function markHot(items: TradeItem[], ratio: (item: TradeItem) => number): TradeItem[] {
+  const ratios = items.map(ratio).filter((r) => r > 0)
+  if (ratios.length < 4) {
+    return items
+  }
+  const threshold = ratios.toSorted((a, b) => b - a)[Math.floor(ratios.length / 4)]
+  return items.map((item) => ({ ...item, hot: ratio(item) >= threshold }))
+}
 
 export const cardNumber = (cardId: string) => Number(cardId.slice(cardId.lastIndexOf('-') + 1))
 
