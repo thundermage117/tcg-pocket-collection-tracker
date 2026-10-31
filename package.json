@@ -9,6 +9,7 @@
     "biome:fix": "pnpm biome check --write --error-on-warnings --formatter-enabled=true --linter-enabled=true .",
     "prepare": "lefthook install",
     "dev": "pnpm --filter frontend run dev",
+    "value:refresh": "python3 -I scripts/value/refresh.py && pnpm lint:fix",
     "build": "pnpm --filter frontend run build",
     "scraper": "tsx scripts/scraper.js && tsx scripts/backfill-promo-b.ts && node scripts/download-packs.js && tsx scripts/generate-scan-hashes.ts && tsx scripts/generate-image-locales.ts && tsx scripts/sql/generate-cards-table.ts && pnpm lint:fix",
     "scraper-cards": "tsx scripts/scraper.js && tsx scripts/backfill-promo-b.ts && node scripts/download-packs.js && tsx scripts/generate-scan-hashes.ts && tsx scripts/generate-image-locales.ts && tsx scripts/sql/generate-cards-table.ts && pnpm lint:fix",
