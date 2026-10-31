@@ -14,6 +14,7 @@ interface Props {
   entries: RankedCard[]
   score: (e: RankedCard) => string
   owned: (card: Card) => boolean
+  showOwned: boolean
   open: boolean
   showAll: boolean
   onToggle: () => void
@@ -21,7 +22,7 @@ interface Props {
   onSelect: (card: Card) => void
 }
 
-export function TierSection({ tier, range, entries, score, owned, open, showAll, onToggle, onShowAll, onSelect }: Props) {
+export function TierSection({ tier, range, entries, score, owned, showOwned, open, showAll, onToggle, onShowAll, onSelect }: Props) {
   const visible = showAll ? entries : entries.slice(0, PREVIEW)
   return (
     <section className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/60">
@@ -35,6 +36,12 @@ export function TierSection({ tier, range, entries, score, owned, open, showAll,
         <span className="flex-1 text-sm">
           <span className="font-medium text-neutral-200">{range}</span>
           <span className="text-neutral-500"> · {entries.length} cards</span>
+          {showOwned && (
+            <span className="text-neutral-400">
+              {' '}
+              · you own {entries.filter((e) => owned(e.card)).length} / {entries.length}
+            </span>
+          )}
         </span>
         <ChevronDown className={cn('size-4 text-neutral-400 transition-transform', open && 'rotate-180')} />
       </button>
