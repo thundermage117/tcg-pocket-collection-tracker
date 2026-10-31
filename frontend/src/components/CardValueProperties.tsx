@@ -1,5 +1,6 @@
 // Personal fork: value rows for the card detail page (same layout as CardDetail's CardProperty).
 import type { ReactNode } from 'react'
+import { twoStarPosition } from '@/lib/rankings'
 import { demandRatio, getCardValue, isProvisional, kindLabel, twoStarCount, valuesGeneratedAt } from '@/lib/ValueDB'
 
 function Row({ name, children }: { name: string; children: ReactNode }) {
@@ -20,7 +21,7 @@ export function CardValueProperties({ cardId }: { cardId: string }) {
     <>
       {value.adj !== undefined && (
         <Row name="☆☆ value">
-          #{value.rank} of {twoStarCount} · Elo {value.adj}
+          #{twoStarPosition(cardId)} of {twoStarCount} · Elo {value.adj}
           {value.kind && ` · ${kindLabel[value.kind]}`}
           {isProvisional(value) && <span className="ml-2 text-amber-400">provisional ({value.votes} votes)</span>}
         </Row>

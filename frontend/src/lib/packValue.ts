@@ -3,6 +3,7 @@
 // is a uniform draw from the booster's pool and every stat below is a plain average over it.
 
 import { allCards, expansions } from '@/lib/CardsDB'
+import { twoStarPosition } from '@/lib/rankings'
 import { getCardValue } from '@/lib/ValueDB'
 import type { Card, Collection, ExpansionId } from '@/types'
 
@@ -10,6 +11,7 @@ export interface BoosterValue {
   expansionId: ExpansionId
   expansionName: string
   packName: string
+  color: string
   cards: Card[]
   meanAdj: number
   pTop50: number
@@ -25,8 +27,10 @@ const TOP_N = 50
 
 const adjOf = (card: Card) => getCardValue(card.card_id)?.adj ?? 0
 
+export const ownsCard = (collection: Collection | undefined, card: Card) => (collection?.get(card.internal_id)?.amount_owned ?? 0) > 0
+
 export function getBoosterValues(collection: Collection | undefined): BoosterValue[] {
-  const owned = (card: Card) => (collection?.get(card.internal_id)?.amount_owned ?? 0) > 0
+  const owned = (card: Card) => ownsCard(collection, card)
   const result: BoosterValue[] = []
 
   for (const expansion of expansions) {
@@ -46,9 +50,10 @@ export function getBoosterValues(collection: Collection | undefined): BoosterVal
         expansionId: expansion.id,
         expansionName: expansion.name,
         packName: pack.name,
+        color: pack.color,
         cards: cards.toSorted((a, b) => adjOf(b) - adjOf(a)),
         meanAdj: mean(cards.map(adjOf)),
-        pTop50: values.filter((v) => (v.rank ?? Infinity) <= TOP_N).length / cards.length,
+        pTop50: cards.filter((c) => (twoStarPosition(c.card_id) ?? Infinity) <= TOP_N).length / cards.length,
         pTrainerOrRainbow: values.filter((v) => v.kind === 'trainer' || v.kind === 'rainbow').length / cards.length,
         minVotes: Math.min(...values.map((v) => v.votes ?? 0)),
         best: cards.reduce((a, b) => (adjOf(b) > adjOf(a) ? b : a)),
