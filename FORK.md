@@ -30,6 +30,8 @@ Work happens on the `personal` branch. `main` mirrors upstream.
    - No SPA rewrites needed (hash router).
    - Set the Vercel URL as Site URL in Supabase Auth → URL Configuration.
 5. **Keepalive**: add repo secrets `SUPABASE_URL` and `SUPABASE_ANON_KEY`. `.github/workflows/supabase-keepalive.yml` pings weekly so the free project doesn't pause.
+   - Scheduled workflows only run from the default branch, so the fork's default branch is `personal`.
+   - Forks start with Actions off: enable them once in the Actions tab, then test with `gh workflow run supabase-keepalive.yml`.
 6. **Upstream workflows**: disable `deploy.yml`, `build.yml`, `verify-*.yml` in the fork's Actions tab. They target upstream's domain and secrets.
 
 ## When a new set drops
