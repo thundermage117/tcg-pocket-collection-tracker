@@ -1,13 +1,15 @@
 // Personal fork: which booster to open if the pull were a guaranteed ☆☆.
-import { Fragment, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useMemo, useState } from 'react'
+import { TabsFilter } from '@/components/Filters'
 import { Spinner } from '@/components/Spinner'
+import { Switch } from '@/components/ui/switch'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { getBoosterValues } from '@/lib/packValue'
-import { getCardNameByLang } from '@/lib/utils'
-import { getCardValue, isProvisional, kindLabel, PROVISIONAL_VOTES, valuesGeneratedAt } from '@/lib/ValueDB'
-import { useCollection, useSelectedCard } from '@/services/collection/useCollection'
-
-type SortKey = 'meanAdj' | 'forMe' | 'pTrainerOrRainbow' | 'pNew'
+import { PROVISIONAL_VOTES, valuesGeneratedAt } from '@/lib/ValueDB'
+import { useCollection } from '@/services/collection/useCollection'
+import { PackCard } from './components/PackCard'
+import { PackSummary } from './components/PackSummary'
+import { type PackRow, personalSorts, type Range, type SortKey } from './types'
 
 const sortOptions: { key: SortKey; label: string }[] = [
   { key: 'meanAdj', label: 'Value' },
@@ -16,120 +18,134 @@ const sortOptions: { key: SortKey; label: string }[] = [
   { key: 'pTrainerOrRainbow', label: 'Trainer / rainbow' },
 ]
 
-const pct = (x: number) => `${Math.round(100 * x)}%`
+const SORT_STORAGE_KEY = 'pack-value-sort'
+
+function loadSort(): SortKey {
+  try {
+    const saved = localStorage.getItem(SORT_STORAGE_KEY)
+    return sortOptions.some((o) => o.key === saved) ? (saved as SortKey) : 'meanAdj'
+  } catch {
+    return 'meanAdj'
+  }
+}
+
+const rangeOf = (xs: number[]): Range => ({ min: Math.min(...xs), max: Math.max(...xs) })
 
 export default function PackValue() {
-  const { t, i18n } = useTranslation(['common/sets', 'common/packs'])
   const { data: collection, isLoading } = useCollection()
-  const { setSelectedCardId } = useSelectedCard()
-  const [sortKey, setSortKey] = useState<SortKey>('meanAdj')
+  const [savedSort, setSavedSort] = useState<SortKey>(loadSort)
+  const [series, setSeries] = useState('All')
+  const [hideComplete, setHideComplete] = useState(false)
   const [expanded, setExpanded] = useState<string | undefined>()
 
-  const boosters = useMemo(() => {
-    const rows = getBoosterValues(collection).map((b) => ({
-      ...b,
-      // expected value of a guaranteed ☆☆ to you: duplicates count as worthless
-      forMe: b.pNew * (b.meanAdjNew ?? 0),
-    }))
-    return rows.toSorted((a, b) => b[sortKey] - a[sortKey])
-  }, [collection, sortKey])
+  // personal sorts need a collection; fall back without forgetting the saved choice
+  const sortKey: SortKey = !collection && personalSorts.includes(savedSort) ? 'meanAdj' : savedSort
+
+  const all: PackRow[] = useMemo(
+    () =>
+      getBoosterValues(collection).map((b) => ({
+        ...b,
+        id: `${b.expansionId}-${b.packName}`,
+        forMe: b.pNew * (b.meanAdjNew ?? 0),
+      })),
+    [collection],
+  )
+
+  const ranges = useMemo(() => ({ meanAdj: rangeOf(all.map((b) => b.meanAdj)), forMe: rangeOf(all.map((b) => b.forMe).filter((x) => x > 0)) }), [all])
+  const seriesOptions = useMemo(() => ['All', ...new Set(all.map((b) => b.expansionId[0]))], [all])
+
+  const packs = all
+    .filter((b) => series === 'All' || b.expansionId.startsWith(series))
+    .filter((b) => !(hideComplete && collection && b.pNew === 0))
+    .toSorted((a, b) => b[sortKey] - a[sortKey])
+
+  const changeSort = (key: SortKey) => {
+    setSavedSort(key)
+    try {
+      localStorage.setItem(SORT_STORAGE_KEY, key)
+    } catch {
+      // storage unavailable: keep the choice for this visit only
+    }
+  }
 
   if (isLoading) {
     return <Spinner size="lg" overlay />
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-4 pb-12">
-      <h1 className="text-2xl font-semibold mb-1">Which pack for a guaranteed ☆☆?</h1>
-      <p className="text-sm text-neutral-400 mb-4">
-        Value = community vote Elo from pokemontcglivetrade (adjusted for vote count). Every ☆☆ in a pack is equally likely. Deluxe packs excluded. Data from{' '}
-        {valuesGeneratedAt}.{collection ? '' : ' Log in to see personalised columns.'}
-      </p>
+    <main className="mx-auto max-w-6xl px-4 pb-12">
+      <header className="mb-5">
+        <h1 className="text-2xl font-semibold sm:text-3xl">Best packs</h1>
+        <p className="mt-1 text-sm text-neutral-400">
+          Which pack to open for the best ☆☆, ranked by the community value of the cards it can pull.
+          {!collection && ' Log in to see which packs are best for your collection.'}
+        </p>
+      </header>
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        {sortOptions.map((o) => (
-          <button
-            key={o.key}
-            type="button"
-            onClick={() => setSortKey(o.key)}
-            className={`px-3 py-1 rounded-full border text-sm ${sortKey === o.key ? 'bg-neutral-200 text-neutral-900 border-neutral-200' : 'border-neutral-700'}`}
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <span className="px-0.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Sort by</span>
+          <ToggleGroup
+            type="single"
+            value={sortKey}
+            onValueChange={(v) => v && changeSort(v as SortKey)}
+            className="rounded-md border-1 border-neutral-700 bg-neutral-800"
           >
-            {o.label}
-          </button>
-        ))}
+            {sortOptions.map((o) => (
+              <ToggleGroupItem
+                key={o.key}
+                value={o.key}
+                disabled={!collection && personalSorts.includes(o.key)}
+                title={!collection && personalSorts.includes(o.key) ? 'Log in to use this sort' : undefined}
+              >
+                {o.label}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        </div>
+        <div className="flex flex-wrap items-end gap-4">
+          <TabsFilter label="Series" options={seriesOptions} value={series} onChange={setSeries} />
+          {collection && (
+            <label htmlFor="packs-hide-complete" className="flex cursor-pointer items-center gap-2 pb-2 text-sm text-neutral-300">
+              <Switch id="packs-hide-complete" checked={hideComplete} onCheckedChange={setHideComplete} />
+              Hide fully owned
+            </label>
+          )}
+        </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="text-neutral-400 text-left">
-            <tr>
-              <th className="py-2 pr-2">#</th>
-              <th className="py-2 pr-2">Pack</th>
-              <th className="py-2 px-2 text-right">Value</th>
-              <th className="py-2 px-2 text-right">Top 50</th>
-              <th className="py-2 px-2 text-right">Trainer / rainbow</th>
-              <th className="py-2 px-2 text-right">New for me</th>
-              <th className="py-2 pl-2 text-right">Value for me</th>
-            </tr>
-          </thead>
-          <tbody>
-            {boosters.map((b, i) => {
-              const id = `${b.expansionId}-${b.packName}`
-              const provisional = b.minVotes < PROVISIONAL_VOTES
-              return (
-                <Fragment key={id}>
-                  <tr className="border-t border-neutral-800 cursor-pointer hover:bg-neutral-900" onClick={() => setExpanded(expanded === id ? undefined : id)}>
-                    <td className="py-2 pr-2 text-neutral-500">{i + 1}</td>
-                    <td className="py-2 pr-2">
-                      {t(b.expansionName, { ns: 'common/sets' })}
-                      <span className="text-neutral-400"> · {t(b.packName, { ns: 'common/packs' })}</span>
-                      {provisional && <span className="ml-2 text-xs text-amber-400">provisional</span>}
-                    </td>
-                    <td className="py-2 px-2 text-right tabular-nums">{Math.round(b.meanAdj)}</td>
-                    <td className="py-2 px-2 text-right tabular-nums">{pct(b.pTop50)}</td>
-                    <td className="py-2 px-2 text-right tabular-nums">{pct(b.pTrainerOrRainbow)}</td>
-                    <td className="py-2 px-2 text-right tabular-nums">{collection ? pct(b.pNew) : '–'}</td>
-                    <td className="py-2 pl-2 text-right tabular-nums">{collection ? Math.round(b.forMe) : '–'}</td>
-                  </tr>
-                  {expanded === id && (
-                    <tr>
-                      <td />
-                      <td colSpan={6} className="pb-3">
-                        <ul className="grid sm:grid-cols-2 gap-x-6">
-                          {b.cards.map((card) => {
-                            const v = getCardValue(card.card_id)
-                            const have = (collection?.get(card.internal_id)?.amount_owned ?? 0) > 0
-                            return (
-                              <li key={card.card_id} className="flex justify-between gap-2 py-0.5">
-                                <button
-                                  type="button"
-                                  className={`text-left hover:underline ${have ? 'text-neutral-500' : ''}`}
-                                  onClick={() => setSelectedCardId(card.internal_id)}
-                                >
-                                  {getCardNameByLang(card, i18n.language)}
-                                  <span className="text-neutral-500"> · {v?.kind ? kindLabel[v.kind] : ''}</span>
-                                  {have && <span className="text-neutral-500"> ✓</span>}
-                                </button>
-                                <span className="tabular-nums text-neutral-400">
-                                  #{v?.rank} · {v?.adj}
-                                  {isProvisional(v) && '*'}
-                                </span>
-                              </li>
-                            )
-                          })}
-                        </ul>
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-      <p className="text-xs text-neutral-500 mt-4">
-        Value for me = chance the ☆☆ is new to you × average value of the ones you're missing. * = fewer than {PROVISIONAL_VOTES} votes, still settling.
-      </p>
+      {packs.length > 0 && <PackSummary pack={packs[0]} sortKey={sortKey} />}
+
+      {packs.length === 0 ? (
+        <p className="py-12 text-center text-neutral-400">No packs match these filters.</p>
+      ) : (
+        <div className="grid grid-flow-row-dense gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {packs.map((pack, i) => (
+            <PackCard
+              key={pack.id}
+              pack={pack}
+              position={i + 1}
+              sortKey={sortKey}
+              ranges={ranges}
+              expanded={expanded === pack.id}
+              onToggle={() => setExpanded(expanded === pack.id ? undefined : pack.id)}
+            />
+          ))}
+        </div>
+      )}
+
+      <details className="mt-8 rounded-lg border border-neutral-800 px-4 py-3 text-sm text-neutral-400">
+        <summary className="cursor-pointer font-medium text-neutral-300">How this works</summary>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          <li>Value = community vote Elo from pokemontcglivetrade, shrunk toward the average for cards with few votes.</li>
+          <li>Every ☆☆ in a pack is equally likely, so each stat is a plain average over the pack's ☆☆ pool. Deluxe packs are excluded.</li>
+          <li>Value for me = chance the ☆☆ is new to you × average value of the ones you're missing. Duplicates count as worthless.</li>
+          <li>
+            Provisional / * = at least one card has fewer than {PROVISIONAL_VOTES} votes and its value is still settling (typical in a set's first month).
+          </li>
+          <li>Data from {valuesGeneratedAt}.</li>
+        </ul>
+      </details>
     </main>
   )
 }
