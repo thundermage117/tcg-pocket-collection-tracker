@@ -1,11 +1,12 @@
 // Personal fork: LF / FT card grids with filters, Discord export and trade settings (replaces upstream's offers/matches tabs).
-import { Check, ChevronDown, Copy, Flame } from 'lucide-react'
+import { Check, ChevronDown, Copy, Flame, Scale } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 import { DropdownFilter, TabsFilter } from '@/components/Filters'
 import SearchInput from '@/components/filters/SearchInput'
 import { Spinner } from '@/components/Spinner'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatRarity } from '@/components/utils'
@@ -158,7 +159,13 @@ export default function PersonalTrade() {
   return (
     <main className="mx-auto max-w-6xl px-4 pb-12">
       <header className="mb-5">
-        <h1 className="text-2xl font-semibold sm:text-3xl">Trade</h1>
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-2xl font-semibold sm:text-3xl">Trade</h1>
+          <Link to="/trade/check" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+            <Scale className="size-4" />
+            Check a trade
+          </Link>
+        </div>
         <p className="mt-1 text-sm text-neutral-400">Cards you're looking for and spares you can offer, based on your keep / collect settings.</p>
         <ValueDataAge className="mt-2" />
       </header>

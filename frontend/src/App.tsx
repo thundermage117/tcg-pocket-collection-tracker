@@ -24,6 +24,7 @@ const Decks = lazy(() => import('./pages/decks/Decks.tsx'))
 const DeckBuilder = lazy(() => import('./pages/decks/DeckBuilder.tsx'))
 // Personal fork: own trade page (settings + Discord list), pack value and rankings pages
 const PersonalTrade = lazy(() => import('./pages/trade/PersonalTrade.tsx'))
+const TradeCheck = lazy(() => import('./pages/trade/TradeCheck.tsx'))
 const PackValue = lazy(() => import('./pages/packs/PackValue.tsx'))
 const Rankings = lazy(() => import('./pages/rankings/Rankings.tsx'))
 const Scan = lazy(() => import('./pages/scan/Scan.tsx'))
@@ -123,6 +124,7 @@ function App() {
         { path: '/decks/edit/:id?', element: <DeckBuilder /> },
         { path: '/decks/:id', element: <DeckView /> },
         { path: '/scan', element: <Scan /> },
+        { path: '/trade/check', element: <TradeCheck /> },
         { path: '/trade/*', element: <PersonalTrade /> },
         { path: '/packs', element: <PackValue /> },
         { path: '/rankings', element: <Rankings /> },
