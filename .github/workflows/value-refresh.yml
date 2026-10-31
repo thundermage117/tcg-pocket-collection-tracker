@@ -1,0 +1,51 @@
+name: Refresh value data
+
+# Rebuilds frontend/assets/values.json (☆☆ Elo, trade demand, wishlists) twice a month and
+# commits it to personal; Vercel deploys the commit. Same as running `pnpm value:refresh`.
+# If a new set's PackId is unknown, build_values.py stops and this run fails: add the line
+# to scripts/value/packs.py and re-run (Actions tab or `gh workflow run value-refresh.yml`).
+on:
+  schedule:
+    - cron: '23 5 1,15 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    if: github.repository != 'marcelpanse/tcg-pocket-collection-tracker'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: personal
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: pnpm/action-setup@v4
+
+      # Biome formats the generated JSON; the Vercel build's lint check needs it formatted
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Refresh
+        run: pnpm value:refresh
+
+      - name: Commit and push
+        run: |
+          git add frontend/assets/values.json scripts/value/data
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "chore: refresh value data"
+          git push
