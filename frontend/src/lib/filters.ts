@@ -3,9 +3,10 @@ import { type Card, type Collection, energies, expansionIds, type Rarity, type R
 import { allCards, getCardByInternalId } from './CardsDB'
 import { levenshtein } from './levenshtein'
 import { getCardNameByLang, getExtraCards, getWantedCards } from './utils'
+import { valueSortKey } from './ValueDB'
 
 export const expansionOptions = ['all', ...expansionIds] as const
-export const sortByOptions = ['expansion-newest', 'rarity', 'type', 'recent'] as const
+export const sortByOptions = ['expansion-newest', 'rarity', 'type', 'recent', 'value'] as const
 export const cardTypeOptions = [...energies, 'dragon', 'colorless'] as const
 export const ownershipOptions = ['all', 'missing', 'registered'] as const
 export const tradingOptions = ['all', 'wanted', 'extra'] as const
@@ -70,6 +71,7 @@ const sortComparators: Record<SortByOption, (a: Card, b: Card) => number> = {
       return 1
     }
   },
+  value: (a, b) => valueSortKey(b.card_id) - valueSortKey(a.card_id), // personal fork
 }
 
 export function getFilteredCards(filters: Filters, cards: Collection, tradingSettings?: RaritySettingsRow[]) {

@@ -19,7 +19,8 @@
     "expansion-newest": "Expansion newest first",
     "rarity": "Rarity",
     "type": "Type",
-    "recent": "Recently updated"
+    "recent": "Recently updated",
+    "value": "Value (☆☆ Elo, then demand)"
   },
   "f-number": {
     "label": "Copies owned",

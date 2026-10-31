@@ -6,6 +6,7 @@ import { Link } from 'react-router'
 import { Tooltip } from 'react-tooltip'
 import { Card as CardComponent } from '@/components/Card'
 import { CardLine } from '@/components/CardLine'
+import { CardValueProperties } from '@/components/CardValueProperties'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Radio, RadioIndicator, RadioItem } from '@/components/ui/radio'
@@ -225,6 +226,7 @@ export default function CardDetail() {
             <div className="mt-8">
               <CardProperty name={t('text.expansion')}>{card?.expansion}</CardProperty>
               <CardProperty name={t('text.pack')}>{card && t(card.pack, { ns: 'common/packs' })}</CardProperty>
+              {card && <CardValueProperties cardId={card.card_id} />}
               <CardProperty name="Energy">
                 {(card &&
                   [card.energy, card.secondary_energy]
