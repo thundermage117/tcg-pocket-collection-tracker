@@ -16,13 +16,13 @@ export interface BoosterValue {
   color: string
   cards: Card[]
   meanAdj: number
-  pTop50: number
+  top50Count: number
+  trainerOrRainbowCount: number
   pTrainerOrRainbow: number
   minVotes: number
   best: Card
-  // personalised: what a guaranteed ☆☆ is worth to you
+  // personalised
   pNew: number
-  meanAdjNew: number | undefined
   missing: number
   // chance per pack actually opened
   perPackTop50: number
@@ -54,6 +54,7 @@ export function getBoosterValues(collection: Collection | undefined): BoosterVal
       const top50 = cards.filter((c) => (twoStarPosition(c.card_id) ?? Infinity) <= TOP_N)
       const perPack = (subset: Card[]) => (subset.length && expansion.packStructure ? pullRate(subset, expansion, pack, false) : 0)
       const values = cards.map((c) => getCardValue(c.card_id) ?? {})
+      const trainerOrRainbowCount = values.filter((v) => v.kind === 'trainer' || v.kind === 'rainbow').length
       result.push({
         expansionId: expansion.id,
         expansionName: expansion.name,
@@ -61,12 +62,12 @@ export function getBoosterValues(collection: Collection | undefined): BoosterVal
         color: pack.color,
         cards: cards.toSorted((a, b) => adjOf(b) - adjOf(a)),
         meanAdj: mean(cards.map(adjOf)),
-        pTop50: top50.length / cards.length,
-        pTrainerOrRainbow: values.filter((v) => v.kind === 'trainer' || v.kind === 'rainbow').length / cards.length,
+        top50Count: top50.length,
+        trainerOrRainbowCount,
+        pTrainerOrRainbow: trainerOrRainbowCount / cards.length,
         minVotes: Math.min(...values.map((v) => v.votes ?? 0)),
         best: cards.reduce((a, b) => (adjOf(b) > adjOf(a) ? b : a)),
         pNew: missing.length / cards.length,
-        meanAdjNew: missing.length ? mean(missing.map(adjOf)) : undefined,
         missing: missing.length,
         perPackTop50: perPack(top50),
         perPackNew: perPack(missing),

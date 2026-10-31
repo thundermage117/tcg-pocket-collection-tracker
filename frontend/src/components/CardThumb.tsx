@@ -10,13 +10,14 @@ interface CardThumbProps {
   card: Card
   owned?: boolean
   label?: ReactNode
+  labelTitle?: string // hover text explaining the label
   badge?: ReactNode // top-left corner
   className?: string
   onClick: () => void
 }
 
 /** Clickable card image; owned cards are dimmed with a check, `label` sits in the bottom-left corner. */
-export function CardThumb({ card, owned, label, badge, className, onClick }: CardThumbProps) {
+export function CardThumb({ card, owned, label, labelTitle, badge, className, onClick }: CardThumbProps) {
   const { i18n } = useTranslation()
   const name = getCardNameByLang(card, i18n.language)
   return (
@@ -41,7 +42,11 @@ export function CardThumb({ card, owned, label, badge, className, onClick }: Car
         </span>
       )}
       {badge && <span className="absolute top-1 left-1">{badge}</span>}
-      {label && <span className="absolute bottom-1 left-1 rounded bg-black/75 px-1.5 py-0.5 text-[10px] font-semibold text-white tabular-nums">{label}</span>}
+      {label && (
+        <span title={labelTitle} className="absolute bottom-1 left-1 rounded bg-black/75 px-1.5 py-0.5 text-[10px] font-semibold text-white tabular-nums">
+          {label}
+        </span>
+      )}
     </button>
   )
 }

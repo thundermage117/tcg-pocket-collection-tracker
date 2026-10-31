@@ -5,27 +5,16 @@ import { CardThumb, SetLogo } from '@/components/CardThumb'
 import { ownsCard } from '@/lib/packValue'
 import { twoStarPosition } from '@/lib/rankings'
 import { getCardNameByLang } from '@/lib/utils'
-import { getCardValue } from '@/lib/ValueDB'
 import { useCollection, useSelectedCard } from '@/services/collection/useCollection'
-import { type PackRow, pct, personalSorts, type SortKey } from '../types'
+import { goals, type PackRow, personalSorts, type SortKey } from '../types'
 
-const every = (p: number) => (p > 0 ? `about once every ${Math.round(1 / p)} packs opened` : 'never')
-
-const headline: Record<SortKey, (p: PackRow) => string> = {
-  meanAdj: (p) => `Average ☆☆ value ${Math.round(p.meanAdj)}`,
-  forMe: (p) => `Value for you ${Math.round(p.forMe)}`,
-  perPackTop50: (p) => `A top-50 ☆☆ ${every(p.perPackTop50)}`,
-  perPackNew: (p) => `A ☆☆ you're missing ${every(p.perPackNew)}`,
-  pTrainerOrRainbow: (p) => `${pct(p.pTrainerOrRainbow)} chance of a trainer or rainbow`,
-}
-
-export function PackSummary({ pack, sortKey }: { pack: PackRow; sortKey: SortKey }) {
+export function PackSummary({ pack, sortKey, total }: { pack: PackRow; sortKey: SortKey; total: number }) {
   const { t, i18n } = useTranslation(['common/sets', 'common/packs'])
   const { data: collection } = useCollection()
   const { setSelectedCardId } = useSelectedCard()
   // for personal sorts, highlight the best card you're still missing
   const highlight = (personalSorts.includes(sortKey) && pack.cards.find((c) => !ownsCard(collection, c))) || pack.best
-  const value = getCardValue(highlight.card_id)
+  const goal = goals[sortKey]
 
   return (
     <section
@@ -43,9 +32,13 @@ export function PackSummary({ pack, sortKey }: { pack: PackRow; sortKey: SortKey
             <p className="truncate text-sm text-neutral-400">{t(pack.expansionName, { ns: 'common/sets' })}</p>
           </div>
         </div>
-        <p className="mt-3 text-sm text-neutral-200">{headline[sortKey](pack)}</p>
+        <p className="mt-3 text-sm text-neutral-200">
+          <span className="font-semibold">{goal.stat(pack, total)}</span> {goal.caption(pack, total)}
+          {sortKey === 'perPackNew' && pack.missing > 0 && <span className="text-neutral-400"> ({pack.missing} left)</span>}
+        </p>
         <p className="mt-1 text-xs text-neutral-400">
-          Top card: {getCardNameByLang(highlight, i18n.language)} (#{twoStarPosition(highlight.card_id)} · Elo {value?.adj})
+          {highlight === pack.best ? 'Top card' : "Best card you're missing"}: {getCardNameByLang(highlight, i18n.language)}{' '}
+          {`(#${twoStarPosition(highlight.card_id)} of all ☆☆)`}
         </p>
       </div>
       <CardThumb
