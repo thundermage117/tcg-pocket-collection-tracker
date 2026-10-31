@@ -1,4 +1,4 @@
-import { Heart, Siren } from 'lucide-react'
+import { Siren } from 'lucide-react'
 import { Fragment, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
@@ -28,9 +28,6 @@ function Overview() {
 
   const { t } = useTranslation(['pages/overview', 'filters', 'common/sets', 'expansion-overview'])
 
-  const [collectionCount, setCollectionCount] = useState('')
-  const [usersCount, setUsersCount] = useState('')
-
   const ownedCardsCount = () => {
     // Count from the card database (same logic as CollectionCards.totalOwned) so orphaned
     // collection rows — card_ids no longer present in allCards — don't inflate the total.
@@ -49,15 +46,6 @@ function Overview() {
     const savedFilters = localStorage.getItem('overview-filters')
     return savedFilters ? JSON.parse(savedFilters) : { rarity: [], number: 1, deckbuildingMode: false }
   })
-
-  useEffect(() => {
-    fetch('https://vcwloujmsjuacqpwthee.supabase.co/storage/v1/object/public/stats/stats.json')
-      .then((response) => response.json())
-      .then((data) => {
-        setCollectionCount(data.collectionCount)
-        setUsersCount(data.usersCount)
-      })
-  }, [])
 
   useEffect(() => localStorage.setItem('overview-filters', JSON.stringify(filters)), [filters])
 
@@ -231,15 +219,6 @@ function Overview() {
         </div>
       </article>
 
-      {ownedCards.size > 0 && (
-        <div className="mx-auto max-w-2xl my-8">
-          <Alert className="border-1 border-neutral-700 shadow-none">
-            <Heart className="h-4 w-4" />
-            <AlertTitle>{t('stats.title')}</AlertTitle>
-            <AlertDescription>{t('stats.description', { usersCount, collectionCount })}</AlertDescription>
-          </Alert>
-        </div>
-      )}
       <Footer />
     </main>
   )

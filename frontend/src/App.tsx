@@ -6,14 +6,12 @@ import { createHashRouter, Navigate, Outlet, RouterProvider, useLocation, usePar
 import InstallPrompt from '@/components/InstallPrompt.tsx'
 import { useToast } from '@/hooks/use-toast.ts'
 import { useAuthSSO, userQuery } from '@/services/auth/useAuth'
-import { ChatManager } from './components/chat/ChatManager.tsx'
 import ErrorAlert from './components/ErrorAlert.tsx'
 import FriendIdQrCodeDialog from './components/FriendIdQrCode.tsx'
 import { Header } from './components/Header.tsx'
 import { SelectCardContext, SelectCardDialog, type SelectCardRequest } from './components/SelectCard.tsx'
 import { Spinner } from './components/Spinner.tsx'
 import { Toaster } from './components/ui/toaster.tsx'
-import { ChatProvider } from './context/ChatProvider.tsx'
 import { DialogContext } from './context/DialogContext.ts'
 import DeckView from './pages/decks/DeckView.tsx'
 import { accountQuery, useUpdateLastActive } from './services/account/useAccount.ts'
@@ -24,14 +22,14 @@ const Collection = lazy(() => import('./pages/collection/Collection.tsx'))
 const Missions = lazy(() => import('./pages/collection/Missions.tsx'))
 const Decks = lazy(() => import('./pages/decks/Decks.tsx'))
 const DeckBuilder = lazy(() => import('./pages/decks/DeckBuilder.tsx'))
-const Trade = lazy(() => import('./pages/trade/Trade.tsx'))
+// Personal fork: own trade page (settings + Discord list) and pack value page
+const PersonalTrade = lazy(() => import('./pages/trade/PersonalTrade.tsx'))
+const PackValue = lazy(() => import('./pages/packs/PackValue.tsx'))
 const Scan = lazy(() => import('./pages/scan/Scan.tsx'))
 const EditProfile = lazy(() => import('./components/EditProfile.tsx'))
 const CardDetail = lazy(() => import('./pages/collection/CardDetail.tsx'))
 const Import = lazy(() => import('./pages/import/Import.tsx'))
 const Changelog = lazy(() => import('./pages/changelog/Changelog.tsx'))
-
-const Friends = lazy(() => import('./pages/friends/Friends.tsx'))
 
 const TradeWithRedirect = () => {
   const { friendId } = useParams()
@@ -124,8 +122,8 @@ function App() {
         { path: '/decks/edit/:id?', element: <DeckBuilder /> },
         { path: '/decks/:id', element: <DeckView /> },
         { path: '/scan', element: <Scan /> },
-        { path: '/trade/*', element: <Trade /> },
-        { path: '/friends', element: <Friends /> },
+        { path: '/trade/*', element: <PersonalTrade /> },
+        { path: '/packs', element: <PackValue /> },
         { path: '/import', element: <Import /> },
         { path: '/changelog', element: <Changelog /> },
       ],
@@ -150,14 +148,11 @@ function App() {
     <ErrorBoundary FallbackComponent={ErrorAlert}>
       <DialogContext.Provider value={dialogContextValue}>
         <SelectCardContext.Provider value={selectCardContextValue}>
-          <ChatProvider>
-            <Toaster />
-            <RouterProvider router={router} />
-            <InstallPrompt />
-            <ChatManager />
-            {/* Add React Query DevTools (only in development) */}
-            {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
-          </ChatProvider>
+          <Toaster />
+          <RouterProvider router={router} />
+          <InstallPrompt />
+          {/* Add React Query DevTools (only in development) */}
+          {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
         </SelectCardContext.Provider>
       </DialogContext.Provider>
     </ErrorBoundary>

@@ -21,8 +21,6 @@ import { NavigationMenu, NavigationMenuLink, NavigationMenuList } from '@/compon
 import { useUnreadChangelogCount } from '@/lib/useChangelog'
 import { useProfileDialog } from '@/services/account/useAccount'
 import { useLoginDialog, useLogout, userQuery } from '@/services/auth/useAuth'
-import { usePendingRequests } from '@/services/friends/useFriends'
-import { useActionableTradeCount } from '@/services/trade/useTrade.ts'
 import { Badge } from './ui/badge'
 
 export function Header() {
@@ -30,9 +28,6 @@ export function Header() {
   const navigate = useNavigate()
   const { t, i18n } = useTranslation('header')
   const { data: user } = useQuery(userQuery)
-  const { data: actionableTradeCount } = useActionableTradeCount()
-  const { data: pendingRequests = [] } = usePendingRequests()
-  const pendingFriendCount = pendingRequests.length
   const unreadChangelog = useUnreadChangelogCount()
   const logoutMutation = useLogout()
 
@@ -101,43 +96,25 @@ export function Header() {
                 </Button>
               </Link>
             </NavigationMenuLink>
-            <NavigationMenuLink asChild className={`${actionableTradeCount ? 'block' : 'hidden'} md:block`}>
+            {/* Personal fork: social links (friends, community) and trade badges removed */}
+            <NavigationMenuLink asChild className="hidden md:block">
+              <Link to="/packs">
+                <Button className="px-2 sm:px-4" variant="ghost">
+                  Packs
+                </Button>
+              </Link>
+            </NavigationMenuLink>
+            <NavigationMenuLink asChild className="hidden md:block">
               <Link to="/trade">
                 <Button className="px-2 sm:px-4" variant="ghost">
                   {t('trade')}
-                  <Badge
-                    className={`h-5 min-w-5 rounded-full font-mono tabular-nums -mt-2 ${actionableTradeCount ? 'flex' : 'hidden'} justify-center`}
-                    variant="destructive"
-                  >
-                    {actionableTradeCount}
-                  </Badge>
                 </Button>
               </Link>
             </NavigationMenuLink>
-            <NavigationMenuLink asChild className={`${pendingFriendCount && !actionableTradeCount ? 'block' : 'hidden'} md:block`}>
-              <Link to="/friends">
-                <Button className="px-2 sm:px-4" variant="ghost">
-                  {t('friends')}
-                  <Badge
-                    className={`h-5 min-w-5 rounded-full font-mono tabular-nums -mt-2 ${pendingFriendCount ? 'flex' : 'hidden'} justify-center`}
-                    variant="destructive"
-                  >
-                    {pendingFriendCount}
-                  </Badge>
-                </Button>
-              </Link>
-            </NavigationMenuLink>
-            <NavigationMenuLink asChild className={`${actionableTradeCount || pendingFriendCount ? 'hidden sm:block' : ''}`}>
+            <NavigationMenuLink asChild>
               <Link to="/scan">
                 <Button className="px-2 sm:px-4" variant="ghost">
                   {t('scan')}
-                </Button>
-              </Link>
-            </NavigationMenuLink>
-            <NavigationMenuLink asChild className="hidden lg:block">
-              <Link to="https://community.tcgpocketcollectiontracker.com" className="hidden lg:block">
-                <Button className="px-2 sm:px-4" variant="ghost">
-                  {t('community')}
                 </Button>
               </Link>
             </NavigationMenuLink>

@@ -10,7 +10,6 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
 import { useProfileDialog } from '@/services/account/useAccount'
 import { useLoginDialog, useLogout, userQuery } from '@/services/auth/useAuth'
-import { useActionableTradeCount } from '@/services/trade/useTrade.ts'
 
 type MenuItem = {
   title: string
@@ -22,11 +21,9 @@ const menuItems: MenuItem[] = [
   { title: 'collection', href: '/collection' },
   { title: 'missions', href: '/missions' },
   { title: 'decks', href: '/decks' },
+  { title: 'Packs', href: '/packs' }, // personal fork; no locale key, i18next falls back to the title
   { title: 'trade', href: '/trade' },
-  { title: 'friends', href: '/friends' },
   { title: 'scan', href: '/scan' },
-  { title: 'blog', href: 'https://blog.tcgpocketcollectiontracker.com' },
-  { title: 'community', href: 'https://community.tcgpocketcollectiontracker.com' },
 ]
 
 export default function HamburgerMenu() {
@@ -36,7 +33,7 @@ export default function HamburgerMenu() {
   const { setIsLoginDialogOpen } = useLoginDialog()
   const { data: user } = useQuery(userQuery)
   const logoutMutation = useLogout()
-  const { data: actionableTradeCount = 0 } = useActionableTradeCount()
+  const actionableTradeCount = 0 // personal fork: no trade offers
 
   const [open, setOpen] = useState(false)
 
