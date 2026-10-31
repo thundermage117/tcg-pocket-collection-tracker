@@ -4,17 +4,19 @@ import { TabsFilter } from '@/components/Filters'
 import { Spinner } from '@/components/Spinner'
 import { Switch } from '@/components/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { ValueDataAge } from '@/components/ValueDataAge'
 import { getBoosterValues } from '@/lib/packValue'
-import { PROVISIONAL_VOTES, valuesGeneratedAt } from '@/lib/ValueDB'
+import { PROVISIONAL_VOTES } from '@/lib/ValueDB'
 import { useCollection } from '@/services/collection/useCollection'
 import { PackCard } from './components/PackCard'
 import { PackSummary } from './components/PackSummary'
-import { type PackRow, personalSorts, type Range, type SortKey } from './types'
+import { type PackRow, personalSorts, type Range, type Ranges, type SortKey } from './types'
 
 const sortOptions: { key: SortKey; label: string }[] = [
   { key: 'meanAdj', label: 'Value' },
   { key: 'forMe', label: 'Value for me' },
-  { key: 'pNew', label: 'Chance of new' },
+  { key: 'perPackTop50', label: 'Top 50 per pack' },
+  { key: 'perPackNew', label: 'New per pack' },
   { key: 'pTrainerOrRainbow', label: 'Trainer / rainbow' },
 ]
 
@@ -51,7 +53,16 @@ export default function PackValue() {
     [collection],
   )
 
-  const ranges = useMemo(() => ({ meanAdj: rangeOf(all.map((b) => b.meanAdj)), forMe: rangeOf(all.map((b) => b.forMe).filter((x) => x > 0)) }), [all])
+  const ranges: Ranges = useMemo(
+    () => ({
+      meanAdj: rangeOf(all.map((b) => b.meanAdj)),
+      forMe: rangeOf(all.map((b) => b.forMe).filter((x) => x > 0)),
+      // odds bars start at zero so "twice as likely" looks twice as long
+      perPackTop50: rangeOf([0, ...all.map((b) => b.perPackTop50)]),
+      perPackNew: rangeOf([0, ...all.map((b) => b.perPackNew)]),
+    }),
+    [all],
+  )
   const seriesOptions = useMemo(() => ['All', ...new Set(all.map((b) => b.expansionId[0]))], [all])
 
   const packs = all
@@ -80,6 +91,7 @@ export default function PackValue() {
           Which pack to open for the best ☆☆, ranked by the community value of the cards it can pull.
           {!collection && ' Log in to see which packs are best for your collection.'}
         </p>
+        <ValueDataAge className="mt-2" />
       </header>
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
@@ -138,12 +150,15 @@ export default function PackValue() {
         <summary className="cursor-pointer font-medium text-neutral-300">How this works</summary>
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>Value = community vote Elo from pokemontcglivetrade, shrunk toward the average for cards with few votes.</li>
-          <li>Every ☆☆ in a pack is equally likely, so each stat is a plain average over the pack's ☆☆ pool. Deluxe packs are excluded.</li>
+          <li>
+            Every ☆☆ in a pack is equally likely, so Value, Top 50 chance and Trainer / rainbow are plain averages over the pack's ☆☆ pool. Packs that can no
+            longer be opened (Deluxe Pack: ex) are excluded.
+          </li>
+          <li>"Per pack opened" uses the real pull odds of every slot, rare packs included, so it also reflects how many ☆☆ share the pool.</li>
           <li>Value for me = chance the ☆☆ is new to you × average value of the ones you're missing. Duplicates count as worthless.</li>
           <li>
             Provisional / * = at least one card has fewer than {PROVISIONAL_VOTES} votes and its value is still settling (typical in a set's first month).
           </li>
-          <li>Data from {valuesGeneratedAt}.</li>
         </ul>
       </details>
     </main>

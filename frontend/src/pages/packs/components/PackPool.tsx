@@ -5,9 +5,9 @@ import { ownsCard } from '@/lib/packValue'
 import { twoStarPosition } from '@/lib/rankings'
 import { getCardValue, isProvisional, kindLabel } from '@/lib/ValueDB'
 import { useCollection, useSelectedCard } from '@/services/collection/useCollection'
-import type { Card } from '@/types'
+import type { Card, ExpansionId } from '@/types'
 
-export function PackPool({ cards }: { cards: Card[] }) {
+export function PackPool({ cards, expansionId }: { cards: Card[]; expansionId: ExpansionId }) {
   const { data: collection } = useCollection()
   const { setSelectedCardId } = useSelectedCard()
 
@@ -32,8 +32,11 @@ export function PackPool({ cards }: { cards: Card[] }) {
           )
         })}
       </div>
-      <Link to="/rankings" className="mt-3 inline-block text-xs text-neutral-400 underline-offset-2 hover:text-neutral-200 hover:underline">
-        See the full ☆☆ ranking →
+      <Link
+        to={`/rankings?set=${expansionId}`}
+        className="mt-3 inline-block text-xs text-neutral-400 underline-offset-2 hover:text-neutral-200 hover:underline"
+      >
+        See this set in the ☆☆ ranking →
       </Link>
     </div>
   )

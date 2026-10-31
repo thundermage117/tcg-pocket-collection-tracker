@@ -9,10 +9,13 @@ import { getCardValue } from '@/lib/ValueDB'
 import { useCollection, useSelectedCard } from '@/services/collection/useCollection'
 import { type PackRow, pct, personalSorts, type SortKey } from '../types'
 
+const every = (p: number) => (p > 0 ? `about once every ${Math.round(1 / p)} packs opened` : 'never')
+
 const headline: Record<SortKey, (p: PackRow) => string> = {
   meanAdj: (p) => `Average ☆☆ value ${Math.round(p.meanAdj)}`,
   forMe: (p) => `Value for you ${Math.round(p.forMe)}`,
-  pNew: (p) => `${pct(p.pNew)} chance the ☆☆ is new to you`,
+  perPackTop50: (p) => `A top-50 ☆☆ ${every(p.perPackTop50)}`,
+  perPackNew: (p) => `A ☆☆ you're missing ${every(p.perPackNew)}`,
   pTrainerOrRainbow: (p) => `${pct(p.pTrainerOrRainbow)} chance of a trainer or rainbow`,
 }
 

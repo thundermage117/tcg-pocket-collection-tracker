@@ -1,9 +1,11 @@
 // Personal fork: rank boosters by the value of their ☆☆ pool.
 // Every ☆☆ in a booster has equal odds (slot 4: 0.5% / N, slot 5: 2% / N), so a guaranteed ☆☆
 // is a uniform draw from the booster's pool and every stat below is a plain average over it.
+// The perPack* stats instead use the real pull odds (stats.ts), rare packs included.
 
 import { allCards, expansions } from '@/lib/CardsDB'
 import { twoStarPosition } from '@/lib/rankings'
+import { pullRate } from '@/lib/stats'
 import { getCardValue } from '@/lib/ValueDB'
 import type { Card, Collection, ExpansionId } from '@/types'
 
@@ -21,6 +23,10 @@ export interface BoosterValue {
   // personalised: what a guaranteed ☆☆ is worth to you
   pNew: number
   meanAdjNew: number | undefined
+  missing: number
+  // chance per pack actually opened
+  perPackTop50: number
+  perPackNew: number
 }
 
 const TOP_N = 50
@@ -45,6 +51,8 @@ export function getBoosterValues(collection: Collection | undefined): BoosterVal
         continue
       }
       const missing = cards.filter((c) => !owned(c))
+      const top50 = cards.filter((c) => (twoStarPosition(c.card_id) ?? Infinity) <= TOP_N)
+      const perPack = (subset: Card[]) => (subset.length && expansion.packStructure ? pullRate(subset, expansion, pack, false) : 0)
       const values = cards.map((c) => getCardValue(c.card_id) ?? {})
       result.push({
         expansionId: expansion.id,
@@ -53,12 +61,15 @@ export function getBoosterValues(collection: Collection | undefined): BoosterVal
         color: pack.color,
         cards: cards.toSorted((a, b) => adjOf(b) - adjOf(a)),
         meanAdj: mean(cards.map(adjOf)),
-        pTop50: cards.filter((c) => (twoStarPosition(c.card_id) ?? Infinity) <= TOP_N).length / cards.length,
+        pTop50: top50.length / cards.length,
         pTrainerOrRainbow: values.filter((v) => v.kind === 'trainer' || v.kind === 'rainbow').length / cards.length,
         minVotes: Math.min(...values.map((v) => v.votes ?? 0)),
         best: cards.reduce((a, b) => (adjOf(b) > adjOf(a) ? b : a)),
         pNew: missing.length / cards.length,
         meanAdjNew: missing.length ? mean(missing.map(adjOf)) : undefined,
+        missing: missing.length,
+        perPackTop50: perPack(top50),
+        perPackNew: perPack(missing),
       })
     }
   }

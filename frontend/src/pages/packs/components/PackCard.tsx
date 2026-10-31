@@ -8,14 +8,14 @@ import { twoStarPosition } from '@/lib/rankings'
 import { cn } from '@/lib/utils'
 import { PROVISIONAL_VOTES } from '@/lib/ValueDB'
 import { useCollection, useSelectedCard } from '@/services/collection/useCollection'
-import { fill, type PackRow, pct, type Range, type SortKey } from '../types'
+import { fill, oneIn, type PackRow, pct, type Ranges, type SortKey } from '../types'
 import { PackPool } from './PackPool'
 
 interface Props {
   pack: PackRow
   position: number
   sortKey: SortKey
-  ranges: Record<'meanAdj' | 'forMe', Range>
+  ranges: Ranges
   expanded: boolean
   onToggle: () => void
 }
@@ -60,6 +60,7 @@ export function PackCard({ pack, position, sortKey, ranges, expanded, onToggle }
           <h2 className="truncate font-semibold leading-tight">{t(pack.packName, { ns: 'common/packs' })}</h2>
           <p className="truncate text-xs text-neutral-400">
             {t(pack.expansionName, { ns: 'common/sets' })} · {pack.cards.length} ☆☆
+            {collection && !complete && <span className="text-neutral-300"> · {pack.missing} missing</span>}
           </p>
           <div className="mt-1 flex flex-wrap gap-1">
             {provisional && <span className="rounded bg-amber-400/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">provisional</span>}
@@ -93,6 +94,13 @@ export function PackCard({ pack, position, sortKey, ranges, expanded, onToggle }
         />
         <Stat label="Top 50 chance" value={pct(pack.pTop50)} fraction={pack.pTop50} color={pack.color} active={false} />
         <Stat
+          label="Top 50 ☆☆ per pack opened"
+          value={oneIn(pack.perPackTop50)}
+          fraction={fill(pack.perPackTop50, ranges.perPackTop50)}
+          color={pack.color}
+          active={sortKey === 'perPackTop50'}
+        />
+        <Stat
           label="Trainer / rainbow"
           value={pct(pack.pTrainerOrRainbow)}
           fraction={pack.pTrainerOrRainbow}
@@ -101,7 +109,13 @@ export function PackCard({ pack, position, sortKey, ranges, expanded, onToggle }
         />
         {collection && (
           <>
-            <Stat label="Chance of new" value={pct(pack.pNew)} fraction={pack.pNew} color={pack.color} active={sortKey === 'pNew'} />
+            <Stat
+              label="New ☆☆ per pack opened"
+              value={oneIn(pack.perPackNew)}
+              fraction={pack.perPackNew > 0 ? fill(pack.perPackNew, ranges.perPackNew) : 0}
+              color={pack.color}
+              active={sortKey === 'perPackNew'}
+            />
             <Stat
               label="Value for me"
               value={String(Math.round(pack.forMe))}
@@ -113,7 +127,7 @@ export function PackCard({ pack, position, sortKey, ranges, expanded, onToggle }
         )}
       </div>
 
-      {expanded && <PackPool cards={pack.cards} />}
+      {expanded && <PackPool cards={pack.cards} expansionId={pack.expansionId} />}
 
       <button
         type="button"
