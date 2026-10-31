@@ -40,19 +40,6 @@
       "Rank": 3
     },
     {
-      "PackId": 4,
-      "CardNumber": 95,
-      "CardName": "阿爾宙斯ex",
-      "CardLevel": 7,
-      "ImageUrl": "",
-      "EloScore": 400,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 1,
-      "MarketRatio": 0.0,
-      "Rank": 4
-    },
-    {
       "PackId": 2,
       "CardNumber": 85,
       "CardName": "時拉比ex",
@@ -63,98 +50,20 @@
       "DemandCount": 0,
       "SupplyCount": 1,
       "MarketRatio": 0.0,
+      "Rank": 4
+    },
+    {
+      "PackId": 4,
+      "CardNumber": 95,
+      "CardName": "阿爾宙斯ex",
+      "CardLevel": 7,
+      "ImageUrl": "",
+      "EloScore": 400,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 1,
+      "MarketRatio": 0.0,
       "Rank": 5
-    },
-    {
-      "PackId": 3,
-      "CardNumber": 204,
-      "CardName": "帕路奇亞ex",
-      "CardLevel": 7,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 6
-    },
-    {
-      "PackId": 3,
-      "CardNumber": 205,
-      "CardName": "帝牙盧卡ex",
-      "CardLevel": 7,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 7
-    },
-    {
-      "PackId": 5,
-      "CardNumber": 96,
-      "CardName": "騎拉帝納ex",
-      "CardLevel": 7,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 8
-    },
-    {
-      "PackId": 6,
-      "CardNumber": 208,
-      "CardName": "古茲馬",
-      "CardLevel": 7,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 9
-    },
-    {
-      "PackId": 6,
-      "CardNumber": 209,
-      "CardName": "莉莉艾",
-      "CardLevel": 7,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 10
-    },
-    {
-      "PackId": 7,
-      "CardNumber": 88,
-      "CardName": "爆肌蚊ex",
-      "CardLevel": 7,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 11
-    },
-    {
-      "PackId": 8,
-      "CardNumber": 92,
-      "CardName": "伊布ex",
-      "CardLevel": 7,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 12
     },
     {
       "PackId": 9,
@@ -167,7 +76,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 13
+      "Rank": 6
     },
     {
       "PackId": 9,
@@ -180,7 +89,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 14
+      "Rank": 7
     },
     {
       "PackId": 10,
@@ -193,7 +102,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 15
+      "Rank": 8
     },
     {
       "PackId": 11,
@@ -206,7 +115,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 16
+      "Rank": 9
     },
     {
       "PackId": 13,
@@ -219,7 +128,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 17
+      "Rank": 10
     },
     {
       "PackId": 14,
@@ -232,7 +141,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 18
+      "Rank": 11
     },
     {
       "PackId": 14,
@@ -245,7 +154,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 19
+      "Rank": 12
     },
     {
       "PackId": 15,
@@ -258,7 +167,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 20
+      "Rank": 13
     },
     {
       "PackId": 16,
@@ -271,7 +180,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 21
+      "Rank": 14
     },
     {
       "PackId": 16,
@@ -284,7 +193,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 22
+      "Rank": 15
     },
     {
       "PackId": 17,
@@ -297,7 +206,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 23
+      "Rank": 16
     },
     {
       "PackId": 17,
@@ -310,7 +219,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 24
+      "Rank": 17
     },
     {
       "PackId": 18,
@@ -323,7 +232,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 25
+      "Rank": 18
     },
     {
       "PackId": 19,
@@ -336,7 +245,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 26
+      "Rank": 19
     },
     {
       "PackId": 20,
@@ -349,7 +258,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 27
+      "Rank": 20
     },
     {
       "PackId": 20,
@@ -362,7 +271,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 28
+      "Rank": 21
     },
     {
       "PackId": 21,
@@ -375,7 +284,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 29
+      "Rank": 22
     },
     {
       "PackId": 22,
@@ -388,7 +297,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 30
+      "Rank": 23
     },
     {
       "PackId": 1,
@@ -401,7 +310,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 31
+      "Rank": 24
     },
     {
       "PackId": 1,
@@ -414,7 +323,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 32
+      "Rank": 25
     },
     {
       "PackId": 1,
@@ -427,12 +336,103 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 33
+      "Rank": 26
     },
     {
       "PackId": 1,
       "CardNumber": 283,
       "CardName": "夢幻",
+      "CardLevel": 7,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 27
+    },
+    {
+      "PackId": 3,
+      "CardNumber": 204,
+      "CardName": "帕路奇亞ex",
+      "CardLevel": 7,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 28
+    },
+    {
+      "PackId": 3,
+      "CardNumber": 205,
+      "CardName": "帝牙盧卡ex",
+      "CardLevel": 7,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 29
+    },
+    {
+      "PackId": 5,
+      "CardNumber": 96,
+      "CardName": "騎拉帝納ex",
+      "CardLevel": 7,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 30
+    },
+    {
+      "PackId": 6,
+      "CardNumber": 208,
+      "CardName": "古茲馬",
+      "CardLevel": 7,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 31
+    },
+    {
+      "PackId": 6,
+      "CardNumber": 209,
+      "CardName": "莉莉艾",
+      "CardLevel": 7,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 32
+    },
+    {
+      "PackId": 7,
+      "CardNumber": 88,
+      "CardName": "爆肌蚊ex",
+      "CardLevel": 7,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 33
+    },
+    {
+      "PackId": 8,
+      "CardNumber": 92,
+      "CardName": "伊布ex",
       "CardLevel": 7,
       "ImageUrl": "",
       "EloScore": 1200,

@@ -651,422 +651,6 @@
       "Rank": 50
     },
     {
-      "PackId": 14,
-      "CardNumber": 231,
-      "CardName": "Umbreon ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 51
-    },
-    {
-      "PackId": 14,
-      "CardNumber": 232,
-      "CardName": "Lugia ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 52
-    },
-    {
-      "PackId": 15,
-      "CardNumber": 126,
-      "CardName": "炎帝ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 53
-    },
-    {
-      "PackId": 15,
-      "CardNumber": 127,
-      "CardName": "水君ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 54
-    },
-    {
-      "PackId": 15,
-      "CardNumber": 128,
-      "CardName": "雷公ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 55
-    },
-    {
-      "PackId": 15,
-      "CardNumber": 129,
-      "CardName": "巨鍛匠ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 56
-    },
-    {
-      "PackId": 16,
-      "CardNumber": 111,
-      "CardName": "超級噴火龍Xex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 57
-    },
-    {
-      "PackId": 16,
-      "CardNumber": 112,
-      "CardName": "超級呆殼獸ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 58
-    },
-    {
-      "PackId": 16,
-      "CardNumber": 113,
-      "CardName": "超級雷電獸ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 59
-    },
-    {
-      "PackId": 16,
-      "CardNumber": 114,
-      "CardName": "超級耿鬼ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 60
-    },
-    {
-      "PackId": 16,
-      "CardNumber": 115,
-      "CardName": "超級巨鉗螳螂ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 61
-    },
-    {
-      "PackId": 17,
-      "CardNumber": 225,
-      "CardName": "Whimsicott ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 62
-    },
-    {
-      "PackId": 17,
-      "CardNumber": 226,
-      "CardName": "Mega Blaziken ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 63
-    },
-    {
-      "PackId": 17,
-      "CardNumber": 227,
-      "CardName": "Greninja ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 64
-    },
-    {
-      "PackId": 17,
-      "CardNumber": 228,
-      "CardName": "Jolteon ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 65
-    },
-    {
-      "PackId": 17,
-      "CardNumber": 229,
-      "CardName": "Hitmonchan ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 66
-    },
-    {
-      "PackId": 17,
-      "CardNumber": 230,
-      "CardName": "Mega Absol ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 67
-    },
-    {
-      "PackId": 17,
-      "CardNumber": 231,
-      "CardName": "Dragalge ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 68
-    },
-    {
-      "PackId": 17,
-      "CardNumber": 232,
-      "CardName": "Mega Steelix ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 69
-    },
-    {
-      "PackId": 18,
-      "CardNumber": 104,
-      "CardName": "魔幻假面喵ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 70
-    },
-    {
-      "PackId": 18,
-      "CardNumber": 105,
-      "CardName": "紅蓮鎧騎ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 71
-    },
-    {
-      "PackId": 18,
-      "CardNumber": 106,
-      "CardName": "電肚蛙ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 72
-    },
-    {
-      "PackId": 18,
-      "CardNumber": 107,
-      "CardName": "超級七夕青鳥ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 73
-    },
-    {
-      "PackId": 19,
-      "CardNumber": 101,
-      "CardName": "超級暴鯉龍ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 74
-    },
-    {
-      "PackId": 19,
-      "CardNumber": 102,
-      "CardName": "水伊布ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 75
-    },
-    {
-      "PackId": 19,
-      "CardNumber": 103,
-      "CardName": "超級電龍ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 76
-    },
-    {
-      "PackId": 19,
-      "CardNumber": 104,
-      "CardName": "愛管侍ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 77
-    },
-    {
-      "PackId": 20,
-      "CardNumber": 224,
-      "CardName": "砰頭小丑ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 78
-    },
-    {
-      "PackId": 20,
-      "CardNumber": 225,
-      "CardName": "阿羅拉 九尾ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 79
-    },
-    {
-      "PackId": 20,
-      "CardNumber": 226,
-      "CardName": "超級 巨沼怪ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 80
-    },
-    {
-      "PackId": 20,
-      "CardNumber": 227,
-      "CardName": "超級 沙奈朵ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 81
-    },
-    {
-      "PackId": 20,
-      "CardNumber": 228,
-      "CardName": "超級 長耳兔ex",
-      "CardLevel": 10,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 82
-    },
-    {
       "PackId": 20,
       "CardNumber": 229,
       "CardName": "龐岩怪ex",
@@ -1077,7 +661,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 83
+      "Rank": 51
     },
     {
       "PackId": 20,
@@ -1090,7 +674,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 84
+      "Rank": 52
     },
     {
       "PackId": 20,
@@ -1103,7 +687,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 85
+      "Rank": 53
     },
     {
       "PackId": 21,
@@ -1116,7 +700,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 86
+      "Rank": 54
     },
     {
       "PackId": 21,
@@ -1129,7 +713,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 87
+      "Rank": 55
     },
     {
       "PackId": 21,
@@ -1142,7 +726,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 88
+      "Rank": 56
     },
     {
       "PackId": 21,
@@ -1155,7 +739,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 89
+      "Rank": 57
     },
     {
       "PackId": 22,
@@ -1168,7 +752,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 90
+      "Rank": 58
     },
     {
       "PackId": 22,
@@ -1181,7 +765,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 91
+      "Rank": 59
     },
     {
       "PackId": 23,
@@ -1194,7 +778,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 92
+      "Rank": 60
     },
     {
       "PackId": 23,
@@ -1207,7 +791,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 93
+      "Rank": 61
     },
     {
       "PackId": 23,
@@ -1220,7 +804,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 94
+      "Rank": 62
     },
     {
       "PackId": 23,
@@ -1233,7 +817,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 95
+      "Rank": 63
     },
     {
       "PackId": 23,
@@ -1246,7 +830,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 96
+      "Rank": 64
     },
     {
       "PackId": 14,
@@ -1259,7 +843,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 97
+      "Rank": 65
     },
     {
       "PackId": 23,
@@ -1272,7 +856,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 98
+      "Rank": 66
     },
     {
       "PackId": 14,
@@ -1285,7 +869,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 99
+      "Rank": 67
     },
     {
       "PackId": 23,
@@ -1298,7 +882,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 100
+      "Rank": 68
     },
     {
       "PackId": 14,
@@ -1311,7 +895,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 101
+      "Rank": 69
     },
     {
       "PackId": 23,
@@ -1324,7 +908,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 102
+      "Rank": 70
     },
     {
       "PackId": 14,
@@ -1337,7 +921,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 103
+      "Rank": 71
     },
     {
       "PackId": 14,
@@ -1350,12 +934,428 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 104
+      "Rank": 72
     },
     {
       "PackId": 14,
       "CardNumber": 230,
       "CardName": "Donphan ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 73
+    },
+    {
+      "PackId": 14,
+      "CardNumber": 231,
+      "CardName": "Umbreon ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 74
+    },
+    {
+      "PackId": 14,
+      "CardNumber": 232,
+      "CardName": "Lugia ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 75
+    },
+    {
+      "PackId": 15,
+      "CardNumber": 126,
+      "CardName": "炎帝ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 76
+    },
+    {
+      "PackId": 15,
+      "CardNumber": 127,
+      "CardName": "水君ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 77
+    },
+    {
+      "PackId": 15,
+      "CardNumber": 128,
+      "CardName": "雷公ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 78
+    },
+    {
+      "PackId": 15,
+      "CardNumber": 129,
+      "CardName": "巨鍛匠ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 79
+    },
+    {
+      "PackId": 16,
+      "CardNumber": 111,
+      "CardName": "超級噴火龍Xex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 80
+    },
+    {
+      "PackId": 16,
+      "CardNumber": 112,
+      "CardName": "超級呆殼獸ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 81
+    },
+    {
+      "PackId": 16,
+      "CardNumber": 113,
+      "CardName": "超級雷電獸ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 82
+    },
+    {
+      "PackId": 16,
+      "CardNumber": 114,
+      "CardName": "超級耿鬼ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 83
+    },
+    {
+      "PackId": 16,
+      "CardNumber": 115,
+      "CardName": "超級巨鉗螳螂ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 84
+    },
+    {
+      "PackId": 17,
+      "CardNumber": 225,
+      "CardName": "Whimsicott ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 85
+    },
+    {
+      "PackId": 17,
+      "CardNumber": 226,
+      "CardName": "Mega Blaziken ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 86
+    },
+    {
+      "PackId": 17,
+      "CardNumber": 227,
+      "CardName": "Greninja ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 87
+    },
+    {
+      "PackId": 17,
+      "CardNumber": 228,
+      "CardName": "Jolteon ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 88
+    },
+    {
+      "PackId": 17,
+      "CardNumber": 229,
+      "CardName": "Hitmonchan ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 89
+    },
+    {
+      "PackId": 17,
+      "CardNumber": 230,
+      "CardName": "Mega Absol ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 90
+    },
+    {
+      "PackId": 17,
+      "CardNumber": 231,
+      "CardName": "Dragalge ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 91
+    },
+    {
+      "PackId": 17,
+      "CardNumber": 232,
+      "CardName": "Mega Steelix ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 92
+    },
+    {
+      "PackId": 18,
+      "CardNumber": 104,
+      "CardName": "魔幻假面喵ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 93
+    },
+    {
+      "PackId": 18,
+      "CardNumber": 105,
+      "CardName": "紅蓮鎧騎ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 94
+    },
+    {
+      "PackId": 18,
+      "CardNumber": 106,
+      "CardName": "電肚蛙ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 95
+    },
+    {
+      "PackId": 18,
+      "CardNumber": 107,
+      "CardName": "超級七夕青鳥ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 96
+    },
+    {
+      "PackId": 19,
+      "CardNumber": 101,
+      "CardName": "超級暴鯉龍ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 97
+    },
+    {
+      "PackId": 19,
+      "CardNumber": 102,
+      "CardName": "水伊布ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 98
+    },
+    {
+      "PackId": 19,
+      "CardNumber": 103,
+      "CardName": "超級電龍ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 99
+    },
+    {
+      "PackId": 19,
+      "CardNumber": 104,
+      "CardName": "愛管侍ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 100
+    },
+    {
+      "PackId": 20,
+      "CardNumber": 224,
+      "CardName": "砰頭小丑ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 101
+    },
+    {
+      "PackId": 20,
+      "CardNumber": 225,
+      "CardName": "阿羅拉 九尾ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 102
+    },
+    {
+      "PackId": 20,
+      "CardNumber": 226,
+      "CardName": "超級 巨沼怪ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 103
+    },
+    {
+      "PackId": 20,
+      "CardNumber": 227,
+      "CardName": "超級 沙奈朵ex",
+      "CardLevel": 10,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 104
+    },
+    {
+      "PackId": 20,
+      "CardNumber": 228,
+      "CardName": "超級 長耳兔ex",
       "CardLevel": 10,
       "ImageUrl": "",
       "EloScore": 1200,
