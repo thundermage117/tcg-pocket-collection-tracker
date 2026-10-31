@@ -1,7 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 
-export const SUPABASE_URL = 'https://vcwloujmsjuacqpwthee.supabase.co'
-export const SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjd2xvdWptc2p1YWNxcHd0aGVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE4MTM2NjAsImV4cCI6MjA1NzM4OTY2MH0.a4Hyi9PsyLQ-MxtS_20cSs4KWgDNh39w-uJo0cQa_qQ'
+// Personal fork: points at our own Supabase project (schema: scripts/sql/personal-schema.sql).
+// Set these in frontend/.env.local for dev and in the hosting provider for builds.
+export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
+export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error('Missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY (see frontend/.env.example)')
+}
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
