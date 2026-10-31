@@ -22,6 +22,7 @@ const menuItems: MenuItem[] = [
   { title: 'missions', href: '/missions' },
   { title: 'decks', href: '/decks' },
   { title: 'Packs', href: '/packs' }, // personal fork; no locale key, i18next falls back to the title
+  { title: 'Rankings', href: '/rankings' }, // personal fork
   { title: 'trade', href: '/trade' },
   { title: 'scan', href: '/scan' },
 ]

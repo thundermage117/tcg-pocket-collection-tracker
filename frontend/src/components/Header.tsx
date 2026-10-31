@@ -105,6 +105,13 @@ export function Header() {
               </Link>
             </NavigationMenuLink>
             <NavigationMenuLink asChild className="hidden md:block">
+              <Link to="/rankings">
+                <Button className="px-2 sm:px-4" variant="ghost">
+                  Rankings
+                </Button>
+              </Link>
+            </NavigationMenuLink>
+            <NavigationMenuLink asChild className="hidden md:block">
               <Link to="/trade">
                 <Button className="px-2 sm:px-4" variant="ghost">
                   {t('trade')}

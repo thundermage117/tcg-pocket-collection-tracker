@@ -22,9 +22,10 @@ const Collection = lazy(() => import('./pages/collection/Collection.tsx'))
 const Missions = lazy(() => import('./pages/collection/Missions.tsx'))
 const Decks = lazy(() => import('./pages/decks/Decks.tsx'))
 const DeckBuilder = lazy(() => import('./pages/decks/DeckBuilder.tsx'))
-// Personal fork: own trade page (settings + Discord list) and pack value page
+// Personal fork: own trade page (settings + Discord list), pack value and rankings pages
 const PersonalTrade = lazy(() => import('./pages/trade/PersonalTrade.tsx'))
 const PackValue = lazy(() => import('./pages/packs/PackValue.tsx'))
+const Rankings = lazy(() => import('./pages/rankings/Rankings.tsx'))
 const Scan = lazy(() => import('./pages/scan/Scan.tsx'))
 const EditProfile = lazy(() => import('./components/EditProfile.tsx'))
 const CardDetail = lazy(() => import('./pages/collection/CardDetail.tsx'))
@@ -124,6 +125,7 @@ function App() {
         { path: '/scan', element: <Scan /> },
         { path: '/trade/*', element: <PersonalTrade /> },
         { path: '/packs', element: <PackValue /> },
+        { path: '/rankings', element: <Rankings /> },
         { path: '/import', element: <Import /> },
         { path: '/changelog', element: <Changelog /> },
       ],
