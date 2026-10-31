@@ -1,26 +1,75 @@
 // Sanity check for frontend/src/lib/discordTradeList.ts:  pnpm tsx scripts/value/check-discord.ts
 import assert from 'node:assert/strict'
-import { DISCORD_LIMIT, formatDiscordTradeList, type TradeLine } from '../../frontend/src/lib/discordTradeList.ts'
+import { DISCORD_LIMIT, formatDiscordTradeList, type TradeGroup } from '../../frontend/src/lib/discordTradeList.ts'
 
-const line = (i: number, rarity: string, count?: number): TradeLine => ({ name: `Card ${i}`, cardId: `A1-${i}`, rarity, count })
+const group = (title: string, names: string[], counts?: number[]): TradeGroup => ({
+  title,
+  lines: names.map((name, i) => ({ name, count: counts?.[i] })),
+})
 
-// Small list: one message, rarities ordered high -> low, ×N only for count > 1
+// Small list: one message, LF without counts, FT with ×N (including ×1), empty groups/sections dropped
 const small = formatDiscordTradeList([
-  { title: 'Looking for', lines: [line(1, '☆'), line(2, '☆☆')] },
-  { title: 'For trade', lines: [line(3, '◊◊◊◊', 2), line(4, '◊◊◊◊', 1)] },
-  { title: 'Empty', lines: [] },
+  {
+    title: 'LF',
+    groups: [group('Ruler of the Skies', ['Cyclizar', 'Dragonair', 'Accelgor']), group('Empty', []), group('Space-Time Smackdown', ['Mamoswine', 'Tangrowth'])],
+  },
+  {
+    title: 'FT',
+    groups: [group('Mythical Island (A1a)', ['Dedenne', 'Salandit'], [1, 1]), group('Deluxe Pack: ex (A4b)', ['Floragato', "Farfetch'd"], [10, 7])],
+  },
+  { title: 'Nothing', groups: [group('Empty', [])] },
 ])
 assert.equal(small.length, 1)
 assert.equal(
   small[0],
-  ['**Looking for**', '__☆☆__', 'Card 2 — A1 #2', '__☆__', 'Card 1 — A1 #1', '', '**For trade**', '__◊◊◊◊__', 'Card 3 — A1 #3 ×2', 'Card 4 — A1 #4'].join('\n'),
+  [
+    'LF',
+    '',
+    'Ruler of the Skies',
+    'Cyclizar',
+    'Dragonair',
+    'Accelgor',
+    '',
+    'Space-Time Smackdown',
+    'Mamoswine',
+    'Tangrowth',
+    '',
+    '',
+    'FT',
+    '',
+    'Mythical Island (A1a)',
+    'Dedenne ×1',
+    'Salandit ×1',
+    '',
+    'Deluxe Pack: ex (A4b)',
+    'Floragato ×10',
+    "Farfetch'd ×7",
+  ].join('\n'),
 )
 
-// Large list: split into several messages, none over the limit, no lines lost
-const big = formatDiscordTradeList([{ title: 'For trade', lines: Array.from({ length: 300 }, (_, i) => line(i, '◊◊◊', 3)) }])
-assert.ok(big.length > 1)
-assert.ok(big.every((m) => m.length <= DISCORD_LIMIT))
-const allLines = big.join('\n').split('\n')
-assert.equal(allLines.filter((l) => l.startsWith('Card ')).length, 300)
+// Many groups: several messages, none over the limit, no group split, continued messages repeat the section title
+const names = (n: number, prefix: string) => Array.from({ length: n }, (_, i) => `${prefix} card ${i}`)
+const many = formatDiscordTradeList([
+  { title: 'FT', groups: Array.from({ length: 40 }, (_, i) => group(`Set ${i} (X${i})`, names(6, `Set ${i}`), Array(6).fill(2))) },
+])
+assert.ok(many.length > 1)
+assert.ok(many.every((m) => m.length <= DISCORD_LIMIT))
+assert.ok(many.every((m) => m.startsWith('FT\n\nSet ')))
+for (let i = 0; i < 40; i++) {
+  assert.equal(many.filter((m) => m.includes(`Set ${i} (X${i})`)).length, 1)
+  assert.equal(many.filter((m) => m.includes(`Set ${i} card 5 ×2`)).length, 1, `set ${i} split across messages`)
+}
 
-console.log(`ok: small list = 1 message, 300 cards = ${big.length} messages (max ${Math.max(...big.map((m) => m.length))} chars)`)
+// One group over the limit on its own: split by line, nothing lost
+const huge = formatDiscordTradeList([{ title: 'FT', groups: [group('Huge (H)', names(300, 'Huge'), Array(300).fill(3))] }])
+assert.ok(huge.length > 1)
+assert.ok(huge.every((m) => m.length <= DISCORD_LIMIT))
+assert.equal(
+  huge
+    .join('\n')
+    .split('\n')
+    .filter((l) => l.startsWith('Huge card ')).length,
+  300,
+)
+
+console.log(`ok: small list = 1 message, 40 sets = ${many.length} messages, 300-card set = ${huge.length} messages`)
