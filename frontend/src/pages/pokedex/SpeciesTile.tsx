@@ -2,8 +2,8 @@
 import { Check, Crown, Sparkles } from 'lucide-react'
 import { Link } from 'react-router'
 import { getLocalizedImagePath } from '@/lib/imageLocales'
-import { coverCard, dexName, ownedCount, type Species, type SpeciesGroup, speciesName, spriteUrl } from '@/lib/pokedex'
-import { cn } from '@/lib/utils'
+import { coverCard, dexName, type FormNode, ownedCount, type Species, type SpeciesGroup, speciesName, spriteUrl } from '@/lib/pokedex'
+import { cn, getCardNameByLang } from '@/lib/utils'
 import type { CardType, Collection } from '@/types'
 
 export type TileArt = 'sprite' | 'card'
@@ -124,5 +124,34 @@ export function AbsentTile({ dexNr, lang, className }: { dexNr: number; lang: st
       <p className="truncate text-sm text-neutral-500">{name}</p>
       <p className="truncate text-[10px] text-neutral-600">Not in TCG Pocket</p>
     </div>
+  )
+}
+
+/** A form in an evolution line's form chain: its artwork, localized card name and owned/total of that form's cards. */
+export function FormTile({ form, collection, lang, className }: { form: FormNode; collection: Collection | undefined; lang: string; className?: string }) {
+  const owned = ownedCount(collection, form.cards)
+  // without " ex", like the form's own name: Mega Charizard X ex keeps its X when it wraps
+  const name = getCardNameByLang(form.cards[0], lang).replace(/ ex$/, '')
+  const complete = owned === form.cards.length
+  return (
+    <Link
+      to={`/pokedex/${form.species.dexNr}`}
+      title={name}
+      className={cn(
+        'relative block overflow-hidden rounded-md border-1 border-neutral-700 border-solid bg-neutral-800 p-1.5 pt-2.5 transition-colors hover:border-neutral-400',
+        className,
+      )}
+    >
+      <span className="absolute inset-x-0 top-0 h-1" style={{ background: typeStripe(form.species.types) }} />
+      <Sprite artworkId={form.artworkId} caught={owned > 0} alt={name} />
+      <div className="mt-1.5 flex items-baseline justify-end gap-1 text-[11px] tabular-nums">
+        <span className={cn('flex items-center gap-0.5', complete ? 'text-green-500' : owned > 0 ? 'text-neutral-300' : 'text-neutral-500')}>
+          {complete && <Check className="size-3" strokeWidth={3} />}
+          {owned}/{form.cards.length}
+        </span>
+      </div>
+      {/* form names run long (Team Rocket's Raticate, Mega Charizard X): wrapped rather than cut off */}
+      <p className={cn('line-clamp-3 text-xs leading-tight sm:text-sm', owned === 0 && 'text-neutral-500')}>{name}</p>
+    </Link>
   )
 }

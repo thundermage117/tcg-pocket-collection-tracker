@@ -206,22 +206,57 @@ export const dexEntriesQuery = (locale: string) =>
     staleTime: Number.POSITIVE_INFINITY, // only changes on deploy
   })
 
-export interface ArtForm {
-  artworkId: number
-  name: string // the form's card name without ` ex` (Alolan Vulpix, Mega Charizard X)
+const baseCardName = (name: string) => name.replace(/ ex$/, '')
+
+// From each card's evolves_from (scraped from Limitless): card name → card name, so forms stay apart (Alolan Vulpix → Alolan Ninetales)
+const formEvolvesFrom = new Map(allCards.flatMap((c) => (c.evolves_from ? [[baseCardName(c.name), c.evolves_from] as const] : [])))
+
+export interface FormNode {
+  name: string // card name without ` ex` (Alolan Vulpix, Mega Charizard X, Team Rocket's Rattata)
+  species: Species
   cards: Card[]
+  artworkId: number
 }
 
-/** A species' forms with artwork of their own (regional, Mega, Rotom, …), for the evolution lines; ex and Team Rocket's look like the species. */
-export function artForms(species: Species): ArtForm[] {
-  const byArtwork = new Map<number, ArtForm>()
-  for (const card of species.cards) {
-    const artworkId = formArtworkId(species, card.name)
-    if (artworkId !== species.dexNr) {
-      const form = byArtwork.get(artworkId) ?? { artworkId, name: card.name.replace(/ ex$/, ''), cards: [] }
-      form.cards.push(card)
-      byArtwork.set(artworkId, form)
+export interface FormChain {
+  from?: string // the plain card it evolves from, when that isn't a form itself (Charmeleon → Mega Charizard X)
+  stage: number // 0 basic, 1 stage 1, 2 stage 2: where the chain starts, so it lines up under the species line
+  stages: FormNode[][]
+}
+
+/**
+ * The line's forms as their own chains, since PokéAPI's evolution data is per species: Alolan Vulpix → Alolan Ninetales,
+ * Team Rocket's Rattata → Team Rocket's Raticate, and Charmeleon → Mega Charizard X / Y (forms evolving from the same plain
+ * card share a chain; basic forms each start their own).
+ */
+export function formChains(line: EvolutionLine): FormChain[] {
+  const nodes = new Map<string, FormNode>()
+  for (const species of line.species) {
+    for (const card of species.cards) {
+      const name = baseCardName(card.name)
+      // the plain species card isn't a form (an ex counts as its plain card)
+      if (name.toLowerCase() === species.key) {
+        continue
+      }
+      const node = nodes.get(name) ?? { name, species, cards: [], artworkId: formArtworkId(species, name) }
+      node.cards.push(card)
+      nodes.set(name, node)
     }
   }
-  return [...byArtwork.values()]
+  const children = Map.groupBy(
+    [...nodes.values()].filter((n) => nodes.has(formEvolvesFrom.get(n.name) ?? '')),
+    (n) => formEvolvesFrom.get(n.name) as string,
+  )
+  const roots = Map.groupBy(
+    [...nodes.values()].filter((n) => !nodes.has(formEvolvesFrom.get(n.name) ?? '')),
+    (n) => formEvolvesFrom.get(n.name) ?? n.name,
+  )
+  return [...roots.values()].map((first) => {
+    const stages = [first]
+    for (let next = first.flatMap((n) => children.get(n.name) ?? []); next.length > 0; next = next.flatMap((n) => children.get(n.name) ?? [])) {
+      stages.push(next)
+    }
+    const evolutionType = first[0].cards[0].evolution_type
+    return { from: formEvolvesFrom.get(first[0].name), stage: evolutionType === 'stage2' ? 2 : evolutionType === 'stage1' ? 1 : 0, stages }
+  })
 }
