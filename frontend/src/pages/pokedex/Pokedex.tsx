@@ -15,7 +15,7 @@ import { capitalize, cn } from '@/lib/utils'
 import { useCollection } from '@/services/collection/useCollection'
 import { type CardType, cardTypes, type ExpansionId } from '@/types'
 import { EvolutionChain } from './EvolutionChain'
-import { ProgressBar, SpeciesTile, type TileArt } from './SpeciesTile'
+import { ProgressBar, SpeciesTile, type TileArt, typeColors } from './SpeciesTile'
 
 const viewOptions = ['dex', 'lines'] as const
 const viewLabels = { dex: 'Dex', lines: 'Evolution lines' }
@@ -159,6 +159,34 @@ export default function Pokedex() {
               </li>
             )
           })}
+        </ul>
+        {/* a dual-type species counts under both types */}
+        <ul className="mt-3 grid grid-cols-5 gap-x-2 gap-y-2 border-neutral-700 border-t pt-3 sm:gap-x-4 lg:grid-cols-10">
+          {typeOptions
+            .filter((x) => x !== 'all')
+            .map((x) => {
+              const ofType = allSpecies.filter((s) => s.types.includes(x))
+              const ownedOfType = ofType.filter((s) => ownedOf(s) > 0).length
+              const active = type === x
+              return (
+                <li key={x}>
+                  <button
+                    type="button"
+                    onClick={() => update({ type: active ? undefined : x })}
+                    title={capitalize(x)}
+                    className={cn('w-full cursor-pointer rounded px-1 py-0.5 text-left transition-colors hover:bg-neutral-700', active && 'bg-neutral-700')}
+                  >
+                    <span className="flex items-center justify-between text-xs">
+                      <img src={`/images/energy/${x}.webp`} alt={x} className="size-4" />
+                      <span className="text-neutral-400 tabular-nums">
+                        {ownedOfType}/{ofType.length}
+                      </span>
+                    </span>
+                    <ProgressBar value={ownedOfType} max={ofType.length} color={typeColors[x]} className="mt-1 h-1.5" />
+                  </button>
+                </li>
+              )
+            })}
         </ul>
       </section>
 

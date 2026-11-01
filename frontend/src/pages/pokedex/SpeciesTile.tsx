@@ -31,10 +31,10 @@ export const typeStripe = (types: CardType[]) =>
     ? typeColors[types[0]]
     : `linear-gradient(90deg, ${types.map((t, i) => `${typeColors[t]} ${(100 * i) / types.length}% ${(100 * (i + 1)) / types.length}%`).join(', ')})`
 
-export function ProgressBar({ value, max, className }: { value: number; max: number; className?: string }) {
+export function ProgressBar({ value, max, color, className }: { value: number; max: number; color?: string; className?: string }) {
   return (
     <span className={cn('block overflow-hidden rounded-full bg-neutral-700', className)}>
-      <span className="block h-full rounded-full bg-blue-300" style={{ width: `${max === 0 ? 0 : (100 * value) / max}%` }} />
+      <span className="block h-full rounded-full bg-blue-300" style={{ width: `${max === 0 ? 0 : (100 * value) / max}%`, backgroundColor: color }} />
     </span>
   )
 }
