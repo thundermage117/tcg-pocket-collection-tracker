@@ -1,8 +1,11 @@
 import type { Card, Expansion, ExpansionId, Rarity } from '@/types'
 
-const AllCardsJson = await import('../../assets/cards.json')
+import cardsUrl from '../../assets/cards.json?url'
+import { fetchJsonAsset } from './fetchJsonAsset'
 
-export const allCards: Card[] = AllCardsJson.default as Card[]
+// Fetched as plain JSON rather than bundled as a JS module: JSON.parse is much cheaper than parsing a 2.4 MB module,
+// and the hashed file stays cached across deploys that don't touch the cards. index.html preloads it (vite.config.ts).
+export const allCards: Card[] = await fetchJsonAsset<Card[]>(cardsUrl)
 
 const allCardsDict: Map<string, Card> = new Map(allCards.map((card) => [card.card_id, card]))
 const allCardsByInternalId: Map<number, Card> = new Map(allCards.toReversed().map((card) => [card.internal_id, card]))
