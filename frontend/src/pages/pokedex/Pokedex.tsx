@@ -1,12 +1,16 @@
 // Personal fork: one tile per species in National Dex order, owned when any printing (any form) is owned.
-// Filters live in the URL (?view=lines&q=…&gen=1&type=fire&show=missing&set=A1&sort=printings), so links, refresh and back keep the view.
+// Filters live in the URL (?view=lines&art=card&q=…&gen=1&type=fire&show=missing&set=A1&sort=printings), so links, refresh and back keep the view.
+import { SlidersHorizontal, X } from 'lucide-react'
+import { Fragment, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router'
 import { DropdownFilter, TabsFilter } from '@/components/Filters'
 import SearchInput from '@/components/filters/SearchInput'
 import { Spinner } from '@/components/Spinner'
+import { Button } from '@/components/ui/button'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { expansions, getExpansionById } from '@/lib/CardsDB'
-import { allLines, allSpecies, generationOf, generations, ownedCount, type Species, speciesMatches, speciesName } from '@/lib/pokedex'
+import { allLines, allSpecies, type Generation, generationOf, generations, ownedCount, type Species, speciesMatches, speciesName } from '@/lib/pokedex'
 import { capitalize, cn } from '@/lib/utils'
 import { useCollection } from '@/services/collection/useCollection'
 import { type CardType, cardTypes, type ExpansionId } from '@/types'
@@ -49,6 +53,7 @@ export default function Pokedex() {
   const sort = sortOptions.find((x) => x === params.get('sort')) ?? 'dex'
   const art = artOptions.find((x) => x === params.get('art')) ?? 'sprite'
   const filtering = search !== '' || gen !== 'all' || type !== 'all' || show !== 'all' || set !== 'all'
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   const update = (changes: Record<string, string | undefined>) => {
     setParams(
@@ -103,6 +108,10 @@ export default function Pokedex() {
   const lines = allLines.filter((line) => line.species.some(matches))
 
   const speciesOwned = allSpecies.filter((s) => ownedOf(s) > 0).length
+  const genCaught = (g: Generation) => {
+    const inGen = allSpecies.filter((s) => generationOf(s.dexNr) === g)
+    return `${inGen.filter((s) => ownedOf(s) > 0).length}/${inGen.length} caught`
+  }
   const linesComplete = allLines.filter((line) => line.species.every((s) => ownedOf(s) > 0)).length
 
   return (
@@ -136,6 +145,7 @@ export default function Pokedex() {
                 <button
                   type="button"
                   onClick={() => update({ gen: active ? undefined : String(g.nr) })}
+                  title={g.region}
                   className={cn('w-full cursor-pointer rounded px-1 py-0.5 text-left transition-colors hover:bg-neutral-700', active && 'bg-neutral-700')}
                 >
                   <span className="flex justify-between text-xs">
@@ -152,41 +162,61 @@ export default function Pokedex() {
         </ul>
       </section>
 
-      <div className="mb-6 flex flex-col gap-3">
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <SearchInput value={search} setValue={(q) => update({ q: q.trim() || undefined })} className="sm:flex-1" />
-          <DropdownFilter
-            label="Set"
-            options={setOptions}
-            value={set}
-            onChange={(id) => update({ set: id })}
-            show={(id) => (id === 'all' ? 'All sets' : `${id} · ${t(getExpansionById(id).name)}`)}
-            className="sm:w-64"
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <TabsFilter options={viewOptions} value={view} onChange={(x) => update({ view: x })} show={(x) => viewLabels[x]} />
-          <TabsFilter options={artOptions} value={art} onChange={(x) => update({ art: x })} show={(x) => artLabels[x]} />
-          <TabsFilter options={showOptions} value={show} onChange={(x) => update({ show: x })} show={(x) => showLabels[x]} />
-          <DropdownFilter
-            label="Generation"
-            options={genOptions}
-            value={gen}
-            onChange={(g) => update({ gen: g })}
-            show={(g) => (g === 'all' ? 'All' : `Gen ${g}`)}
-          />
-          <DropdownFilter
-            label="Type"
-            options={typeOptions}
-            value={type}
-            onChange={(x) => update({ type: x })}
-            show={(x) => (x === 'all' ? 'All' : capitalize(x))}
-          />
-          {view === 'dex' && (
-            <DropdownFilter label="Sort" options={sortOptions} value={sort} onChange={(x) => update({ sort: x })} show={(x) => sortLabels[x]} />
-          )}
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row">
+        <SearchInput value={search} setValue={(q) => update({ q: q.trim() || undefined })} className="sm:flex-1" />
+        <div className="flex items-center gap-3">
+          <TabsFilter options={showOptions} value={show} onChange={(x) => update({ show: x })} show={(x) => showLabels[x]} className="whitespace-nowrap" />
+          <Button variant="outline" onClick={() => setSheetOpen(true)} className="h-[38px] shrink-0 border-neutral-700 bg-neutral-800">
+            <SlidersHorizontal />
+            <span className="hidden sm:inline">Filters</span>
+          </Button>
         </div>
       </div>
+
+      {/* what the sheet and the generation bars have set, each removable on its own */}
+      {(gen !== 'all' || type !== 'all' || set !== 'all') && (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {gen !== 'all' && <Chip onRemove={() => update({ gen: undefined })}>{genLabel(generations[Number(gen) - 1])}</Chip>}
+          {type !== 'all' && <Chip onRemove={() => update({ type: undefined })}>{capitalize(type)}</Chip>}
+          {set !== 'all' && <Chip onRemove={() => update({ set: undefined })}>{`${set} · ${t(getExpansionById(set).name)}`}</Chip>}
+        </div>
+      )}
+
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="right" className="w-full overflow-y-auto border-neutral-800 sm:max-w-sm">
+          <SheetHeader>
+            <SheetTitle>Filters</SheetTitle>
+          </SheetHeader>
+          <div className="flex flex-col gap-5 px-4 pb-6">
+            <TabsFilter label="View" options={viewOptions} value={view} onChange={(x) => update({ view: x })} show={(x) => viewLabels[x]} />
+            <TabsFilter label="Tiles" options={artOptions} value={art} onChange={(x) => update({ art: x })} show={(x) => artLabels[x]} />
+            {view === 'dex' && (
+              <DropdownFilter label="Sort" options={sortOptions} value={sort} onChange={(x) => update({ sort: x })} show={(x) => sortLabels[x]} />
+            )}
+            <DropdownFilter
+              label="Generation"
+              options={genOptions}
+              value={gen}
+              onChange={(g) => update({ gen: g })}
+              show={(g) => (g === 'all' ? 'All' : genLabel(generations[Number(g) - 1]))}
+            />
+            <DropdownFilter
+              label="Type"
+              options={typeOptions}
+              value={type}
+              onChange={(x) => update({ type: x })}
+              show={(x) => (x === 'all' ? 'All' : capitalize(x))}
+            />
+            <DropdownFilter
+              label="Set"
+              options={setOptions}
+              value={set}
+              onChange={(id) => update({ set: id })}
+              show={(id) => (id === 'all' ? 'All sets' : `${id} · ${t(getExpansionById(id).name)}`)}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {(view === 'dex' ? filtered : lines).length === 0 ? (
         <p className="py-12 text-center text-neutral-400">No species match these filters.</p>
@@ -201,13 +231,29 @@ export default function Pokedex() {
             )}
           </p>
           {view === 'dex' ? (
-            <ul className="grid grid-cols-3 gap-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
-              {filtered.map((s) => (
-                <li key={s.dexNr}>
-                  <SpeciesTile species={s} collection={collection} lang={i18n.language} art={art} />
-                </li>
-              ))}
-            </ul>
+            // in dex order the grid splits by generation, so 993 tiles have landmarks; other sorts stay one list
+            (sort === 'dex'
+              ? generations.map((g) => ({ g, species: filtered.filter((s) => generationOf(s.dexNr) === g) }))
+              : [{ g: undefined, species: filtered }]
+            )
+              .filter((section) => section.species.length > 0)
+              .map(({ g, species }) => (
+                <Fragment key={g?.nr ?? 'all'}>
+                  {g && (
+                    <h2 className="sticky top-0 z-10 -mx-4 mb-3 flex items-baseline justify-between gap-3 bg-[#181818]/90 px-4 py-2 backdrop-blur">
+                      <span className="font-semibold">{genLabel(g)}</span>
+                      <span className="text-sm text-neutral-400 tabular-nums">{genCaught(g)}</span>
+                    </h2>
+                  )}
+                  <ul className="mb-6 grid grid-cols-3 gap-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
+                    {species.map((s) => (
+                      <li key={s.dexNr}>
+                        <SpeciesTile species={s} collection={collection} lang={i18n.language} art={art} />
+                      </li>
+                    ))}
+                  </ul>
+                </Fragment>
+              ))
           ) : (
             <ul className="grid gap-3 lg:grid-cols-2">
               {lines.map((line) => {
@@ -231,5 +277,20 @@ export default function Pokedex() {
         </>
       )}
     </main>
+  )
+}
+
+const genLabel = (g: Generation) => `Gen ${g.nr} · ${g.region}`
+
+function Chip({ children, onRemove }: { children: React.ReactNode; onRemove: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onRemove}
+      className="flex cursor-pointer items-center gap-1 rounded-full border-1 border-neutral-700 border-solid bg-neutral-800 py-1 pr-2 pl-3 text-sm transition-colors hover:border-neutral-500"
+    >
+      {children}
+      <X className="size-3.5 text-neutral-400" />
+    </button>
   )
 }
