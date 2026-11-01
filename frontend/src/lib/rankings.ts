@@ -68,3 +68,13 @@ export function tierIndex(position: number, total: number): number {
   const index = tiers.findIndex((t) => position <= Math.ceil(t.upTo * total))
   return index === -1 ? tiers.length - 1 : index
 }
+
+let tierLookup: { elo: Map<string, Tier>; wanted: Map<string, Tier> } | undefined
+
+const tiersOf = (ranking: RankedCard[]) => new Map(ranking.map((e) => [e.card.card_id, tiers[tierIndex(e.position, ranking.length)]]))
+
+/** The card's tier on each Rankings tab, exactly as the Rankings page shows it. */
+export function cardTiers(cardId: string): { elo?: Tier; wanted?: Tier } {
+  tierLookup ??= { elo: tiersOf(getTwoStarRanking()), wanted: tiersOf(getMostWanted()) }
+  return { elo: tierLookup.elo.get(cardId), wanted: tierLookup.wanted.get(cardId) }
+}

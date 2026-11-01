@@ -234,7 +234,7 @@ export default function CardDetail() {
             <div className="mt-8">
               <CardProperty name={t('text.expansion')}>{card?.expansion}</CardProperty>
               <CardProperty name={t('text.pack')}>{card && t(card.pack, { ns: 'common/packs' })}</CardProperty>
-              {card && <CardValueProperties cardId={card.card_id} />}
+              {card && <CardValueProperties cardId={card.card_id} expansion={card.expansion} onNavigate={() => setOpen(false)} />}
               <CardProperty name="Energy">
                 {(card &&
                   [card.energy, card.secondary_energy]
