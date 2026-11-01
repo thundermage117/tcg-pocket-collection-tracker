@@ -16,6 +16,7 @@ interface Props {
   chances: Map<ExpansionId, PackChance[]>
   cellMode: CellMode
   setCellMode: (mode: CellMode) => void
+  sortByValue: boolean // the overview's Value filter is on: the collection can't filter by tier, so most valuable go first
 }
 
 // What a cell shows: completion %, or how many cards are still missing
@@ -114,7 +115,7 @@ const rarityFamily = (r: Rarity) => ['◊', '☆', '✵'].find((f) => r.startsWi
 
 const rarityLabel = (r: Rarity | 'all') => (r === 'all' ? 'all rarities' : r)
 
-export function CompletionHeatmap({ availableCards, collectedCards, chances, cellMode, setCellMode }: Props) {
+export function CompletionHeatmap({ availableCards, collectedCards, chances, cellMode, setCellMode, sortByValue }: Props) {
   const { t } = useTranslation(['common/sets', 'common/packs'])
   const navigate = useNavigate()
   const isMobile = useMediaQuery({ query: '(max-width: 767px)' }) // tailwind "md"
@@ -180,6 +181,9 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
     }
     if (rarity !== 'all') {
       params.set('rarity', rarity)
+    }
+    if (sortByValue) {
+      params.set('sortBy', 'value')
     }
     navigate(`/collection?${params}`)
   }

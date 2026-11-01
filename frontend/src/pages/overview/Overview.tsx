@@ -16,6 +16,7 @@ import { getBoosterValues } from '@/lib/packValue'
 import { CompletionHeatmap } from '@/pages/overview/components/CompletionHeatmap.tsx'
 import { GradientCard } from '@/pages/overview/components/GradientCard.tsx'
 import { bestChance, getPackChances } from '@/pages/overview/packChances'
+import { inValue, type ValueOption, valueLabels, valueOptions } from '@/pages/overview/valueTiers'
 import { oneIn } from '@/pages/packs/types'
 import { useCollection } from '@/services/collection/useCollection'
 import { type Card, type CollectionRow, type Rarity, rarities } from '@/types'
@@ -31,24 +32,28 @@ function Overview() {
 
   const { t } = useTranslation(['pages/overview', 'filters', 'common/sets', 'common/packs', 'expansion-overview'])
 
-  // personal fork: filters live in the URL (?rarity=☆☆&copies=2&deck=1&cells=left) and are remembered for the next visit
-  const { get, update } = useUrlFilters('overview-view', ['rarity', 'copies', 'deck', 'cells'])
+  // personal fork: filters live in the URL (?rarity=☆☆&copies=2&deck=1&value=top&cells=left) and are remembered for the next visit
+  const { get, update } = useUrlFilters('overview-view', ['rarity', 'copies', 'deck', 'value', 'cells'])
   const rarityParam = get('rarity')
   const copies = Number(get('copies'))
   const number = copyOptions.includes(copies) ? copies : 1
   const deckbuildingMode = get('deck') === '1'
+  const value = valueOptions.find((v) => v === get('value')) ?? 'all'
   const filters = useMemo(
     () => ({
       rarity: (rarityParam?.split(',') ?? []).filter((r): r is Rarity => (rarities as readonly string[]).includes(r)),
       number,
       deckbuildingMode,
+      value,
     }),
-    [rarityParam, number, deckbuildingMode],
+    [rarityParam, number, deckbuildingMode, value],
   )
 
   // Memoized so the pack odds (a pullRate per pack) only rerun when the collection or filters change
   const { availableCards, collectedCards, totalOwned, chances } = useMemo(() => {
-    const availableCards = getFilteredCards(filters, ownedCards)
+    // Value keeps only cards in the chosen Most wanted tiers, so every tile, the pick and the heatmap count just those
+    const valued = (cards: Card[]) => (filters.value === 'all' ? cards : cards.filter((c) => inValue(filters.value, c.internal_id)))
+    const availableCards = valued(getFilteredCards(filters, ownedCards))
     // Copies owned of the cards the filters show. Counted from the card database (same logic as CollectionCards.totalOwned)
     // so orphaned collection rows — card_ids no longer present in allCards — don't inflate the total.
     let totalOwned = 0
@@ -59,13 +64,13 @@ function Overview() {
         countedIds.add(card.internal_id)
       }
     }
-    const collectedCards = getFilteredCards({ ...filters, minNumber: filters.number }, ownedCards)
-    const wantedCards = getFilteredCards({ ...filters, maxNumber: filters.number - 1 }, ownedCards)
+    const collectedCards = valued(getFilteredCards({ ...filters, minNumber: filters.number }, ownedCards))
+    const wantedCards = valued(getFilteredCards({ ...filters, maxNumber: filters.number - 1 }, ownedCards))
     return { availableCards, collectedCards, totalOwned, chances: getPackChances(availableCards, collectedCards, wantedCards, filters.deckbuildingMode) }
   }, [filters, ownedCards])
   const bestPack = bestChance([...chances.values()].flat())
   // The ☆☆ pick ignores the filters, so only show it when ☆☆ cards are in view (deckbuilding mode hides alternate arts like ☆☆)
-  const showTwoStarPick = !filters.deckbuildingMode && (filters.rarity.length === 0 || filters.rarity.includes('☆☆'))
+  const showTwoStarPick = !filters.deckbuildingMode && filters.value === 'all' && (filters.rarity.length === 0 || filters.rarity.includes('☆☆'))
 
   // same ranking as the packs page's "Cards I'm missing" goal
   const bestTwoStarPack = useMemo(
@@ -100,6 +105,13 @@ function Overview() {
             value={filters.number}
             onChange={(number) => update({ copies: Number(number) === 1 ? undefined : String(number) })}
           />
+          <DropdownFilter
+            label="Value"
+            options={valueOptions}
+            value={filters.value}
+            show={(v) => valueLabels[v]}
+            onChange={(v: ValueOption) => update({ value: v === 'all' ? undefined : v })}
+          />
           <div className="grow" />
           <DeckbuildingFilter
             deckbuildingMode={filters.deckbuildingMode}
@@ -122,6 +134,7 @@ function Overview() {
             <h2 className="mt-2 text-balance text-center text-neutral-300 text-xs sm:mt-6 sm:text-sm sm:text-white">
               {filters.number === 1 ? t('numberOfCopies-single') : t('numberOfCopies-plural', { numberFilter: filters.number })}
             </h2>
+            {filters.value !== 'all' && <p className="mt-1 text-center text-neutral-400 text-xs">{valueLabels[filters.value]}</p>}
           </div>
           {/* Personal fork: links to the packs page, and names its ☆☆ pick so the two answers can't silently disagree */}
           {bestPack && bestPack.pct > 0 ? (
@@ -142,7 +155,8 @@ function Overview() {
             <div className="order-last col-span-8 md:order-none md:col-span-4 md:col-start-3 flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 bg-neutral-800 border-solid p-4 sm:p-8">
               <p className="font-semibold text-center text-2xl sm:text-5xl">All caught up 🎉</p>
               <p className="mt-2 text-balance text-center text-neutral-300 text-md sm:text-xl">
-                No booster pack has a card you're missing{filters.rarity.length > 0 || filters.number > 1 ? ' with these filters' : ''}.
+                No booster pack has a card you're missing
+                {filters.rarity.length > 0 || filters.number > 1 || filters.value !== 'all' ? ' with these filters' : ''}.
               </p>
             </div>
           )}
@@ -160,6 +174,7 @@ function Overview() {
           collectedCards={collectedCards}
           chances={chances}
           cellMode={get('cells') === 'left' ? 'left' : 'pct'}
+          sortByValue={filters.value !== 'all'}
           setCellMode={(mode) => update({ cells: mode === 'left' ? 'left' : undefined })}
         />
       </article>
