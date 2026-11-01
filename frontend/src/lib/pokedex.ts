@@ -2,14 +2,12 @@
 import { allCards } from '@/lib/CardsDB'
 import { capitalize, pokemonTranslations } from '@/lib/utils'
 import { type Card, type CardType, type Collection, rarities } from '@/types'
+import evolutions from '../../assets/evolutions.json'
 
 // The first 1025 keys are the species in National Dex order (bulbasaur … pecharunt); forms are appended after them
 const DEX_SIZE = 1025
-const dexNumbers = new Map(
-  Object.keys(pokemonTranslations)
-    .slice(0, DEX_SIZE)
-    .map((key, i) => [key, i + 1]),
-)
+const dexKeys = Object.keys(pokemonTranslations).slice(0, DEX_SIZE)
+const dexNumbers = new Map(dexKeys.map((key, i) => [key, i + 1]))
 
 export interface Generation {
   nr: number
@@ -85,11 +83,14 @@ export const allSpecies: Species[] = buildSpecies()
 
 export const getSpecies = (dexNr: number) => allSpecies.find((s) => s.dexNr === dexNr)
 
-/** Species name in the app language, falling back to English. */
-export function speciesName(species: Species, lang: string): string {
-  const translations = pokemonTranslations[species.key] as Record<string, string | null>
-  return translations[lang] || translations['en-US'] || capitalize(species.key)
+/** Name of any dex number in the app language (also species with no cards, for evolution lines), falling back to English. */
+export function dexName(dexNr: number, lang: string): string {
+  const key = dexKeys[dexNr - 1]
+  const translations = pokemonTranslations[key] as Record<string, string | null>
+  return translations[lang] || translations['en-US'] || capitalize(key)
 }
+
+export const speciesName = (species: Species, lang: string) => dexName(species.dexNr, lang)
 
 /** True when any language's name contains the query, so a French name finds the species in English too. */
 export function speciesMatches(species: Species, query: string): boolean {
@@ -108,3 +109,48 @@ export function coverCard(species: Species, collection: Collection | undefined):
   const pool = owned.length > 0 ? owned : species.cards
   return pool.reduce((best, c) => (rarityIndex(c) < rarityIndex(best) ? c : best))
 }
+
+// Evolution lines, from scripts/generate-evolutions.ts: dex number → the dex number it evolves from
+const evolvesFrom = new Map(Object.entries(evolutions as Record<string, number>).map(([child, parent]) => [Number(child), parent]))
+const evolvesInto = Map.groupBy(evolvesFrom.keys(), (child) => evolvesFrom.get(child) as number)
+
+export interface EvolutionLine {
+  root: number
+  stages: number[][] // dex numbers by stage: [[Eevee], [Vaporeon, Jolteon, …]]; includes species with no cards in TCG Pocket
+  species: Species[] // the members that are in TCG Pocket, in dex order
+}
+
+function rootOf(dexNr: number) {
+  let nr = dexNr
+  while (evolvesFrom.has(nr)) {
+    nr = evolvesFrom.get(nr) as number
+  }
+  return nr
+}
+
+function buildLines(): Map<number, EvolutionLine> {
+  const byRoot = new Map<number, EvolutionLine>()
+  for (const species of allSpecies) {
+    const root = rootOf(species.dexNr)
+    const line = byRoot.get(root)
+    if (line) {
+      line.species.push(species)
+      continue
+    }
+    const stages = [[root]]
+    for (let next = evolvesInto.get(root) ?? []; next.length > 0; next = next.flatMap((nr) => evolvesInto.get(nr) ?? [])) {
+      stages.push(next.toSorted((a, b) => a - b))
+    }
+    byRoot.set(root, { root, stages, species: [species] })
+  }
+  return byRoot
+}
+
+const linesByRoot = buildLines()
+
+/** Evolution lines (2+ stages) with a species in TCG Pocket, ordered by their lowest dex number (so Pichu's line sits at Pikachu). */
+export const allLines: EvolutionLine[] = [...linesByRoot.values()]
+  .filter((line) => line.stages.length > 1)
+  .sort((a, b) => a.species[0].dexNr - b.species[0].dexNr)
+
+export const lineOf = (species: Species) => linesByRoot.get(rootOf(species.dexNr)) as EvolutionLine

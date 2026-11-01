@@ -6,13 +6,14 @@ import { CardThumb } from '@/components/CardThumb'
 import { Spinner } from '@/components/Spinner'
 import { formatRarity } from '@/components/utils'
 import { expansions, getExpansionById } from '@/lib/CardsDB'
-import { allSpecies, generationOf, getSpecies, ownedCount, speciesName } from '@/lib/pokedex'
+import { allSpecies, generationOf, getSpecies, lineOf, ownedCount, speciesName } from '@/lib/pokedex'
 import { getCardNameByLang } from '@/lib/utils'
 import { getPackChances, type PackChance } from '@/pages/overview/packChances'
 import { oneIn } from '@/pages/packs/types'
 import { useCollection, useSelectedCard } from '@/services/collection/useCollection'
 import type { ExpansionId } from '@/types'
-import { dexLabel, ProgressBar } from './Pokedex'
+import { EvolutionChain } from './EvolutionChain'
+import { dexLabel, ProgressBar } from './SpeciesTile'
 
 export default function SpeciesDetail() {
   const { t, i18n } = useTranslation(['common/sets', 'common/packs'])
@@ -41,6 +42,7 @@ export default function SpeciesDetail() {
   const index = allSpecies.indexOf(species)
   const prev = allSpecies[index - 1]
   const next = allSpecies[index + 1]
+  const line = lineOf(species)
 
   const setIndex = (id: string) => expansions.findIndex((e) => e.id === id)
   const firstSet = species.cards.reduce((a, c) => (setIndex(c.expansion) < setIndex(a.expansion) ? c : a)).expansion
@@ -105,6 +107,20 @@ export default function SpeciesDetail() {
           )}
         </dl>
       </header>
+
+      {line.stages.length > 1 && (
+        <section className="mb-8">
+          <h2 className="mb-3 flex items-baseline gap-3 font-semibold text-lg">
+            Evolution line
+            <span className="text-sm text-neutral-400 tabular-nums">
+              {line.species.filter((s) => ownedCount(collection, s.cards) > 0).length}/{line.species.length} species
+            </span>
+          </h2>
+          <div className="overflow-x-auto pb-1">
+            <EvolutionChain line={line} collection={collection} lang={i18n.language} current={species.dexNr} />
+          </div>
+        </section>
+      )}
 
       {species.forms.map((form) => {
         const cards = species.cards.filter((c) => c.name === form)
