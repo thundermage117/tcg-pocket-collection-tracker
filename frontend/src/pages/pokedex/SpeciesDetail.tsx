@@ -8,7 +8,7 @@ import { CardThumb } from '@/components/CardThumb'
 import { Spinner } from '@/components/Spinner'
 import { formatRarity } from '@/components/utils'
 import { expansions, getExpansionById } from '@/lib/CardsDB'
-import { allSpecies, dexEntriesQuery, generationOf, getSpecies, lineOf, ownedCount, speciesName } from '@/lib/pokedex'
+import { allSpecies, dexEntriesQuery, formArtworkId, generationOf, getSpecies, lineOf, ownedCount, speciesName } from '@/lib/pokedex'
 import { getCardNameByLang } from '@/lib/utils'
 import { getPackChances, type PackChance } from '@/pages/overview/packChances'
 import { oneIn } from '@/pages/packs/types'
@@ -123,7 +123,7 @@ export default function SpeciesDetail() {
           className="relative mx-auto w-48 shrink-0 rounded-2xl border-1 border-neutral-700 border-solid p-3 sm:mx-0 sm:w-60"
           style={{ background: `radial-gradient(circle at 50% 45%, ${typeColors[species.types[0]]}55, transparent 70%)` }}
         >
-          <Sprite dexNr={species.dexNr} caught={owned > 0} alt={name} className={owned === 0 ? 'opacity-25' : undefined} />
+          <Sprite artworkId={species.dexNr} caught={owned > 0} alt={name} className={owned === 0 ? 'opacity-25' : undefined} />
           {owned === 0 && <span className="absolute inset-x-0 bottom-3 text-center text-xs font-medium text-neutral-400">Not caught yet</span>}
         </div>
 
@@ -185,9 +185,11 @@ export default function SpeciesDetail() {
 
       {species.forms.map((form) => {
         const cards = species.cards.filter((c) => c.name === form)
+        const formOwned = cards.some((c) => owns(c.internal_id))
         return (
           <section key={form} className="mb-8">
-            <h2 className="mb-3 flex items-baseline gap-3 font-semibold text-lg">
+            <h2 className="mb-3 flex items-center gap-3 font-semibold text-lg">
+              <Sprite artworkId={formArtworkId(species, form)} caught={formOwned} alt="" className="size-10 shrink-0" />
               {getCardNameByLang(cards[0], i18n.language)}
               <span className="text-sm text-neutral-400 tabular-nums">
                 {cards.filter((c) => owns(c.internal_id)).length}/{cards.length}

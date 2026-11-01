@@ -40,10 +40,10 @@ export function ProgressBar({ value, max, color, className }: { value: number; m
 }
 
 /** Official artwork; a faint silhouette until caught ("Who's that Pokémon?"). */
-export function Sprite({ dexNr, caught, alt, className }: { dexNr: number; caught: boolean; alt: string; className?: string }) {
+export function Sprite({ artworkId, caught, alt, className }: { artworkId: number; caught: boolean; alt: string; className?: string }) {
   return (
     <img
-      src={spriteUrl(dexNr)}
+      src={spriteUrl(artworkId)}
       alt={alt}
       loading="lazy"
       draggable={false}
@@ -78,7 +78,7 @@ export function SpeciesTile({ species, collection, lang, art = 'sprite', current
     >
       <span className="absolute inset-x-0 top-0 h-1" style={{ background: typeStripe(species.types) }} />
       {art === 'sprite' ? (
-        <Sprite dexNr={species.dexNr} caught={owned > 0} alt={name} />
+        <Sprite artworkId={species.dexNr} caught={owned > 0} alt={name} />
       ) : (
         <img
           src={getLocalizedImagePath(coverCard(species, collection), lang)}
@@ -104,7 +104,7 @@ export function AbsentTile({ dexNr, lang, className }: { dexNr: number; lang: st
   const name = dexName(dexNr, lang)
   return (
     <div title={`${name} has no card in TCG Pocket`} className={cn('rounded-md border-1 border-dashed border-neutral-700 p-1.5 pt-2.5', className)}>
-      <Sprite dexNr={dexNr} caught={false} alt={name} className="opacity-10" />
+      <Sprite artworkId={dexNr} caught={false} alt={name} className="opacity-10" />
       <p className="mt-1.5 text-[11px] text-neutral-600 tabular-nums">{dexLabel(dexNr)}</p>
       <p className="truncate text-sm text-neutral-500">{name}</p>
       <p className="truncate text-[10px] text-neutral-600">Not in TCG Pocket</p>

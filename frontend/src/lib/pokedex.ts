@@ -5,6 +5,7 @@ import { fetchJsonAsset } from '@/lib/fetchJsonAsset'
 import { capitalize, pokemonTranslations } from '@/lib/utils'
 import { type Card, type CardType, type Collection, rarities } from '@/types'
 import evolutions from '../../assets/evolutions.json'
+import formSprites from '../../assets/form-sprites.json'
 
 // The first 1025 keys are the species in National Dex order (bulbasaur … pecharunt); forms are appended after them
 const DEX_SIZE = 1025
@@ -32,8 +33,14 @@ export const generations: Generation[] = (
   ] as const
 ).map(([region, first, last], i) => ({ nr: i + 1, region, first, last }))
 
-/** Official artwork, from scripts/download-sprites.ts. Every dex number has one, including species with no card. */
-export const spriteUrl = (dexNr: number) => `/images/sprites/${dexNr}.webp`
+/**
+ * Official artwork by artwork id: a dex number (scripts/download-sprites.ts, every species including those with no card)
+ * or a PokéAPI form id from 10001 up (scripts/download-form-sprites.ts).
+ */
+export const spriteUrl = (artworkId: number) => `/images/sprites/${artworkId}.webp`
+
+/** Artwork id for a form's card name (Alolan Vulpix, Mega Charizard X ex); the species' own when PokéAPI has none for the form. */
+export const formArtworkId = (species: Species, cardName: string) => (formSprites as Record<string, number>)[cardName.replace(/ ex$/, '')] ?? species.dexNr
 
 export const generationOf = (dexNr: number) => generations.find((g) => dexNr <= g.last) as Generation
 
