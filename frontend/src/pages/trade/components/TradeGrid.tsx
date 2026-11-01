@@ -1,6 +1,7 @@
 // Personal fork: LF / FT cards as an image grid, one block per expansion.
-import { Flame } from 'lucide-react'
+import { Flame, Scale } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 import { CardThumb, SetLogo } from '@/components/CardThumb'
 import { getExpansionById } from '@/lib/CardsDB'
 import { twoStarPosition } from '@/lib/rankings'
@@ -40,7 +41,7 @@ export function TradeGrid({ groups, empty, side }: { groups: SetGroup[]; empty: 
           </header>
           <div className="grid grid-cols-4 gap-x-2 gap-y-3 sm:grid-cols-6 md:grid-cols-8">
             {group.items.map((item) => (
-              <div key={item.card.card_id} className="flex min-w-0 flex-col gap-0.5">
+              <div key={item.card.card_id} className="relative flex min-w-0 flex-col gap-0.5">
                 <CardThumb
                   card={item.card}
                   label={item.count !== undefined ? `×${item.count}` : undefined}
@@ -53,6 +54,15 @@ export function TradeGrid({ groups, empty, side }: { groups: SetGroup[]; empty: 
                   }
                   onClick={() => setSelectedCardId(item.card.internal_id)}
                 />
+                {/* a spare is what you give; a card you're looking for is what you get */}
+                <Link
+                  to={`/trade/check?${side === 'ft' ? 'give' : 'get'}=${item.card.card_id}`}
+                  title="Check a trade with this card"
+                  aria-label="Check a trade with this card"
+                  className="absolute top-1 right-1 flex rounded-full bg-black/75 p-1 text-white shadow hover:bg-black"
+                >
+                  <Scale className="size-3.5" />
+                </Link>
                 <span className="truncate text-center text-[11px] text-neutral-400 tabular-nums">{hint(item)}</span>
               </div>
             ))}
