@@ -3,6 +3,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { createHashRouter, Navigate, Outlet, RouterProvider, useLocation, useParams } from 'react-router'
+import { BottomNav } from '@/components/BottomNav.tsx'
 import InstallPrompt from '@/components/InstallPrompt.tsx'
 import { useToast } from '@/hooks/use-toast.ts'
 import { useAuthSSO, userQuery } from '@/services/auth/useAuth'
@@ -105,6 +106,7 @@ function App() {
               <Outlet />
             </Suspense>
           </ErrorBoundary>
+          <BottomNav />
           <ErrorBoundary fallback={null} onError={() => toast({ variant: 'destructive', description: 'Failed opening card details.' })}>
             <CardDetail />
           </ErrorBoundary>

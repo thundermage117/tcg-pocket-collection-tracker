@@ -70,7 +70,7 @@ const InstallPrompt = () => {
     <div
       style={{
         position: 'fixed',
-        bottom: '10px',
+        bottom: '74px', // personal fork: above the BottomNav tab bar
         left: '50%',
         transform: 'translateX(-50%)',
       }}

@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { Globe, Heart, LogOut, UserRoundPen } from 'lucide-react'
+import { ChevronDown, Globe, Heart, LogOut, UserRoundPen } from 'lucide-react'
 import { useState } from 'react'
 import GitHubButton from 'react-github-btn'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router'
-import HamburgerMenu from '@/components/HamburgerMenu.tsx'
 import { Login } from '@/components/Login.tsx'
+import { isActivePath, navItems } from '@/components/navItems'
 import { Button } from '@/components/ui/button.tsx'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog.tsx'
 import {
@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { NavigationMenu, NavigationMenuLink, NavigationMenuList } from '@/components/ui/navigation-menu.tsx'
 import { useUnreadChangelogCount } from '@/lib/useChangelog'
+import { cn } from '@/lib/utils'
 import { useProfileDialog } from '@/services/account/useAccount'
 import { useLoginDialog, useLogout, userQuery } from '@/services/auth/useAuth'
 import { Badge } from './ui/badge'
@@ -47,86 +48,52 @@ export function Header() {
     { code: 'pt-BR', name: 'Português' },
   ] // alphabetical language order in their native form for UX accessibility
 
-  const isOverviewPage = location.pathname === '/'
+  const secondaryActive = navItems.some((item) => item.secondary && isActivePath(location.pathname, item.href))
 
   return (
     <>
       <header id="header" className="flex max-w-7xl mx-auto min-h-fit h-14 md:h-20 shrink-0 flex-wrap items-center px-4 md:px-6">
-        <HamburgerMenu />
-        <Link to="/" className="flex items-center gap-2">
-          <img src="/pokemon-icon128.png" alt="Logo" className="h-5 hidden min-[420px]:block" />
-          <div className="shrink font-bold pr-4 hidden xl:block">TCG Pocket Collection Tracker</div>
+        {/* Personal fork: below lg the pages live in BottomNav; social links (friends, community) and trade badges removed */}
+        <Link to="/" className="flex min-w-0 items-center gap-2">
+          <img src="/pokemon-icon128.png" alt="Logo" className="h-5" />
+          <div className="truncate pr-4 font-bold lg:hidden xl:block">TCG Pocket Collection Tracker</div>
         </Link>
-        <NavigationMenu className="max-w-full justify-start">
+        <NavigationMenu className="hidden max-w-full justify-start lg:flex">
           <NavigationMenuList>
-            {/* dynamic item for mobile that switches between overview and collection depending on the current page */}
-            <NavigationMenuLink asChild className="block md:hidden">
-              <Link to={isOverviewPage ? '/collection' : '/'}>
-                <Button className="px-2 sm:px-4" variant="ghost">
-                  {isOverviewPage ? t('collection') : t('overview')}
-                </Button>
-              </Link>
-            </NavigationMenuLink>
-
-            <NavigationMenuLink asChild className="hidden md:block">
-              <Link to="/">
-                <Button className="px-2 sm:px-4" variant="ghost">
-                  {t('overview')}
-                </Button>
-              </Link>
-            </NavigationMenuLink>
-            <NavigationMenuLink asChild className="hidden md:block">
-              <Link to="/collection">
-                <Button className="px-2 sm:px-4" variant="ghost">
-                  {t('collection')}
-                </Button>
-              </Link>
-            </NavigationMenuLink>
-            <NavigationMenuLink asChild className="hidden md:block">
-              <Link to="/missions">
-                <Button className="px-2 sm:px-4" variant="ghost">
-                  {t('missions')}
-                </Button>
-              </Link>
-            </NavigationMenuLink>
-            <NavigationMenuLink asChild className="hidden md:block">
-              <Link to="/decks">
-                <Button className="px-2 sm:px-4" variant="ghost">
-                  {t('Decks')}
-                </Button>
-              </Link>
-            </NavigationMenuLink>
-            {/* Personal fork: social links (friends, community) and trade badges removed */}
-            <NavigationMenuLink asChild className="hidden md:block">
-              <Link to="/packs">
-                <Button className="px-2 sm:px-4" variant="ghost">
-                  Packs
-                </Button>
-              </Link>
-            </NavigationMenuLink>
-            <NavigationMenuLink asChild className="hidden md:block">
-              <Link to="/rankings">
-                <Button className="px-2 sm:px-4" variant="ghost">
-                  Rankings
-                </Button>
-              </Link>
-            </NavigationMenuLink>
-            <NavigationMenuLink asChild className="hidden md:block">
-              <Link to="/trade">
-                <Button className="px-2 sm:px-4" variant="ghost">
-                  {t('trade')}
-                </Button>
-              </Link>
-            </NavigationMenuLink>
-            <NavigationMenuLink asChild>
-              <Link to="/scan">
-                <Button className="px-2 sm:px-4" variant="ghost">
-                  {t('scan')}
-                </Button>
-              </Link>
-            </NavigationMenuLink>
+            {navItems
+              .filter((item) => !item.secondary)
+              .map((item) => (
+                <NavigationMenuLink key={item.href} asChild active={isActivePath(location.pathname, item.href)}>
+                  <Link to={item.href}>
+                    <Button className={cn('px-4', isActivePath(location.pathname, item.href) && 'bg-neutral-800')} variant="ghost">
+                      {t(item.title)}
+                    </Button>
+                  </Link>
+                </NavigationMenuLink>
+              ))}
           </NavigationMenuList>
         </NavigationMenu>
+        <div className="hidden lg:block">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className={cn('px-4', secondaryActive && 'bg-neutral-800')} variant="ghost">
+                More
+                <ChevronDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {navItems
+                .filter((item) => item.secondary)
+                .map((item) => (
+                  <DropdownMenuItem key={item.href} selected={isActivePath(location.pathname, item.href)} onClick={() => navigate(item.href)}>
+                    <item.icon />
+                    {t(item.title)}
+                  </DropdownMenuItem>
+                ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div className="grow" />
         <div className="items-center gap-2 flex">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

@@ -306,7 +306,9 @@ export function CompletionHeatmap({ availableCards, collectedCards, wantedCards,
       )
     }
 
-    return <div className="sticky bottom-3 z-20 mt-3 rounded-lg border border-neutral-600 bg-neutral-900/95 p-3 shadow-lg backdrop-blur">{body}</div>
+    return (
+      <div className="sticky bottom-19 z-20 lg:bottom-3 mt-3 rounded-lg border border-neutral-600 bg-neutral-900/95 p-3 shadow-lg backdrop-blur">{body}</div>
+    )
   }
 
   if (columns.length === 0) {
