@@ -205,3 +205,23 @@ export const dexEntriesQuery = (locale: string) =>
     queryFn: () => fetchJsonAsset<Record<string, DexEntry>>(`/pokedex/${locale}.json`),
     staleTime: Number.POSITIVE_INFINITY, // only changes on deploy
   })
+
+export interface ArtForm {
+  artworkId: number
+  name: string // the form's card name without ` ex` (Alolan Vulpix, Mega Charizard X)
+  cards: Card[]
+}
+
+/** A species' forms with artwork of their own (regional, Mega, Rotom, …), for the evolution lines; ex and Team Rocket's look like the species. */
+export function artForms(species: Species): ArtForm[] {
+  const byArtwork = new Map<number, ArtForm>()
+  for (const card of species.cards) {
+    const artworkId = formArtworkId(species, card.name)
+    if (artworkId !== species.dexNr) {
+      const form = byArtwork.get(artworkId) ?? { artworkId, name: card.name.replace(/ ex$/, ''), cards: [] }
+      form.cards.push(card)
+      byArtwork.set(artworkId, form)
+    }
+  }
+  return [...byArtwork.values()]
+}
