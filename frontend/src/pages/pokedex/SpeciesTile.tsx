@@ -1,5 +1,5 @@
 // Personal fork: species tile and progress bar shared by the Pokédex grid, its lines view and the species page.
-import { Check, Crown, Sparkles } from 'lucide-react'
+import { Check, CircleDot, Crown, Sparkles } from 'lucide-react'
 import { Link } from 'react-router'
 import { getLocalizedImagePath } from '@/lib/imageLocales'
 import { coverCard, dexName, type FormNode, ownedCount, type Species, type SpeciesGroup, speciesName, spriteUrl } from '@/lib/pokedex'
@@ -31,13 +31,16 @@ export const typeStripe = (types: CardType[]) =>
     ? typeColors[types[0]]
     : `linear-gradient(90deg, ${types.map((t, i) => `${typeColors[t]} ${(100 * i) / types.length}% ${(100 * (i + 1)) / types.length}%`).join(', ')})`
 
-export const groupLabels: Record<SpeciesGroup, string> = { legendary: 'Legendary', mythical: 'Mythical' }
+export const groupLabels: Record<SpeciesGroup, string> = { legendary: 'Legendary', mythical: 'Mythical', starter: 'Starter' }
 
-/** Crown for legendary, sparkles for mythical. */
+const groupIcons = { legendary: Crown, mythical: Sparkles, starter: CircleDot }
+const groupColors: Record<SpeciesGroup, string> = { legendary: 'text-amber-300', mythical: 'text-violet-300', starter: 'text-sky-300' }
+
+/** Crown for legendary, sparkles for mythical, a ball for starters. */
 export function GroupIcon({ group, className }: { group: SpeciesGroup; className?: string }) {
-  const Icon = group === 'legendary' ? Crown : Sparkles
+  const Icon = groupIcons[group]
   return (
-    <span title={groupLabels[group]} className={cn(group === 'legendary' ? 'text-amber-300' : 'text-violet-300', className)}>
+    <span title={groupLabels[group]} className={cn(groupColors[group], className)}>
       <Icon className="size-3.5" />
     </span>
   )

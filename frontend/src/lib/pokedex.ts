@@ -69,9 +69,21 @@ export function speciesKey(card: Card): string | undefined {
 }
 
 // From scripts/generate-species-groups.ts (PokéAPI's flags); a species is in at most one
-export const speciesGroupOptions = ['legendary', 'mythical'] as const
+export const speciesGroupOptions = ['legendary', 'mythical', 'starter'] as const
 export type SpeciesGroup = (typeof speciesGroupOptions)[number]
 const groupOf = (dexNr: number) => speciesGroupOptions.find((group) => speciesGroups[group].includes(dexNr))
+
+export const stageOptions = ['basic', 'stage1', 'stage2'] as const
+export type Stage = (typeof stageOptions)[number]
+
+export const featureOptions = ['ex', 'mega', 'regional'] as const
+export type Feature = (typeof featureOptions)[number]
+
+const regionalPrefix = /^(Alolan|Galarian|Hisuian|Paldean) /
+
+/** What a species has among its cards: an ex card, a Mega form, a regional form. */
+const featuresOf = (cards: Card[]): Feature[] =>
+  featureOptions.filter((f) => cards.some((c) => (f === 'ex' ? c.ex : f === 'mega' ? c.name.startsWith('Mega ') : regionalPrefix.test(c.name))))
 
 export interface Species {
   dexNr: number
@@ -80,6 +92,8 @@ export interface Species {
   forms: string[] // distinct card names (Charizard, Charizard ex, Mega Charizard X ex, …)
   types: CardType[]
   group?: SpeciesGroup
+  stages: Stage[] // a species can have more than one (Mega Mewtwo X is Basic, Mewtwo too; Mega Charizard is Stage 2)
+  features: Feature[]
 }
 
 function buildSpecies(): Species[] {
@@ -98,6 +112,8 @@ function buildSpecies(): Species[] {
       forms: [...new Set(cards.map((c) => c.name))],
       types: [...new Set(cards.flatMap((c) => (c.secondary_energy ? [c.energy, c.secondary_energy] : [c.energy])))],
       group: groupOf(dexNumbers.get(key) as number),
+      stages: stageOptions.filter((stage) => cards.some((c) => c.evolution_type === stage)),
+      features: featuresOf(cards),
     }))
     .sort((a, b) => a.dexNr - b.dexNr)
 }
@@ -111,7 +127,17 @@ const shinyRarities: Rarity[] = ['✵', '✵✵']
 /** The Shiny Pokédex: species with a ✵ or ✵✵ card, each narrowed to just those cards. */
 export const shinySpecies: Species[] = allSpecies.flatMap((species) => {
   const cards = species.cards.filter((c) => shinyRarities.includes(c.rarity))
-  return cards.length === 0 ? [] : [{ ...species, cards, forms: [...new Set(cards.map((c) => c.name))] }]
+  return cards.length === 0
+    ? []
+    : [
+        {
+          ...species,
+          cards,
+          forms: [...new Set(cards.map((c) => c.name))],
+          stages: stageOptions.filter((st) => cards.some((c) => c.evolution_type === st)),
+          features: featuresOf(cards),
+        },
+      ]
 })
 
 /** Name of any dex number in the app language (also species with no cards, for evolution lines), falling back to English. */

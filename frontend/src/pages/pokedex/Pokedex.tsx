@@ -1,5 +1,5 @@
 // Personal fork: one tile per species in National Dex order, owned when any printing (any form) is owned.
-// Filters live in the URL (?dex=shiny&view=lines&art=card&q=…&gen=1&group=legendary&type=fire&show=missing&set=A1&sort=printings), so links, refresh and back keep the view.
+// Filters live in the URL (?dex=shiny&view=lines&art=card&q=…&gen=1&group=legendary&stage=stage2&has=mega&type=fire&show=missing&set=A1&sort=printings), so links, refresh and back keep the view.
 import { SlidersHorizontal, X } from 'lucide-react'
 import { Fragment, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -13,15 +13,19 @@ import { expansions, getExpansionById } from '@/lib/CardsDB'
 import {
   allLines,
   allSpecies,
+  type Feature,
+  featureOptions,
   type Generation,
   generationOf,
   generations,
   ownedCount,
   type Species,
+  type Stage,
   shinySpecies,
   speciesGroupOptions,
   speciesMatches,
   speciesName,
+  stageOptions,
 } from '@/lib/pokedex'
 import { capitalize, cn } from '@/lib/utils'
 import { useCollection } from '@/services/collection/useCollection'
@@ -47,6 +51,10 @@ type SortOption = (typeof sortOptions)[number]
 const sortLabels: Record<SortOption, string> = { dex: 'Dex number', printings: 'Most printings', completion: 'Closest to complete' }
 
 const groupOptions = ['all', ...speciesGroupOptions] as const
+const stageFilterOptions = ['all', ...stageOptions] as const
+const stageLabels: Record<Stage, string> = { basic: 'Basic', stage1: 'Stage 1', stage2: 'Stage 2' }
+const hasOptions = ['all', ...featureOptions] as const
+const hasLabels: Record<Feature, string> = { ex: 'An ex card', mega: 'A Mega form', regional: 'A regional form' }
 
 const genOptions = ['all', ...generations.map((g) => String(g.nr))]
 const typeOptions: ('all' | CardType)[] = ['all', ...cardTypes.filter((t) => t !== 'trainer' && allSpecies.some((s) => s.types.includes(t)))]
@@ -71,9 +79,12 @@ export default function Pokedex() {
   const show = showOptions.find((x) => x === params.get('show')) ?? 'all'
   const set = setOptions.find((x) => x === params.get('set')) ?? 'all'
   const group = groupOptions.find((x) => x === params.get('group')) ?? 'all'
+  const stage = stageFilterOptions.find((x) => x === params.get('stage')) ?? 'all'
+  const has = hasOptions.find((x) => x === params.get('has')) ?? 'all'
+  const sheetFiltering = gen !== 'all' || type !== 'all' || set !== 'all' || group !== 'all' || stage !== 'all' || has !== 'all'
   const sort = sortOptions.find((x) => x === params.get('sort')) ?? 'dex'
   const art = artOptions.find((x) => x === params.get('art')) ?? 'sprite'
-  const filtering = search !== '' || gen !== 'all' || type !== 'all' || show !== 'all' || set !== 'all' || group !== 'all'
+  const filtering = search !== '' || show !== 'all' || sheetFiltering
   const [sheetOpen, setSheetOpen] = useState(false)
 
   const update = (changes: Record<string, string | undefined>) => {
@@ -114,6 +125,8 @@ export default function Pokedex() {
       (type === 'all' || s.types.includes(type)) &&
       (set === 'all' || s.cards.some((c) => c.expansion === set)) &&
       (group === 'all' || s.group === group) &&
+      (stage === 'all' || s.stages.includes(stage)) &&
+      (has === 'all' || s.features.includes(has)) &&
       (show === 'all' || (show === 'missing' ? n === 0 : show === 'owned' ? n > 0 : n > 0 && n < s.cards.length)) &&
       (!query || speciesMatches(s, query))
     )
@@ -152,40 +165,40 @@ export default function Pokedex() {
       </header>
 
       <section className="mb-6 rounded-lg border-1 border-neutral-700 border-solid bg-neutral-800 p-4">
-        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+        <div className="mb-3 flex items-baseline justify-between gap-4">
           <h2 className="font-bold text-lg">{shiny ? 'Shiny species owned' : 'Species owned'}</h2>
-          <p className="flex items-baseline gap-4 tabular-nums">
-            {/* legendary / mythical caught, each a shortcut to its filter */}
-            {speciesGroupOptions.map((g) => {
-              const inGroup = list.filter((s) => s.group === g)
-              return (
-                <button
-                  key={g}
-                  type="button"
-                  onClick={() => update({ group: group === g ? undefined : g })}
-                  title={groupLabels[g]}
-                  className={cn(
-                    'flex cursor-pointer items-center gap-1 rounded px-1 text-sm text-neutral-400 hover:text-white',
-                    group === g && 'bg-neutral-700 text-white',
-                  )}
-                >
-                  <GroupIcon group={g} />
-                  {inGroup.filter((s) => ownedOf(s) > 0).length}/{inGroup.length}
-                </button>
-              )
-            })}
-            {!shiny && (
-              <span className="text-sm text-neutral-400">
-                {linesComplete}/{allLines.length} lines complete
-              </span>
-            )}
-            <span>
-              <span className="font-bold text-2xl">{speciesOwned}</span>
-              <span className="text-neutral-400"> / {list.length}</span>
-            </span>
+          <p className="tabular-nums">
+            <span className="font-bold text-2xl">{speciesOwned}</span>
+            <span className="text-neutral-400"> / {list.length}</span>
           </p>
         </div>
-        <ProgressBar value={speciesOwned} max={list.length} className="mb-4 h-2" />
+        <ProgressBar value={speciesOwned} max={list.length} className="mb-3 h-2" />
+        <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 tabular-nums">
+          {/* legendary / mythical / starters caught, each a shortcut to its filter */}
+          {speciesGroupOptions.map((g) => {
+            const inGroup = list.filter((s) => s.group === g)
+            return (
+              <button
+                key={g}
+                type="button"
+                onClick={() => update({ group: group === g ? undefined : g })}
+                title={groupLabels[g]}
+                className={cn(
+                  'flex cursor-pointer items-center gap-1 rounded px-1 text-sm text-neutral-400 hover:text-white',
+                  group === g && 'bg-neutral-700 text-white',
+                )}
+              >
+                <GroupIcon group={g} />
+                {inGroup.filter((s) => ownedOf(s) > 0).length}/{inGroup.length}
+              </button>
+            )
+          })}
+          {!shiny && (
+            <span className="text-sm text-neutral-400">
+              {linesComplete}/{allLines.length} lines complete
+            </span>
+          )}
+        </div>
         <ul className="grid grid-cols-3 gap-x-4 gap-y-2 sm:grid-cols-5 lg:grid-cols-9">
           {generations.map((g) => {
             const inGen = list.filter((s) => generationOf(s.dexNr).nr === g.nr)
@@ -253,11 +266,15 @@ export default function Pokedex() {
       </div>
 
       {/* what the sheet and the generation bars have set, each removable on its own */}
-      {(gen !== 'all' || type !== 'all' || set !== 'all' || group !== 'all') && (
+      {sheetFiltering && (
         <div className="mb-3 flex flex-wrap gap-2">
           {gen !== 'all' && <Chip onRemove={() => update({ gen: undefined })}>{genLabel(generations[Number(gen) - 1])}</Chip>}
           {type !== 'all' && <Chip onRemove={() => update({ type: undefined })}>{capitalize(type)}</Chip>}
           {group !== 'all' && <Chip onRemove={() => update({ group: undefined })}>{groupLabels[group]}</Chip>}
+          {stage !== 'all' && <Chip onRemove={() => update({ stage: undefined })}>{stageLabels[stage]}</Chip>}
+          {has !== 'all' && (
+            <Chip onRemove={() => update({ has: undefined })}>{`Has ${hasLabels[has].charAt(0).toLowerCase()}${hasLabels[has].slice(1)}`}</Chip>
+          )}
           {set !== 'all' && <Chip onRemove={() => update({ set: undefined })}>{`${set} · ${t(getExpansionById(set).name)}`}</Chip>}
         </div>
       )}
@@ -286,6 +303,20 @@ export default function Pokedex() {
               value={group}
               onChange={(x) => update({ group: x })}
               show={(x) => (x === 'all' ? 'All' : groupLabels[x])}
+            />
+            <DropdownFilter
+              label="Stage"
+              options={stageFilterOptions}
+              value={stage}
+              onChange={(x) => update({ stage: x })}
+              show={(x) => (x === 'all' ? 'All' : stageLabels[x])}
+            />
+            <DropdownFilter
+              label="Has"
+              options={hasOptions}
+              value={has}
+              onChange={(x) => update({ has: x })}
+              show={(x) => (x === 'all' ? 'Anything' : hasLabels[x])}
             />
             <DropdownFilter
               label="Type"
