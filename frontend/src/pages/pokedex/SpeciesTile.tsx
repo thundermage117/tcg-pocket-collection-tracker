@@ -40,10 +40,10 @@ export function ProgressBar({ value, max, color, className }: { value: number; m
 }
 
 /** Official artwork; a faint silhouette until caught ("Who's that Pokémon?"). */
-export function Sprite({ artworkId, caught, alt, className }: { artworkId: number; caught: boolean; alt: string; className?: string }) {
+export function Sprite({ artworkId, caught, shiny, alt, className }: { artworkId: number; caught: boolean; shiny?: boolean; alt: string; className?: string }) {
   return (
     <img
-      src={spriteUrl(artworkId)}
+      src={spriteUrl(artworkId, shiny)}
       alt={alt}
       loading="lazy"
       draggable={false}
@@ -57,18 +57,19 @@ interface Props {
   collection: Collection | undefined
   lang: string
   art?: TileArt
+  shiny?: boolean // shiny artwork, and a sparkle once caught
   current?: boolean // the species whose page this is
   className?: string
 }
 
 /** Artwork (or owned card art), dex number and owned/total printings; a check once every printing is owned. */
-export function SpeciesTile({ species, collection, lang, art = 'sprite', current, className }: Props) {
+export function SpeciesTile({ species, collection, lang, art = 'sprite', shiny, current, className }: Props) {
   const owned = ownedCount(collection, species.cards)
   const name = speciesName(species, lang)
   const complete = owned === species.cards.length
   return (
     <Link
-      to={`/pokedex/${species.dexNr}`}
+      to={`/pokedex/${species.dexNr}${shiny ? '?shiny' : ''}`}
       title={name}
       className={cn(
         'relative block overflow-hidden rounded-md border-1 border-neutral-700 border-solid bg-neutral-800 p-1.5 pt-2.5 transition-colors hover:border-neutral-400',
@@ -77,8 +78,9 @@ export function SpeciesTile({ species, collection, lang, art = 'sprite', current
       )}
     >
       <span className="absolute inset-x-0 top-0 h-1" style={{ background: typeStripe(species.types) }} />
+      {shiny && owned > 0 && <span className="absolute top-2 right-2 text-pink-300 drop-shadow">✵</span>}
       {art === 'sprite' ? (
-        <Sprite artworkId={species.dexNr} caught={owned > 0} alt={name} />
+        <Sprite artworkId={species.dexNr} caught={owned > 0} shiny={shiny} alt={name} />
       ) : (
         <img
           src={getLocalizedImagePath(coverCard(species, collection), lang)}

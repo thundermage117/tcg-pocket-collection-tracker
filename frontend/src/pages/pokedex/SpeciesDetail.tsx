@@ -1,14 +1,14 @@
 // Personal fork: a species' Pokédex entry and every printing of it, grouped by form, with what's owned and the best pack for a missing one.
 import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { CardThumb } from '@/components/CardThumb'
 import { Spinner } from '@/components/Spinner'
 import { formatRarity } from '@/components/utils'
 import { expansions, getExpansionById } from '@/lib/CardsDB'
-import { allSpecies, dexEntriesQuery, formArtworkId, generationOf, getSpecies, lineOf, ownedCount, speciesName } from '@/lib/pokedex'
+import { allSpecies, dexEntriesQuery, formArtworkId, generationOf, getSpecies, lineOf, ownedCount, shinySpecies, speciesName } from '@/lib/pokedex'
 import { getCardNameByLang } from '@/lib/utils'
 import { getPackChances, type PackChance } from '@/pages/overview/packChances'
 import { oneIn } from '@/pages/packs/types'
@@ -46,6 +46,12 @@ export default function SpeciesDetail() {
   }, [prev, next, navigate])
 
   // a mostly horizontal swipe on phones does the same
+  // ?shiny (from the Shiny Pokédex) opens on the shiny artwork; the ✵ button flips it
+  const [searchParams] = useSearchParams()
+  const [showShiny, setShowShiny] = useState(searchParams.has('shiny'))
+  const shinyCards = shinySpecies.find((s) => s.dexNr === species?.dexNr)?.cards ?? []
+  const shinyOwned = ownedCount(collection, shinyCards)
+
   const touchStart = useRef<{ x: number; y: number } | undefined>(undefined)
   const onTouchStart = (e: React.TouchEvent) => {
     // not on the evolution line, which scrolls sideways itself
@@ -123,8 +129,27 @@ export default function SpeciesDetail() {
           className="relative mx-auto w-48 shrink-0 rounded-2xl border-1 border-neutral-700 border-solid p-3 sm:mx-0 sm:w-60"
           style={{ background: `radial-gradient(circle at 50% 45%, ${typeColors[species.types[0]]}55, transparent 70%)` }}
         >
-          <Sprite artworkId={species.dexNr} caught={owned > 0} alt={name} className={owned === 0 ? 'opacity-25' : undefined} />
-          {owned === 0 && <span className="absolute inset-x-0 bottom-3 text-center text-xs font-medium text-neutral-400">Not caught yet</span>}
+          {showShiny ? (
+            <>
+              <Sprite artworkId={species.dexNr} caught={shinyOwned > 0} shiny alt={name} className={shinyOwned === 0 ? 'opacity-25' : undefined} />
+              {shinyOwned === 0 && <span className="absolute inset-x-0 bottom-3 text-center text-xs font-medium text-neutral-400">No shiny caught yet</span>}
+            </>
+          ) : (
+            <>
+              <Sprite artworkId={species.dexNr} caught={owned > 0} alt={name} className={owned === 0 ? 'opacity-25' : undefined} />
+              {owned === 0 && <span className="absolute inset-x-0 bottom-3 text-center text-xs font-medium text-neutral-400">Not caught yet</span>}
+            </>
+          )}
+          {shinyCards.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowShiny(!showShiny)}
+              title={showShiny ? 'Show regular artwork' : `Show shiny artwork (${shinyOwned}/${shinyCards.length} shiny cards)`}
+              className={`absolute top-2 right-2 cursor-pointer rounded-full border-1 border-solid px-2 py-0.5 text-xs transition-colors ${showShiny ? 'border-pink-300 bg-pink-300/20 text-pink-200' : 'border-neutral-600 bg-neutral-900/60 text-neutral-300 hover:border-pink-300'}`}
+            >
+              ✵ {shinyOwned}/{shinyCards.length}
+            </button>
+          )}
         </div>
 
         <div className="min-w-0 grow">

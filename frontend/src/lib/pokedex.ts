@@ -3,7 +3,7 @@ import { queryOptions } from '@tanstack/react-query'
 import { allCards } from '@/lib/CardsDB'
 import { fetchJsonAsset } from '@/lib/fetchJsonAsset'
 import { capitalize, pokemonTranslations } from '@/lib/utils'
-import { type Card, type CardType, type Collection, rarities } from '@/types'
+import { type Card, type CardType, type Collection, type Rarity, rarities } from '@/types'
 import evolutions from '../../assets/evolutions.json'
 import formSprites from '../../assets/form-sprites.json'
 
@@ -35,9 +35,9 @@ export const generations: Generation[] = (
 
 /**
  * Official artwork by artwork id: a dex number (scripts/download-sprites.ts, every species including those with no card)
- * or a PokéAPI form id from 10001 up (scripts/download-form-sprites.ts).
+ * or a PokéAPI form id from 10001 up (scripts/download-form-sprites.ts). Shiny artwork exists for dex numbers only.
  */
-export const spriteUrl = (artworkId: number) => `/images/sprites/${artworkId}.webp`
+export const spriteUrl = (artworkId: number, shiny = false) => `/images/sprites/${shiny ? 'shiny/' : ''}${artworkId}.webp`
 
 /** Artwork id for a form's card name (Alolan Vulpix, Mega Charizard X ex); the species' own when PokéAPI has none for the form. */
 export const formArtworkId = (species: Species, cardName: string) => (formSprites as Record<string, number>)[cardName.replace(/ ex$/, '')] ?? species.dexNr
@@ -97,6 +97,14 @@ function buildSpecies(): Species[] {
 export const allSpecies: Species[] = buildSpecies()
 
 export const getSpecies = (dexNr: number) => allSpecies.find((s) => s.dexNr === dexNr)
+
+const shinyRarities: Rarity[] = ['✵', '✵✵']
+
+/** The Shiny Pokédex: species with a ✵ or ✵✵ card, each narrowed to just those cards. */
+export const shinySpecies: Species[] = allSpecies.flatMap((species) => {
+  const cards = species.cards.filter((c) => shinyRarities.includes(c.rarity))
+  return cards.length === 0 ? [] : [{ ...species, cards, forms: [...new Set(cards.map((c) => c.name))] }]
+})
 
 /** Name of any dex number in the app language (also species with no cards, for evolution lines), falling back to English. */
 export function dexName(dexNr: number, lang: string): string {

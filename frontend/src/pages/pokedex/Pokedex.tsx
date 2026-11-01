@@ -1,5 +1,5 @@
 // Personal fork: one tile per species in National Dex order, owned when any printing (any form) is owned.
-// Filters live in the URL (?view=lines&art=card&q=…&gen=1&type=fire&show=missing&set=A1&sort=printings), so links, refresh and back keep the view.
+// Filters live in the URL (?dex=shiny&view=lines&art=card&q=…&gen=1&type=fire&show=missing&set=A1&sort=printings), so links, refresh and back keep the view.
 import { SlidersHorizontal, X } from 'lucide-react'
 import { Fragment, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -10,12 +10,26 @@ import { Spinner } from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { expansions, getExpansionById } from '@/lib/CardsDB'
-import { allLines, allSpecies, type Generation, generationOf, generations, ownedCount, type Species, speciesMatches, speciesName } from '@/lib/pokedex'
+import {
+  allLines,
+  allSpecies,
+  type Generation,
+  generationOf,
+  generations,
+  ownedCount,
+  type Species,
+  shinySpecies,
+  speciesMatches,
+  speciesName,
+} from '@/lib/pokedex'
 import { capitalize, cn } from '@/lib/utils'
 import { useCollection } from '@/services/collection/useCollection'
 import { type CardType, cardTypes, type ExpansionId } from '@/types'
 import { EvolutionChain } from './EvolutionChain'
 import { ProgressBar, SpeciesTile, type TileArt, typeColors } from './SpeciesTile'
+
+const dexOptions = ['all', 'shiny'] as const
+const dexLabels = { all: 'Pokédex', shiny: '✵ Shiny' }
 
 const viewOptions = ['dex', 'lines'] as const
 const viewLabels = { dex: 'Dex', lines: 'Evolution lines' }
@@ -44,7 +58,10 @@ export default function Pokedex() {
   const [params, setParams] = useSearchParams()
 
   // defaults are left out of the URL; unknown values fall back to them
-  const view = viewOptions.find((x) => x === params.get('view')) ?? 'dex'
+  const dex = dexOptions.find((x) => x === params.get('dex')) ?? 'all'
+  const shiny = dex === 'shiny'
+  // lines are about catching every member, which doesn't carry over to shinies
+  const view = shiny ? 'dex' : (viewOptions.find((x) => x === params.get('view')) ?? 'dex')
   const search = params.get('q') ?? ''
   const gen = genOptions.find((g) => g === params.get('gen')) ?? 'all'
   const type = typeOptions.find((x) => x === params.get('type')) ?? 'all'
@@ -82,7 +99,8 @@ export default function Pokedex() {
     return <Spinner size="lg" overlay />
   }
 
-  const owned = new Map(allSpecies.map((s) => [s.dexNr, ownedCount(collection, s.cards)]))
+  const list = shiny ? shinySpecies : allSpecies
+  const owned = new Map(list.map((s) => [s.dexNr, ownedCount(collection, s.cards)]))
   const ownedOf = (s: Species) => owned.get(s.dexNr) as number
   const query = search.trim().toLowerCase()
   const matches = (s: Species) => {
@@ -103,13 +121,13 @@ export default function Pokedex() {
     // complete species go last: there's nothing left to chase
     completion: (a, b) => Number(share(a) === 1) - Number(share(b) === 1) || share(b) - share(a) || a.dexNr - b.dexNr,
   }
-  const filtered = allSpecies.filter(matches).sort(sorters[sort])
+  const filtered = list.filter(matches).sort(sorters[sort])
   // a line shows when any member matches, and then shows whole
   const lines = allLines.filter((line) => line.species.some(matches))
 
-  const speciesOwned = allSpecies.filter((s) => ownedOf(s) > 0).length
+  const speciesOwned = list.filter((s) => ownedOf(s) > 0).length
   const genCaught = (g: Generation) => {
-    const inGen = allSpecies.filter((s) => generationOf(s.dexNr) === g)
+    const inGen = list.filter((s) => generationOf(s.dexNr) === g)
     return `${inGen.filter((s) => ownedOf(s) > 0).length}/${inGen.length} caught`
   }
   const linesComplete = allLines.filter((line) => line.species.every((s) => ownedOf(s) > 0)).length
@@ -117,27 +135,36 @@ export default function Pokedex() {
   return (
     <main className="mx-auto max-w-7xl px-4 pb-12">
       <header className="mb-5">
-        <h1 className="text-2xl font-semibold sm:text-3xl">Pokédex</h1>
-        <p className="mt-1 text-sm text-neutral-400">Every species in TCG Pocket. A species counts as owned with any card of it, in any form.</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-semibold sm:text-3xl">{shiny ? 'Shiny Pokédex' : 'Pokédex'}</h1>
+          <TabsFilter options={dexOptions} value={dex} onChange={(x) => update({ dex: x })} show={(x) => dexLabels[x]} />
+        </div>
+        <p className="mt-1 text-sm text-neutral-400">
+          {shiny
+            ? 'Every species with a shiny (✵ or ✵✵) card. It counts as owned with any of its shiny cards.'
+            : 'Every species in TCG Pocket. A species counts as owned with any card of it, in any form.'}
+        </p>
       </header>
 
       <section className="mb-6 rounded-lg border-1 border-neutral-700 border-solid bg-neutral-800 p-4">
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-          <h2 className="font-bold text-lg">Species owned</h2>
+          <h2 className="font-bold text-lg">{shiny ? 'Shiny species owned' : 'Species owned'}</h2>
           <p className="flex items-baseline gap-4 tabular-nums">
-            <span className="text-sm text-neutral-400">
-              {linesComplete}/{allLines.length} lines complete
-            </span>
+            {!shiny && (
+              <span className="text-sm text-neutral-400">
+                {linesComplete}/{allLines.length} lines complete
+              </span>
+            )}
             <span>
               <span className="font-bold text-2xl">{speciesOwned}</span>
-              <span className="text-neutral-400"> / {allSpecies.length}</span>
+              <span className="text-neutral-400"> / {list.length}</span>
             </span>
           </p>
         </div>
-        <ProgressBar value={speciesOwned} max={allSpecies.length} className="mb-4 h-2" />
+        <ProgressBar value={speciesOwned} max={list.length} className="mb-4 h-2" />
         <ul className="grid grid-cols-3 gap-x-4 gap-y-2 sm:grid-cols-5 lg:grid-cols-9">
           {generations.map((g) => {
-            const inGen = allSpecies.filter((s) => generationOf(s.dexNr).nr === g.nr)
+            const inGen = list.filter((s) => generationOf(s.dexNr).nr === g.nr)
             const ownedInGen = inGen.filter((s) => ownedOf(s) > 0).length
             const active = gen === String(g.nr)
             return (
@@ -165,7 +192,7 @@ export default function Pokedex() {
           {typeOptions
             .filter((x) => x !== 'all')
             .map((x) => {
-              const ofType = allSpecies.filter((s) => s.types.includes(x))
+              const ofType = list.filter((s) => s.types.includes(x))
               const ownedOfType = ofType.filter((s) => ownedOf(s) > 0).length
               const active = type === x
               return (
@@ -216,7 +243,7 @@ export default function Pokedex() {
             <SheetTitle>Filters</SheetTitle>
           </SheetHeader>
           <div className="flex flex-col gap-5 px-4 pb-6">
-            <TabsFilter label="View" options={viewOptions} value={view} onChange={(x) => update({ view: x })} show={(x) => viewLabels[x]} />
+            {!shiny && <TabsFilter label="View" options={viewOptions} value={view} onChange={(x) => update({ view: x })} show={(x) => viewLabels[x]} />}
             <TabsFilter label="Tiles" options={artOptions} value={art} onChange={(x) => update({ art: x })} show={(x) => artLabels[x]} />
             {view === 'dex' && (
               <DropdownFilter label="Sort" options={sortOptions} value={sort} onChange={(x) => update({ sort: x })} show={(x) => sortLabels[x]} />
@@ -253,7 +280,7 @@ export default function Pokedex() {
           <p className="mb-3 flex gap-3 text-sm text-neutral-400">
             {view === 'dex' ? `${filtered.length} species` : `${lines.length} evolution lines`}
             {filtering && (
-              <Link to={view === 'dex' ? '/pokedex' : '/pokedex?view=lines'} className="underline hover:text-white">
+              <Link to={shiny ? '/pokedex?dex=shiny' : view === 'dex' ? '/pokedex' : '/pokedex?view=lines'} className="underline hover:text-white">
                 Clear filters
               </Link>
             )}
@@ -276,7 +303,7 @@ export default function Pokedex() {
                   <ul className="mb-6 grid grid-cols-3 gap-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
                     {species.map((s) => (
                       <li key={s.dexNr}>
-                        <SpeciesTile species={s} collection={collection} lang={i18n.language} art={art} />
+                        <SpeciesTile species={s} collection={collection} lang={i18n.language} art={art} shiny={shiny} />
                       </li>
                     ))}
                   </ul>
