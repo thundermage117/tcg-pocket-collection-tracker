@@ -107,23 +107,25 @@ function Overview() {
           />
         </div>
 
-        <section className="grid grid-cols-8 gap-4 sm:gap-4">
-          <div className="col-span-8 md:col-span-2 flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 bg-neutral-800 border-solid p-3 sm:p-6 md:p-8">
-            <h2 className="font-bold mb-4 text-center text-base sm:text-lg md:text-3xl">{t('uniqueCards')}</h2>
+        {/* Personal fork: below md the two stat tiles share a row and the pick goes under them, so the heatmap starts higher */}
+        <section className="grid grid-cols-8 gap-3 sm:gap-4">
+          <div className="col-span-4 md:col-span-2 flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 bg-neutral-800 border-solid p-3 sm:p-6 md:p-8">
+            <h2 className="font-bold mb-2 text-center text-base sm:mb-4 sm:text-lg md:text-3xl">{t('uniqueCards')}</h2>
             <RadialChart
               value={availableCards.length === 0 ? 0 : getUniqueCount(collectedCards) / getUniqueCount(availableCards)}
               label={String(getUniqueCount(collectedCards))}
               sublabel={`/ ${getUniqueCount(availableCards)}`}
               color="#92C5FD"
               strokeWidth={24}
+              className="size-28 sm:size-45"
             />
-            <h2 className="mt-6 text-balance text-center text-sm sm:text-md md:text-md">
+            <h2 className="mt-2 text-balance text-center text-neutral-300 text-xs sm:mt-6 sm:text-sm sm:text-white">
               {filters.number === 1 ? t('numberOfCopies-single') : t('numberOfCopies-plural', { numberFilter: filters.number })}
             </h2>
           </div>
           {/* Personal fork: links to the packs page, and names its ☆☆ pick so the two answers can't silently disagree */}
           {bestPack && bestPack.pct > 0 ? (
-            <Link to="/packs" className="col-span-8 md:col-span-4 col-start-1 md:col-start-3 flex rounded-lg transition-opacity hover:opacity-90">
+            <Link to="/packs" className="order-last col-span-8 md:order-none md:col-span-4 md:col-start-3 flex rounded-lg transition-opacity hover:opacity-90">
               <GradientCard title={bestPack.pack.name} percentage={bestPack.pct / 100} className="w-full" backgroundColor={bestPack.pack.color}>
                 {showTwoStarPick && bestTwoStarPack && bestTwoStarPack.perPackNew > 0 && (
                   <p className="mt-3 flex items-center gap-1 text-center text-sm text-slate-900/80">
@@ -136,16 +138,16 @@ function Overview() {
             </Link>
           ) : (
             // Nothing missing in any openable pack: no pick to make
-            <div className="col-span-8 md:col-span-4 col-start-1 md:col-start-3 flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 bg-neutral-800 border-solid p-4 sm:p-8">
+            <div className="order-last col-span-8 md:order-none md:col-span-4 md:col-start-3 flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 bg-neutral-800 border-solid p-4 sm:p-8">
               <p className="font-semibold text-center text-2xl sm:text-5xl">All caught up 🎉</p>
               <p className="mt-2 text-balance text-center text-neutral-300 text-md sm:text-xl">
                 No booster pack has a card you're missing{filters.rarity.length > 0 || filters.number > 1 ? ' with these filters' : ''}.
               </p>
             </div>
           )}
-          <div className="col-span-8 md:col-span-2 flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 bg-neutral-800 border-solid p-3 sm:p-6 md:p-8">
+          <div className="col-span-4 md:col-span-2 flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 bg-neutral-800 border-solid p-3 sm:p-6 md:p-8">
             <h2 className="mb-1 text-center text-base sm:text-lg md:text-2xl">{t('youHave')}</h2>
-            <h1 className="mb-2 text-balance text-center font-semibold text-2xl sm:text-3xl md:text-7xl">{totalOwned}</h1>
+            <h1 className="mb-2 text-balance text-center font-semibold text-4xl sm:text-5xl md:text-7xl">{totalOwned}</h1>
             <h2 className="text-balance text-center text-base sm:text-lg md:text-2xl">{t('cardsTotal')}</h2>
             {/* Follows the rarity filter like the other tiles; say so, or the number looks wrong */}
             {filters.rarity.length > 0 && <p className="mt-1 text-center text-neutral-400 text-sm">{filters.rarity.join(' ')}</p>}

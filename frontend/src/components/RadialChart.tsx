@@ -10,6 +10,8 @@ interface RadialChartProps {
   color?: string
   /** Grosor del círculo */
   strokeWidth?: number
+  /** personal fork: CSS size override; the chart scales to it */
+  className?: string
 }
 
 export const RadialChart: React.FC<RadialChartProps> = ({
@@ -18,6 +20,7 @@ export const RadialChart: React.FC<RadialChartProps> = ({
   sublabel,
   color = '#38bdf8', // tailwind sky-400
   strokeWidth = 10,
+  className,
 }) => {
   const size = 180
   const radius = (size - strokeWidth) / 2
@@ -25,7 +28,7 @@ export const RadialChart: React.FC<RadialChartProps> = ({
   const offset = circumference * (1 - value)
 
   return (
-    <svg width={size} height={size}>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className={className}>
       <title>{label ?? `Radial chart showing ${Math.round(value * 100)}%`}</title>
       <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#404040" strokeWidth={strokeWidth / 2} />
       <circle
