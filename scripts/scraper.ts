@@ -335,6 +335,9 @@ async function extractCardInfo($: CheerioAPI, cardUrl: string, expansion: Expans
   const typeAndEvolution = $('p.card-text-type').text().trim().split('-')
   const card_type = typeAndEvolution[0].toLowerCase().trim()
   const evolution_type = typeAndEvolution[1] ? typeAndEvolution[1].toLowerCase().trim().replace(' ', '') : 'basic'
+  // Personal fork: "Pokémon - Stage 1 - Evolves from Alolan Vulpix", for the Pokédex's evolution lines. Matched on the whole
+  // line, not the split above, since names can contain dashes (Ho-Oh, Jangmo-o); stored without " ex", like the Pokédex's forms.
+  const evolves_from = /Evolves from (.+)$/.exec($('p.card-text-type').text().replace(/\s+/g, ' ').trim())?.[1].replace(/ ex$/, '')
 
   const attacks: Card['attacks'][number][] = []
   $('div.card-text-attack').each((_i, attackElem) => {
@@ -450,6 +453,7 @@ async function extractCardInfo($: CheerioAPI, cardUrl: string, expansion: Expans
     name,
     card_type,
     evolution_type,
+    ...(evolves_from && { evolves_from }),
     attacks,
     ability,
     weakness,

@@ -156,6 +156,7 @@ export interface Card {
   secondary_energy?: CardType // dual-type Pokémon (e.g. Water/Darkness), introduced in C1
   card_type: 'pokémon' | 'trainer'
   evolution_type: string
+  evolves_from?: string // Stage 1 / 2 only: the card name it evolves from, without " ex" (Alolan Vulpix, Charmeleon)
   image: string
   attacks: {
     cost: string[]
