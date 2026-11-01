@@ -110,6 +110,8 @@ export default function DeckView() {
             <button key={idx} className="cursor-pointer" onClick={() => setSelectedCardId(id)} type="button">
               <img
                 className={`w-28 sm:w-36 ${owned ? '' : 'grayscale'}`}
+                loading="lazy"
+                decoding="async"
                 src={getLocalizedImagePath(card, i18n.language)}
                 alt={`${card.card_id} ${card.name}`}
               />

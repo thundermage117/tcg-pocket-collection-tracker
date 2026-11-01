@@ -89,6 +89,7 @@ function FancyCard({ selected, card, size = 'default' }: Readonly<FancyCardProps
           <img
             draggable={false}
             loading="lazy"
+            decoding="async"
             ref={cardRef}
             className="card-test"
             style={cardStyle}

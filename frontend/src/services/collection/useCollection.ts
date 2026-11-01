@@ -6,7 +6,14 @@ import { getExtraCards, getWantedCards } from '@/lib/utils'
 import { updateCollectionTimestamp } from '@/services/account/accountService'
 import { useAccount } from '@/services/account/useAccount.ts'
 import { userQuery } from '@/services/auth/useAuth.ts'
-import { getCollection, getPublicCollection, setCollected, updateAmountWanted, updateCards } from '@/services/collection/collectionService.ts'
+import {
+  getCachedCollection,
+  getCollection,
+  getPublicCollection,
+  setCollected,
+  updateAmountWanted,
+  updateCards,
+} from '@/services/collection/collectionService.ts'
 import type { CardAmountUpdate, CollectionRow } from '@/types'
 
 export function collectionQuery(email: string | undefined, collectionLastUpdated: Date | undefined) {
@@ -14,6 +21,9 @@ export function collectionQuery(email: string | undefined, collectionLastUpdated
     queryKey: ['collection', email],
     queryFn: () => getCollection(email as string, collectionLastUpdated as Date),
     enabled: Boolean(email) && Boolean(collectionLastUpdated),
+    // Shows the localStorage copy while the account query works out whether it's still current. Mutations refuse to
+    // run on it (isPlaceholderData), as they write absolute amounts.
+    placeholderData: () => (email ? (getCachedCollection(email) ?? undefined) : undefined),
     staleTime: 500, // Set a short stale time here because we handle the cache internally already (in case someone is using two devices at the same time)
   })
 }
@@ -31,6 +41,8 @@ export function useTradingCards() {
 
   return useQuery({
     ...collectionQuery(user?.user.email, account?.collection_last_updated),
+    // select would run on the placeholder before the account has loaded
+    placeholderData: undefined,
     select: (collection) => {
       if (!account) {
         throw new Error('Trading cards can only be fetched for logged in users.')
@@ -57,13 +69,13 @@ export function publicCollectionQuery(friendId: string | undefined) {
 export function useUpdateCards() {
   const { toast } = useToast()
   const { data: user, isLoading: isLoadingUser } = useQuery(userQuery)
-  const { data: collection, isLoading: isLoadingCollection } = useCollection()
+  const { data: collection, isLoading: isLoadingCollection, isPlaceholderData } = useCollection()
   const email = user?.user.email
 
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (updates: CardAmountUpdate[]) => {
-      if (isLoadingUser || isLoadingCollection) {
+      if (isLoadingUser || isLoadingCollection || isPlaceholderData) {
         throw new Error('Context not yet loaded')
       }
       if (!email) {
@@ -87,13 +99,13 @@ export function useUpdateCards() {
 export function useUpdateAmountWanted() {
   const { toast } = useToast()
   const { data: user, isLoading: isLoadingUser } = useQuery(userQuery)
-  const { data: collection, isLoading: isLoadingCollection } = useCollection()
+  const { data: collection, isLoading: isLoadingCollection, isPlaceholderData } = useCollection()
   const email = user?.user.email
 
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ internal_id, amount_wanted, do_insert }: { internal_id: number; amount_wanted: number | null; do_insert?: boolean }) => {
-      if (isLoadingUser || isLoadingCollection) {
+      if (isLoadingUser || isLoadingCollection || isPlaceholderData) {
         throw new Error('Context not yet loaded')
       }
       if (!email) {
@@ -118,13 +130,13 @@ export function useUpdateAmountWanted() {
 
 export function useSetCollected() {
   const { data: user, isLoading: isLoadingUser } = useQuery(userQuery)
-  const { data: collection, isLoading: isLoadingCollection } = useCollection()
+  const { data: collection, isLoading: isLoadingCollection, isPlaceholderData } = useCollection()
   const email = user?.user.email
 
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ internal_ids, collected }: { internal_ids: number[]; collected: boolean }) => {
-      if (isLoadingUser || isLoadingCollection) {
+      if (isLoadingUser || isLoadingCollection || isPlaceholderData) {
         throw new Error('Context not yet loaded')
       }
       if (!email) {

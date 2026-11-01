@@ -8,13 +8,11 @@ import InstallPrompt from '@/components/InstallPrompt.tsx'
 import { useToast } from '@/hooks/use-toast.ts'
 import { useAuthSSO, userQuery } from '@/services/auth/useAuth'
 import ErrorAlert from './components/ErrorAlert.tsx'
-import FriendIdQrCodeDialog from './components/FriendIdQrCode.tsx'
 import { Header } from './components/Header.tsx'
 import { SelectCardContext, SelectCardDialog, type SelectCardRequest } from './components/SelectCard.tsx'
 import { Spinner } from './components/Spinner.tsx'
 import { Toaster } from './components/ui/toaster.tsx'
 import { DialogContext } from './context/DialogContext.ts'
-import DeckView from './pages/decks/DeckView.tsx'
 import { accountQuery, useUpdateLastActive } from './services/account/useAccount.ts'
 
 // Lazy import for chunking
@@ -22,6 +20,7 @@ const Overview = lazy(() => import('./pages/overview/Overview.tsx'))
 const Collection = lazy(() => import('./pages/collection/Collection.tsx'))
 const Missions = lazy(() => import('./pages/collection/Missions.tsx'))
 const Decks = lazy(() => import('./pages/decks/Decks.tsx'))
+const DeckView = lazy(() => import('./pages/decks/DeckView.tsx'))
 const DeckBuilder = lazy(() => import('./pages/decks/DeckBuilder.tsx'))
 // Personal fork: own trade page (settings + Discord list), pack value and rankings pages
 const PersonalTrade = lazy(() => import('./pages/trade/PersonalTrade.tsx'))
@@ -33,6 +32,7 @@ const SpeciesDetail = lazy(() => import('./pages/pokedex/SpeciesDetail.tsx'))
 const Scan = lazy(() => import('./pages/scan/Scan.tsx'))
 const EditProfile = lazy(() => import('./components/EditProfile.tsx'))
 const CardDetail = lazy(() => import('./pages/collection/CardDetail.tsx'))
+const FriendIdQrCodeDialog = lazy(() => import('./components/FriendIdQrCode.tsx'))
 const Import = lazy(() => import('./pages/import/Import.tsx'))
 const Changelog = lazy(() => import('./pages/changelog/Changelog.tsx'))
 
@@ -104,12 +104,21 @@ function App() {
             </Suspense>
           </ErrorBoundary>
           <BottomNav />
+          {/* Own boundaries so these always-mounted dialogs load in the background instead of suspending the whole app */}
           <ErrorBoundary fallback={null} onError={() => toast({ variant: 'destructive', description: 'Failed opening card details.' })}>
-            <CardDetail />
+            <Suspense fallback={null}>
+              <CardDetail />
+            </Suspense>
           </ErrorBoundary>
-          <FriendIdQrCodeDialog friendId={friendIdQrCode} onOpenChange={(open) => open || setFriendIdQrCode(undefined)} />
+          {friendIdQrCode && (
+            <Suspense fallback={null}>
+              <FriendIdQrCodeDialog friendId={friendIdQrCode} onOpenChange={(open) => open || setFriendIdQrCode(undefined)} />
+            </Suspense>
+          )}
           <SelectCardDialog request={selectCardRequest} onClose={() => setSelectedCardRequest(undefined)} />
-          <EditProfile />
+          <Suspense fallback={null}>
+            <EditProfile />
+          </Suspense>
         </>
       ),
       errorElement: <ErrorAlert />,

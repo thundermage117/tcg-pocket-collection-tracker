@@ -37,7 +37,13 @@ function Slot({ side, card, score, active, onClick }: { side: Side; card?: Card;
       </span>
       {card ? (
         <>
-          <img src={getLocalizedImagePath(card, i18n.language)} alt="" className="aspect-[367/512] w-24 rounded-md object-cover sm:w-32" />
+          <img
+            src={getLocalizedImagePath(card, i18n.language)}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="aspect-[367/512] w-24 rounded-md object-cover sm:w-32"
+          />
           <span className="w-full truncate text-sm font-medium">{getCardNameByLang(card, i18n.language)}</span>
           <span className="w-full truncate text-xs text-neutral-400">
             {card.rarity} · {t(getExpansionById(card.expansion).name)}

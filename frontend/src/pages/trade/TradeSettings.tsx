@@ -1,11 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CircleHelp, Trash2 } from 'lucide-react'
+import { lazy, Suspense } from 'react'
 import { type Resolver, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Tooltip } from 'react-tooltip'
 import { z } from 'zod'
 import { CardLine } from '@/components/CardLine'
-import { SocialShareButtons } from '@/components/SocialShareButtons'
 import { Spinner } from '@/components/Spinner'
 import { Alert } from '@/components/ui/alert.tsx'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,9 @@ import { formatLanguage } from '@/lib/utils'
 import { useAccount, useUpdateAccountTradingFields } from '@/services/account/useAccount.ts'
 import { useCollection, useUpdateAmountWanted } from '@/services/collection/useCollection'
 import { gameLanguages, rarities } from '@/types/index.ts'
+
+// react-share is sizable and only shown to public profiles
+const SocialShareButtons = lazy(() => import('@/components/SocialShareButtons').then((m) => ({ default: m.SocialShareButtons })))
 
 function TradeSettings() {
   const { t } = useTranslation('trade-matches')
@@ -264,7 +267,9 @@ function TradeSettings() {
           </>
         )}
       </div>
-      <SocialShareButtons className="mt-4 mx-auto w-fit" />
+      <Suspense fallback={null}>
+        <SocialShareButtons className="mt-4 mx-auto w-fit" />
+      </Suspense>
     </div>
   )
 }

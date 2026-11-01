@@ -12,10 +12,20 @@ import {
   type TradeRow,
   tradableRarities,
 } from '@/types'
-import pokemonTranslations from '../../assets/pokemon_translations.json'
-import toolTranslations from '../../assets/tools_translations.json'
-import trainerTranslations from '../../assets/trainers_translations.json'
+import pokemonTranslationsUrl from '../../assets/pokemon_translations.json?url'
+import toolTranslationsUrl from '../../assets/tools_translations.json?url'
+import trainerTranslationsUrl from '../../assets/trainers_translations.json?url'
 import { allCards, getCardByInternalId, tradableExpansions } from './CardsDB'
+import { fetchJsonAsset } from './fetchJsonAsset'
+
+type NameTranslations = Record<string, Partial<Record<string, string | null>>>
+
+// Fetched like cards.json (see CardsDB.ts) rather than bundled into the startup chunk
+const [pokemonTranslations, toolTranslations, trainerTranslations] = await Promise.all([
+  fetchJsonAsset<NameTranslations>(pokemonTranslationsUrl),
+  fetchJsonAsset<NameTranslations>(toolTranslationsUrl),
+  fetchJsonAsset<NameTranslations>(trainerTranslationsUrl),
+])
 
 export const formatLanguage: Record<GameLanguage, string> = {
   en: 'English',
@@ -61,24 +71,24 @@ export function getCardNameByLang(card: Card, lang: string): string {
     case 'pokémon': {
       let cardName = card.ex ? card.name.slice(0, -3) : card.name
       const key = cardName.toLowerCase()
-      const cardNameTranslations = pokemonTranslations[key as keyof typeof pokemonTranslations]
+      const cardNameTranslations = pokemonTranslations[key]
 
       if (cardNameTranslations) {
-        cardName = cardNameTranslations[lang as keyof typeof cardNameTranslations] || cardName
+        cardName = cardNameTranslations[lang] || cardName
       }
 
       return card.ex ? `${cardName} ex` : cardName
     }
     case 'trainer': {
       if (card.evolution_type === 'item' || card.evolution_type === 'tool' || card.evolution_type === 'stadium') {
-        const toolNameTranslations = toolTranslations[card.name.toLowerCase() as keyof typeof toolTranslations]
+        const toolNameTranslations = toolTranslations[card.name.toLowerCase()]
         if (toolNameTranslations) {
-          return toolNameTranslations[lang as keyof typeof toolNameTranslations] || card.name
+          return toolNameTranslations[lang] || card.name
         }
       } else if (card.evolution_type === 'supporter') {
-        const trainerNameTranslations = trainerTranslations[card.name.toLowerCase() as keyof typeof trainerTranslations]
+        const trainerNameTranslations = trainerTranslations[card.name.toLowerCase()]
         if (trainerNameTranslations) {
-          return trainerNameTranslations[lang as keyof typeof trainerNameTranslations] || card.name
+          return trainerNameTranslations[lang] || card.name
         }
       }
       break

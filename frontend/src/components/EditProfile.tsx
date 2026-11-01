@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
 import { Siren } from 'lucide-react'
-import type { FC } from 'react'
+import { type FC, lazy, Suspense } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
@@ -16,7 +16,9 @@ import { useToast } from '@/hooks/use-toast.ts'
 import { useAccount, useProfileDialog, useUpdateAccount } from '@/services/account/useAccount'
 import { userQuery } from '@/services/auth/useAuth'
 import type { UserAccountRow } from '@/types'
-import { SocialShareButtons } from './SocialShareButtons'
+
+// react-share is sizable and only shown to public profiles
+const SocialShareButtons = lazy(() => import('@/components/SocialShareButtons').then((m) => ({ default: m.SocialShareButtons })))
 
 const EditProfile: FC = () => {
   const navigate = useNavigate()
@@ -146,7 +148,11 @@ const EditProfile: FC = () => {
             </Button>
           </form>
         </Form>
-        {account?.is_public && <SocialShareButtons className="mt-4" />}
+        {account?.is_public && (
+          <Suspense fallback={null}>
+            <SocialShareButtons className="mt-4" />
+          </Suspense>
+        )}
       </DialogContent>
     </Dialog>
   )
