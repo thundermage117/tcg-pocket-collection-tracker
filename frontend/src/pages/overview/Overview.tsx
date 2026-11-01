@@ -11,12 +11,11 @@ import { Spinner } from '@/components/Spinner'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTitle } from '@/components/ui/alert.tsx'
 import { useUrlFilters } from '@/hooks/useUrlFilters'
-import { expansions } from '@/lib/CardsDB.ts'
 import { getFilteredCards } from '@/lib/filters'
 import { getBoosterValues } from '@/lib/packValue'
-import { pullRate } from '@/lib/stats'
 import { CompletionHeatmap } from '@/pages/overview/components/CompletionHeatmap.tsx'
 import { GradientCard } from '@/pages/overview/components/GradientCard.tsx'
+import { bestChance, getPackChances } from '@/pages/overview/packChances'
 import { oneIn } from '@/pages/packs/types'
 import { useCollection } from '@/services/collection/useCollection'
 import { type Card, type CollectionRow, type Rarity, rarities } from '@/types'
@@ -48,36 +47,27 @@ function Overview() {
 
   // personal fork: filters live in the URL (?rarity=☆☆&copies=2&deck=1) and are remembered for the next visit
   const { get, update } = useUrlFilters('overview-view', ['rarity', 'copies', 'deck'])
+  const rarityParam = get('rarity')
   const copies = Number(get('copies'))
-  const filters: { rarity: Rarity[]; number: number; deckbuildingMode: boolean } = {
-    rarity: (get('rarity')?.split(',') ?? []).filter((r): r is Rarity => (rarities as readonly string[]).includes(r)),
-    number: copyOptions.includes(copies) ? copies : 1,
-    deckbuildingMode: get('deck') === '1',
-  }
+  const number = copyOptions.includes(copies) ? copies : 1
+  const deckbuildingMode = get('deck') === '1'
+  const filters = useMemo(
+    () => ({
+      rarity: (rarityParam?.split(',') ?? []).filter((r): r is Rarity => (rarities as readonly string[]).includes(r)),
+      number,
+      deckbuildingMode,
+    }),
+    [rarityParam, number, deckbuildingMode],
+  )
 
-  const availableCards = getFilteredCards(filters, ownedCards)
-  const collectedCards = ownedCards && getFilteredCards({ ...filters, minNumber: filters.number }, ownedCards)
-  const wantedCards = ownedCards && getFilteredCards({ ...filters, maxNumber: filters.number - 1 }, ownedCards)
-
-  const getHighestProbabilityPack = () => {
-    let newHighestProbabilityPack: { packName: string; percentage: number; fill: string } | undefined
-    const filteredExpansions = expansions.filter((expansion) => expansion.openable)
-    for (const expansion of filteredExpansions) {
-      const pullRates = expansion.packs
-        .filter((p) => p.name !== 'everypack')
-        .map((pack) => ({
-          packName: pack.name,
-          percentage: pullRate(wantedCards, expansion, pack, filters.deckbuildingMode),
-          fill: pack.color,
-        }))
-      const highestProbabilityPackCandidate = pullRates.sort((a, b) => b.percentage - a.percentage)[0]
-      if (highestProbabilityPackCandidate.percentage > (newHighestProbabilityPack?.percentage ?? -1)) {
-        newHighestProbabilityPack = highestProbabilityPackCandidate
-      }
-    }
-    return newHighestProbabilityPack
-  }
-  const highestProbabilityPack = getHighestProbabilityPack()
+  // Memoized so the pack odds (a pullRate per pack) only rerun when the collection or filters change
+  const { availableCards, collectedCards, chances } = useMemo(() => {
+    const availableCards = getFilteredCards(filters, ownedCards)
+    const collectedCards = getFilteredCards({ ...filters, minNumber: filters.number }, ownedCards)
+    const wantedCards = getFilteredCards({ ...filters, maxNumber: filters.number - 1 }, ownedCards)
+    return { availableCards, collectedCards, chances: getPackChances(availableCards, collectedCards, wantedCards, filters.deckbuildingMode) }
+  }, [filters, ownedCards])
+  const bestPack = bestChance([...chances.values()].flat())
 
   // same ranking as the packs page's "Cards I'm missing" goal
   const bestTwoStarPack = useMemo(
@@ -135,12 +125,7 @@ function Overview() {
           </div>
           {/* Personal fork: links to the packs page, and names its ☆☆ pick so the two answers can't silently disagree */}
           <Link to="/packs" className="col-span-8 md:col-span-4 col-start-1 md:col-start-3 flex rounded-lg transition-opacity hover:opacity-90">
-            <GradientCard
-              title={highestProbabilityPack?.packName ?? ''}
-              percentage={highestProbabilityPack?.percentage ?? 0}
-              className="w-full"
-              backgroundColor={highestProbabilityPack?.fill}
-            >
+            <GradientCard title={bestPack?.pack.name ?? ''} percentage={(bestPack?.pct ?? 0) / 100} className="w-full" backgroundColor={bestPack?.pack.color}>
               {bestTwoStarPack && bestTwoStarPack.perPackNew > 0 && (
                 <p className="mt-3 flex items-center gap-1 text-center text-sm text-slate-900/80">
                   For ☆☆ you're missing: <span className="font-semibold">{t(bestTwoStarPack.packName, { ns: 'common/packs' })}</span> ·{' '}
@@ -157,12 +142,7 @@ function Overview() {
           </div>
         </section>
 
-        <CompletionHeatmap
-          availableCards={availableCards}
-          collectedCards={collectedCards}
-          wantedCards={wantedCards}
-          deckbuildingMode={filters.deckbuildingMode}
-        />
+        <CompletionHeatmap availableCards={availableCards} collectedCards={collectedCards} chances={chances} />
       </article>
 
       <Footer />

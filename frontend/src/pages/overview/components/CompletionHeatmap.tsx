@@ -1,29 +1,23 @@
 import { ChevronRight, X } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMediaQuery } from 'react-responsive'
 import { useNavigate } from 'react-router'
 import { Tooltip } from 'react-tooltip'
 import { SetLogo } from '@/components/CardThumb'
 import { expansions, getExpansionById } from '@/lib/CardsDB.ts'
-import { pullRate } from '@/lib/stats'
-import { type Card, type Expansion, type ExpansionId, type Pack, type Rarity, rarities } from '@/types'
+import { bestChance, type PackChance } from '@/pages/overview/packChances'
+import { type Card, type ExpansionId, type Pack, type Rarity, rarities } from '@/types'
 
 interface Props {
   availableCards: Card[]
   collectedCards: Card[]
-  wantedCards: Card[]
-  deckbuildingMode: boolean
+  chances: Map<ExpansionId, PackChance[]>
 }
 
 interface Cell {
   collected: number
   available: number
-}
-
-interface PackChance extends Cell {
-  pack: Pack
-  pct: number
 }
 
 // On mobile a tap selects a cell (or a set's pack chances) and shows it in the details bar
@@ -76,7 +70,7 @@ function chanceColor(pct: number) {
 
 const rarityLabel = (r: Rarity | 'all') => (r === 'all' ? 'all rarities' : r)
 
-export function CompletionHeatmap({ availableCards, collectedCards, wantedCards, deckbuildingMode }: Props) {
+export function CompletionHeatmap({ availableCards, collectedCards, chances }: Props) {
   const { t } = useTranslation(['common/sets', 'common/packs'])
   const navigate = useNavigate()
   const isMobile = useMediaQuery({ query: '(max-width: 767px)' }) // tailwind "md"
@@ -108,9 +102,14 @@ export function CompletionHeatmap({ availableCards, collectedCards, wantedCards,
   }, [updateScroll])
 
   const openable = expansions.filter((e) => e.openable)
-  const openableIds = new Set(openable.map((e) => e.id))
-  const available = countByCell(availableCards.filter((c) => openableIds.has(c.expansion)))
-  const collected = countByCell(collectedCards.filter((c) => openableIds.has(c.expansion)))
+  // Memoized: scrolling and selecting re-render the table
+  const { available, collected } = useMemo(() => {
+    const openableIds = new Set(expansions.filter((e) => e.openable).map((e) => e.id))
+    return {
+      available: countByCell(availableCards.filter((c) => openableIds.has(c.expansion))),
+      collected: countByCell(collectedCards.filter((c) => openableIds.has(c.expansion))),
+    }
+  }, [availableCards, collectedCards])
 
   const cell = (row: string, col: string): Cell | undefined => {
     const n = available.get(`${row}|${col}`) ?? 0
@@ -123,18 +122,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, wantedCards,
   const setName = (row: string) => (row === 'all' ? 'All sets' : t(getExpansionById(row as ExpansionId).name, { ns: 'common/sets' }))
   const packName = (pack: Pack) => t(pack.name, { ns: 'common/packs' })
 
-  // Chance that one pack gives a card you're missing
-  const packChances = (expansion: Expansion): PackChance[] =>
-    expansion.packs
-      .filter((p) => p.name !== 'everypack')
-      .map((pack) => ({
-        pack,
-        pct: 100 * pullRate(wantedCards, expansion, pack, deckbuildingMode),
-        available: availableCards.filter((c) => c.expansion === expansion.id && c.pack === pack.name).length,
-        collected: collectedCards.filter((c) => c.expansion === expansion.id && c.pack === pack.name).length,
-      }))
-  const chances = new Map(rows.map((e) => [e.id, packChances(e)]))
-  const bestChance = (row: ExpansionId) => (chances.get(row) ?? []).reduce<PackChance | undefined>((a, b) => (!a || b.pct > a.pct ? b : a), undefined)
+  const bestInRow = (row: ExpansionId) => bestChance(chances.get(row) ?? [])
 
   const openCollection = (expansion: string, rarity: Rarity | 'all', pack?: string) => {
     const params = new URLSearchParams({ ownership: 'missing' })
@@ -160,7 +148,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, wantedCards,
   // Desktop: every pack's chance as a chip at the end of the row
   const renderChances = (row: ExpansionId) => {
     const packs = chances.get(row) ?? []
-    const best = bestChance(row)
+    const best = bestInRow(row)
     return (
       <td className="hidden pl-2 md:table-cell">
         <div className="flex gap-1">
@@ -188,7 +176,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, wantedCards,
 
   // Mobile: only the best pack's chance, right next to the set code; tap for every pack
   const renderBestChance = (row: ExpansionId) => {
-    const best = bestChance(row)
+    const best = bestInRow(row)
     return (
       <td className="p-0.5 md:hidden">
         {best && (
@@ -250,7 +238,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, wantedCards,
     if (selected.col === 'packs') {
       const row = selected.row
       const packs = chances.get(row) ?? []
-      const best = bestChance(row)
+      const best = bestInRow(row)
       body = (
         <>
           {header(`${setName(row)} · chance of a new card`)}
