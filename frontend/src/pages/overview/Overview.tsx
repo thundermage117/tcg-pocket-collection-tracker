@@ -1,5 +1,5 @@
 import { ChevronRight, Siren } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { DropdownFilter } from '@/components/Filters'
@@ -10,6 +10,7 @@ import { RadialChart } from '@/components/RadialChart'
 import { Spinner } from '@/components/Spinner'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTitle } from '@/components/ui/alert.tsx'
+import { useUrlFilters } from '@/hooks/useUrlFilters'
 import { expansions } from '@/lib/CardsDB.ts'
 import { getFilteredCards } from '@/lib/filters'
 import { getBoosterValues } from '@/lib/packValue'
@@ -18,7 +19,9 @@ import { CompletionHeatmap } from '@/pages/overview/components/CompletionHeatmap
 import { GradientCard } from '@/pages/overview/components/GradientCard.tsx'
 import { oneIn } from '@/pages/packs/types'
 import { useCollection } from '@/services/collection/useCollection'
-import type { Card, CollectionRow, Rarity } from '@/types'
+import { type Card, type CollectionRow, type Rarity, rarities } from '@/types'
+
+const copyOptions = [1, 2, 3, 4, 5]
 
 function getUniqueCount(cards: Card[]) {
   return new Set(cards.map((c) => c.internal_id)).size
@@ -43,12 +46,14 @@ function Overview() {
     return total
   }
 
-  const [filters, setFilters] = useState<{ rarity: Rarity[]; number: number; deckbuildingMode: boolean }>(() => {
-    const savedFilters = localStorage.getItem('overview-filters')
-    return savedFilters ? JSON.parse(savedFilters) : { rarity: [], number: 1, deckbuildingMode: false }
-  })
-
-  useEffect(() => localStorage.setItem('overview-filters', JSON.stringify(filters)), [filters])
+  // personal fork: filters live in the URL (?rarity=☆☆&copies=2&deck=1) and are remembered for the next visit
+  const { get, update } = useUrlFilters('overview-view', ['rarity', 'copies', 'deck'])
+  const copies = Number(get('copies'))
+  const filters: { rarity: Rarity[]; number: number; deckbuildingMode: boolean } = {
+    rarity: (get('rarity')?.split(',') ?? []).filter((r): r is Rarity => (rarities as readonly string[]).includes(r)),
+    number: copyOptions.includes(copies) ? copies : 1,
+    deckbuildingMode: get('deck') === '1',
+  }
 
   const availableCards = getFilteredCards(filters, ownedCards)
   const collectedCards = ownedCards && getFilteredCards({ ...filters, minNumber: filters.number }, ownedCards)
@@ -98,19 +103,19 @@ function Overview() {
         <div className="mb-4 flex items-center gap-2 flex-wrap">
           <RarityFilter
             rarityFilter={filters.rarity}
-            setRarityFilter={(rarity) => setFilters((prev) => ({ ...prev, rarity }))}
+            setRarityFilter={(rarity) => update({ rarity: rarity.join(',') || undefined })}
             deckbuildingMode={filters.deckbuildingMode}
           />
           <DropdownFilter
             label={t('f-number.numberCards', { ns: 'filters' })}
-            options={[1, 2, 3, 4, 5] as const}
+            options={copyOptions}
             value={filters.number}
-            onChange={(number) => setFilters((prev) => ({ ...prev, number }))}
+            onChange={(number) => update({ copies: Number(number) === 1 ? undefined : String(number) })}
           />
           <div className="grow" />
           <DeckbuildingFilter
             deckbuildingMode={filters.deckbuildingMode}
-            setDeckbuildingMode={(deckbuildingMode) => setFilters((prev) => ({ ...prev, deckbuildingMode }))}
+            setDeckbuildingMode={(deckbuildingMode) => update({ deck: deckbuildingMode ? '1' : undefined })}
           />
         </div>
 

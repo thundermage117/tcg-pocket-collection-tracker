@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatRarity } from '@/components/utils'
 import { ValueDataAge } from '@/components/ValueDataAge'
+import { useUrlFilters } from '@/hooks/useUrlFilters'
 import { expansions, getCardByInternalId, getExpansionById } from '@/lib/CardsDB'
 import { RARITY_ORDER } from '@/lib/discordTradeList'
 import { getCardNameByLang } from '@/lib/utils'
@@ -31,17 +32,6 @@ type PackOption = 'all' | `${ExpansionId}|${string}`
 
 const rarityOptions = RARITY_ORDER.filter((r) => (tradableRarities as readonly string[]).includes(r)) as Rarity[]
 const sortOptions: SortMode[] = ['list', 'value']
-
-const VIEW_STORAGE_KEY = 'trade-view'
-
-function loadView(): { rarity: Rarity; mode: SortMode } {
-  try {
-    const saved = JSON.parse(localStorage.getItem(VIEW_STORAGE_KEY) ?? '{}')
-    return { rarity: rarityOptions.includes(saved.rarity) ? saved.rarity : '☆', mode: sortOptions.includes(saved.mode) ? saved.mode : 'list' }
-  } catch {
-    return { rarity: '☆', mode: 'list' }
-  }
-}
 
 const DISCORD_SECTION_ID = 'discord-export'
 
@@ -64,24 +54,17 @@ export default function PersonalTrade() {
   const { data: account } = useAccount()
   const { data: collection } = useCollection()
   const { data: trading, isLoading } = useTradingCards()
-  const [view, setView] = useState(loadView)
-  const [side, setSide] = useState<Side>('lf')
-  const [set, setSet] = useState<SetOption>('all')
-  const [pack, setPack] = useState<PackOption>('all')
-  const [search, setSearch] = useState('')
-  const [hotOnly, setHotOnly] = useState(false)
+  // filters live in the URL (?rarity=☆☆&side=ft&set=B1&q=…); rarity and sort are remembered for the next visit
+  const { get, update } = useUrlFilters('trade-view', ['rarity', 'sort'])
+  const view = {
+    rarity: rarityOptions.find((r) => r === get('rarity')) ?? '☆',
+    mode: sortOptions.find((m) => m === get('sort')) ?? 'list',
+  }
+  const side: Side = get('side') === 'ft' ? 'ft' : 'lf'
+  const search = get('q') ?? ''
+  const hotOnly = get('hot') === '1'
   const [copied, setCopied] = useState(false)
   const { setIsLoginDialogOpen } = useLoginDialog()
-
-  const updateView = (next: Partial<typeof view>) => {
-    const merged = { ...view, ...next }
-    setView(merged)
-    try {
-      localStorage.setItem(VIEW_STORAGE_KEY, JSON.stringify(merged))
-    } catch {
-      // storage unavailable: keep the choice for this visit only
-    }
-  }
 
   // every LF / FT item of the selected rarity, before set / pack / search filters
   const items = useMemo(() => {
@@ -112,12 +95,15 @@ export default function PersonalTrade() {
 
   const all = [...items.lf, ...items.ft]
   const setOptions: SetOption[] = ['all', ...expansions.filter((e) => all.some((i) => i.card.expansion === e.id)).map((e) => e.id)]
+  // until the lists load only 'all' is offered; the URL keeps the choice
+  const set: SetOption = setOptions.find((x) => x === get('set')) ?? 'all'
   const packOptions: PackOption[] = [
     'all',
     ...expansions
       .filter((e) => (set === 'all' ? setOptions.includes(e.id) : e.id === set))
       .flatMap((e) => e.packs.filter((p) => p.name !== 'everypack').map((p): PackOption => `${e.id}|${p.name}`)),
   ]
+  const pack: PackOption = packOptions.find((x) => x === get('pack')) ?? 'all'
   const showPack = (option: PackOption) => {
     if (option === 'all') {
       return 'All packs'
@@ -179,33 +165,36 @@ export default function PersonalTrade() {
         <>
           <div className="mb-5 flex flex-col gap-3">
             <div className="flex flex-wrap items-end gap-3">
-              <TabsFilter label="Rarity" options={rarityOptions} value={view.rarity} onChange={(rarity) => updateView({ rarity })} show={formatRarity} />
+              <TabsFilter
+                label="Rarity"
+                options={rarityOptions}
+                value={view.rarity}
+                onChange={(rarity) => update({ rarity: rarity === '☆' ? undefined : rarity })}
+                show={formatRarity}
+              />
               <TabsFilter
                 label="Sort"
                 options={sortOptions}
                 value={view.mode}
-                onChange={(mode) => updateView({ mode })}
+                onChange={(mode) => update({ sort: mode === 'list' ? undefined : mode })}
                 show={(m) => (m === 'list' ? 'Card number' : 'Value')}
               />
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
-              <SearchInput value={search} setValue={setSearch} />
+              <SearchInput value={search} setValue={(q) => update({ q: q || undefined })} />
               <DropdownFilter
                 label="Set"
                 options={setOptions}
                 value={set}
-                onChange={(x) => {
-                  setSet(x)
-                  setPack('all')
-                }}
+                onChange={(x) => update({ set: x === 'all' ? undefined : x, pack: undefined })}
                 show={(id) => (id === 'all' ? 'All sets' : t(getExpansionById(id).name, { ns: 'common/sets' }))}
               />
-              <DropdownFilter label="Pack" options={packOptions} value={pack} onChange={setPack} show={showPack} />
+              <DropdownFilter label="Pack" options={packOptions} value={pack} onChange={(x) => update({ pack: x === 'all' ? undefined : x })} show={showPack} />
             </div>
           </div>
 
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <Tabs value={side} onValueChange={(v) => setSide(v as Side)}>
+            <Tabs value={side} onValueChange={(v) => update({ side: v === 'ft' ? 'ft' : undefined })}>
               <TabsList className="inline-flex rounded-md border-1 border-neutral-700 bg-neutral-800">
                 <TabsTrigger className="rounded-sm" value="lf">
                   Looking for <span className="ml-1.5 text-neutral-400 tabular-nums">{count(lf)}</span>
@@ -217,7 +206,7 @@ export default function PersonalTrade() {
             </Tabs>
             <div className="flex flex-wrap items-center gap-4">
               <label htmlFor="trade-hot-only" className="flex cursor-pointer items-center gap-2 text-sm text-neutral-300" title={hotLabel[side]}>
-                <Switch id="trade-hot-only" checked={hotOnly} onCheckedChange={setHotOnly} />
+                <Switch id="trade-hot-only" checked={hotOnly} onCheckedChange={(on) => update({ hot: on ? '1' : undefined })} />
                 <Flame className="size-3.5 text-orange-500" />
                 {side === 'ft' ? 'In demand only' : 'Scarce only'}
               </label>

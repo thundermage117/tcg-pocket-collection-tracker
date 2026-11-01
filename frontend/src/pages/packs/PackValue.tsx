@@ -5,6 +5,7 @@ import { Spinner } from '@/components/Spinner'
 import { Switch } from '@/components/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { ValueDataAge } from '@/components/ValueDataAge'
+import { useUrlFilters } from '@/hooks/useUrlFilters'
 import { getBoosterValues } from '@/lib/packValue'
 import { PROVISIONAL_VOTES } from '@/lib/ValueDB'
 import { useCollection } from '@/services/collection/useCollection'
@@ -12,24 +13,14 @@ import { PackCard } from './components/PackCard'
 import { PackSummary } from './components/PackSummary'
 import { goals, type PackRow, personalSorts, type Range, type Ranges, type SortKey, sortOrder } from './types'
 
-const SORT_STORAGE_KEY = 'pack-value-sort'
-
-function loadSort(): SortKey | undefined {
-  try {
-    const saved = localStorage.getItem(SORT_STORAGE_KEY)
-    return sortOrder.includes(saved as SortKey) ? (saved as SortKey) : undefined
-  } catch {
-    return undefined
-  }
-}
-
 const rangeOf = (xs: number[]): Range => ({ min: Math.min(...xs), max: Math.max(...xs) })
 
 export default function PackValue() {
   const { data: collection, isLoading } = useCollection()
-  const [savedSort, setSavedSort] = useState<SortKey | undefined>(loadSort)
-  const [series, setSeries] = useState('All')
-  const [hideComplete, setHideComplete] = useState(false)
+  // filters live in the URL (?goal=meanAdj&series=B&hide=1); the goal is remembered for the next visit
+  const { get, update } = useUrlFilters('packs-view', ['goal'])
+  const savedSort = sortOrder.find((key) => key === get('goal'))
+  const hideComplete = get('hide') === '1'
   const [expanded, setExpanded] = useState<string | undefined>()
 
   // missing cards is the most useful goal once we know the collection; personal goals need one,
@@ -54,20 +45,12 @@ export default function PackValue() {
     [all],
   )
   const seriesOptions = useMemo(() => ['All', ...new Set(all.map((b) => b.expansionId[0]))], [all])
+  const series = seriesOptions.find((x) => x === get('series')) ?? 'All'
 
   const packs = all
     .filter((b) => series === 'All' || b.expansionId.startsWith(series))
     .filter((b) => !(hideComplete && collection && b.pNew === 0))
     .toSorted((a, b) => b[sortKey] - a[sortKey])
-
-  const changeSort = (key: SortKey) => {
-    setSavedSort(key)
-    try {
-      localStorage.setItem(SORT_STORAGE_KEY, key)
-    } catch {
-      // storage unavailable: keep the choice for this visit only
-    }
-  }
 
   if (isLoading) {
     return <Spinner size="lg" overlay />
@@ -90,7 +73,7 @@ export default function PackValue() {
           <ToggleGroup
             type="single"
             value={sortKey}
-            onValueChange={(v) => v && changeSort(v as SortKey)}
+            onValueChange={(v) => v && update({ goal: v === fallback ? undefined : v })}
             className="rounded-md border-1 border-neutral-700 bg-neutral-800"
           >
             {sortOrder.map((key) => (
@@ -106,10 +89,10 @@ export default function PackValue() {
           </ToggleGroup>
         </div>
         <div className="flex flex-wrap items-end gap-4">
-          <TabsFilter label="Series" options={seriesOptions} value={series} onChange={setSeries} />
+          <TabsFilter label="Series" options={seriesOptions} value={series} onChange={(x) => update({ series: x === 'All' ? undefined : x })} />
           {collection && (
             <label htmlFor="packs-hide-complete" className="flex cursor-pointer items-center gap-2 pb-2 text-sm text-neutral-300">
-              <Switch id="packs-hide-complete" checked={hideComplete} onCheckedChange={setHideComplete} />
+              <Switch id="packs-hide-complete" checked={hideComplete} onCheckedChange={(on) => update({ hide: on ? '1' : undefined })} />
               Hide fully owned
             </label>
           )}
