@@ -2276,136 +2276,6 @@
       "Rank": 175
     },
     {
-      "PackId": 23,
-      "CardNumber": 43,
-      "CardName": "皮卡丘ex",
-      "CardLevel": 4,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 176
-    },
-    {
-      "PackId": 22,
-      "CardNumber": 68,
-      "CardName": "吼鯨王ex",
-      "CardLevel": 4,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 177
-    },
-    {
-      "PackId": 17,
-      "CardNumber": 124,
-      "CardName": "Corviknight ex",
-      "CardLevel": 4,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 178
-    },
-    {
-      "PackId": 23,
-      "CardNumber": 56,
-      "CardName": "超級超夢Xex",
-      "CardLevel": 4,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 179
-    },
-    {
-      "PackId": 22,
-      "CardNumber": 70,
-      "CardName": "美納斯ex",
-      "CardLevel": 4,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 180
-    },
-    {
-      "PackId": 17,
-      "CardNumber": 126,
-      "CardName": "Flygon ex",
-      "CardLevel": 4,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 181
-    },
-    {
-      "PackId": 23,
-      "CardNumber": 57,
-      "CardName": "夢幻ex",
-      "CardLevel": 4,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 182
-    },
-    {
-      "PackId": 22,
-      "CardNumber": 73,
-      "CardName": "甲賀忍蛙ex",
-      "CardLevel": 4,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 183
-    },
-    {
-      "PackId": 17,
-      "CardNumber": 141,
-      "CardName": "Mega Audino ex",
-      "CardLevel": 4,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 184
-    },
-    {
-      "PackId": 23,
-      "CardNumber": 80,
-      "CardName": "鬃岩狼人ex",
-      "CardLevel": 4,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 185
-    },
-    {
       "PackId": 22,
       "CardNumber": 77,
       "CardName": "鐵包袱ex",
@@ -2416,7 +2286,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 186
+      "Rank": 176
     },
     {
       "PackId": 18,
@@ -2429,7 +2299,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 187
+      "Rank": 177
     },
     {
       "PackId": 23,
@@ -2442,7 +2312,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 188
+      "Rank": 178
     },
     {
       "PackId": 22,
@@ -2455,7 +2325,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 189
+      "Rank": 179
     },
     {
       "PackId": 18,
@@ -2468,7 +2338,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 190
+      "Rank": 180
     },
     {
       "PackId": 23,
@@ -2481,7 +2351,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 191
+      "Rank": 181
     },
     {
       "PackId": 22,
@@ -2494,7 +2364,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 192
+      "Rank": 182
     },
     {
       "PackId": 18,
@@ -2507,7 +2377,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 193
+      "Rank": 183
     },
     {
       "PackId": 23,
@@ -2520,7 +2390,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 194
+      "Rank": 184
     },
     {
       "PackId": 22,
@@ -2533,7 +2403,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 195
+      "Rank": 185
     },
     {
       "PackId": 18,
@@ -2546,7 +2416,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 196
+      "Rank": 186
     },
     {
       "PackId": 23,
@@ -2559,7 +2429,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 197
+      "Rank": 187
     },
     {
       "PackId": 22,
@@ -2572,7 +2442,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 198
+      "Rank": 188
     },
     {
       "PackId": 18,
@@ -2585,7 +2455,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 199
+      "Rank": 189
     },
     {
       "PackId": 23,
@@ -2598,7 +2468,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 200
+      "Rank": 190
     },
     {
       "PackId": 22,
@@ -2611,7 +2481,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 201
+      "Rank": 191
     },
     {
       "PackId": 19,
@@ -2624,7 +2494,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 202
+      "Rank": 192
     },
     {
       "PackId": 22,
@@ -2637,7 +2507,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 203
+      "Rank": 193
     },
     {
       "PackId": 19,
@@ -2650,7 +2520,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 204
+      "Rank": 194
     },
     {
       "PackId": 22,
@@ -2663,7 +2533,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 205
+      "Rank": 195
     },
     {
       "PackId": 19,
@@ -2676,7 +2546,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 206
+      "Rank": 196
     },
     {
       "PackId": 22,
@@ -2689,7 +2559,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 207
+      "Rank": 197
     },
     {
       "PackId": 19,
@@ -2702,7 +2572,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 208
+      "Rank": 198
     },
     {
       "PackId": 22,
@@ -2715,7 +2585,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 209
+      "Rank": 199
     },
     {
       "PackId": 19,
@@ -2728,7 +2598,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 210
+      "Rank": 200
     },
     {
       "PackId": 22,
@@ -2741,7 +2611,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 211
+      "Rank": 201
     },
     {
       "PackId": 20,
@@ -2754,7 +2624,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 212
+      "Rank": 202
     },
     {
       "PackId": 22,
@@ -2767,7 +2637,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 213
+      "Rank": 203
     },
     {
       "PackId": 20,
@@ -2780,7 +2650,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 214
+      "Rank": 204
     },
     {
       "PackId": 22,
@@ -2793,7 +2663,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 215
+      "Rank": 205
     },
     {
       "PackId": 20,
@@ -2806,7 +2676,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 216
+      "Rank": 206
     },
     {
       "PackId": 22,
@@ -2819,7 +2689,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 217
+      "Rank": 207
     },
     {
       "PackId": 20,
@@ -2832,7 +2702,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 218
+      "Rank": 208
     },
     {
       "PackId": 22,
@@ -2845,7 +2715,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 219
+      "Rank": 209
     },
     {
       "PackId": 20,
@@ -2858,7 +2728,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 220
+      "Rank": 210
     },
     {
       "PackId": 22,
@@ -2871,7 +2741,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 221
+      "Rank": 211
     },
     {
       "PackId": 20,
@@ -2884,7 +2754,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 222
+      "Rank": 212
     },
     {
       "PackId": 22,
@@ -2897,7 +2767,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 223
+      "Rank": 213
     },
     {
       "PackId": 20,
@@ -2910,7 +2780,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 224
+      "Rank": 214
     },
     {
       "PackId": 22,
@@ -2923,7 +2793,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 225
+      "Rank": 215
     },
     {
       "PackId": 20,
@@ -2936,7 +2806,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 226
+      "Rank": 216
     },
     {
       "PackId": 22,
@@ -2949,7 +2819,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 227
+      "Rank": 217
     },
     {
       "PackId": 20,
@@ -2962,7 +2832,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 228
+      "Rank": 218
     },
     {
       "PackId": 22,
@@ -2975,7 +2845,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 229
+      "Rank": 219
     },
     {
       "PackId": 20,
@@ -2988,7 +2858,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 230
+      "Rank": 220
     },
     {
       "PackId": 22,
@@ -3001,7 +2871,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 231
+      "Rank": 221
     },
     {
       "PackId": 21,
@@ -3014,7 +2884,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 232
+      "Rank": 222
     },
     {
       "PackId": 22,
@@ -3027,7 +2897,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 233
+      "Rank": 223
     },
     {
       "PackId": 21,
@@ -3040,7 +2910,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 234
+      "Rank": 224
     },
     {
       "PackId": 14,
@@ -3053,7 +2923,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 235
+      "Rank": 225
     },
     {
       "PackId": 22,
@@ -3066,7 +2936,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 236
+      "Rank": 226
     },
     {
       "PackId": 21,
@@ -3079,7 +2949,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 237
+      "Rank": 227
     },
     {
       "PackId": 14,
@@ -3092,7 +2962,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 238
+      "Rank": 228
     },
     {
       "PackId": 22,
@@ -3105,7 +2975,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 239
+      "Rank": 229
     },
     {
       "PackId": 21,
@@ -3118,7 +2988,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 240
+      "Rank": 230
     },
     {
       "PackId": 14,
@@ -3131,7 +3001,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 241
+      "Rank": 231
     },
     {
       "PackId": 22,
@@ -3144,7 +3014,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 242
+      "Rank": 232
     },
     {
       "PackId": 21,
@@ -3157,7 +3027,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 243
+      "Rank": 233
     },
     {
       "PackId": 14,
@@ -3170,7 +3040,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 244
+      "Rank": 234
     },
     {
       "PackId": 22,
@@ -3183,7 +3053,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 245
+      "Rank": 235
     },
     {
       "PackId": 21,
@@ -3196,7 +3066,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 246
+      "Rank": 236
     },
     {
       "PackId": 14,
@@ -3209,7 +3079,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 247
+      "Rank": 237
     },
     {
       "PackId": 22,
@@ -3222,7 +3092,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 248
+      "Rank": 238
     },
     {
       "PackId": 22,
@@ -3235,7 +3105,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 249
+      "Rank": 239
     },
     {
       "PackId": 14,
@@ -3248,7 +3118,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 250
+      "Rank": 240
     },
     {
       "PackId": 22,
@@ -3261,7 +3131,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 251
+      "Rank": 241
     },
     {
       "PackId": 22,
@@ -3274,7 +3144,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 252
+      "Rank": 242
     },
     {
       "PackId": 14,
@@ -3287,7 +3157,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 253
+      "Rank": 243
     },
     {
       "PackId": 22,
@@ -3300,7 +3170,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 254
+      "Rank": 244
     },
     {
       "PackId": 22,
@@ -3313,7 +3183,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 255
+      "Rank": 245
     },
     {
       "PackId": 14,
@@ -3326,7 +3196,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 256
+      "Rank": 246
     },
     {
       "PackId": 22,
@@ -3339,7 +3209,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 257
+      "Rank": 247
     },
     {
       "PackId": 22,
@@ -3352,7 +3222,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 258
+      "Rank": 248
     },
     {
       "PackId": 14,
@@ -3365,7 +3235,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 259
+      "Rank": 249
     },
     {
       "PackId": 22,
@@ -3378,7 +3248,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 260
+      "Rank": 250
     },
     {
       "PackId": 22,
@@ -3391,7 +3261,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 261
+      "Rank": 251
     },
     {
       "PackId": 14,
@@ -3404,7 +3274,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 262
+      "Rank": 252
     },
     {
       "PackId": 22,
@@ -3417,7 +3287,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 263
+      "Rank": 253
     },
     {
       "PackId": 22,
@@ -3430,7 +3300,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 264
+      "Rank": 254
     },
     {
       "PackId": 15,
@@ -3443,7 +3313,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 265
+      "Rank": 255
     },
     {
       "PackId": 22,
@@ -3456,7 +3326,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 266
+      "Rank": 256
     },
     {
       "PackId": 22,
@@ -3469,7 +3339,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 267
+      "Rank": 257
     },
     {
       "PackId": 15,
@@ -3482,7 +3352,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 268
+      "Rank": 258
     },
     {
       "PackId": 22,
@@ -3495,7 +3365,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 269
+      "Rank": 259
     },
     {
       "PackId": 22,
@@ -3508,7 +3378,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 270
+      "Rank": 260
     },
     {
       "PackId": 15,
@@ -3521,7 +3391,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 271
+      "Rank": 261
     },
     {
       "PackId": 22,
@@ -3534,7 +3404,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 272
+      "Rank": 262
     },
     {
       "PackId": 22,
@@ -3547,7 +3417,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 273
+      "Rank": 263
     },
     {
       "PackId": 15,
@@ -3560,7 +3430,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 274
+      "Rank": 264
     },
     {
       "PackId": 22,
@@ -3573,7 +3443,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 275
+      "Rank": 265
     },
     {
       "PackId": 22,
@@ -3586,7 +3456,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 276
+      "Rank": 266
     },
     {
       "PackId": 15,
@@ -3599,7 +3469,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 277
+      "Rank": 267
     },
     {
       "PackId": 22,
@@ -3612,7 +3482,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 278
+      "Rank": 268
     },
     {
       "PackId": 22,
@@ -3625,7 +3495,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 279
+      "Rank": 269
     },
     {
       "PackId": 16,
@@ -3638,7 +3508,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 280
+      "Rank": 270
     },
     {
       "PackId": 22,
@@ -3651,7 +3521,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 281
+      "Rank": 271
     },
     {
       "PackId": 22,
@@ -3664,7 +3534,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 282
+      "Rank": 272
     },
     {
       "PackId": 16,
@@ -3677,7 +3547,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 283
+      "Rank": 273
     },
     {
       "PackId": 22,
@@ -3690,7 +3560,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 284
+      "Rank": 274
     },
     {
       "PackId": 22,
@@ -3703,7 +3573,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 285
+      "Rank": 275
     },
     {
       "PackId": 16,
@@ -3716,7 +3586,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 286
+      "Rank": 276
     },
     {
       "PackId": 22,
@@ -3729,7 +3599,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 287
+      "Rank": 277
     },
     {
       "PackId": 22,
@@ -3742,7 +3612,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 288
+      "Rank": 278
     },
     {
       "PackId": 16,
@@ -3755,7 +3625,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 289
+      "Rank": 279
     },
     {
       "PackId": 22,
@@ -3768,7 +3638,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 290
+      "Rank": 280
     },
     {
       "PackId": 22,
@@ -3781,7 +3651,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 291
+      "Rank": 281
     },
     {
       "PackId": 16,
@@ -3794,7 +3664,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 292
+      "Rank": 282
     },
     {
       "PackId": 22,
@@ -3807,7 +3677,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 293
+      "Rank": 283
     },
     {
       "PackId": 22,
@@ -3820,7 +3690,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 294
+      "Rank": 284
     },
     {
       "PackId": 17,
@@ -3833,7 +3703,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 295
+      "Rank": 285
     },
     {
       "PackId": 22,
@@ -3846,7 +3716,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 296
+      "Rank": 286
     },
     {
       "PackId": 22,
@@ -3859,7 +3729,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 297
+      "Rank": 287
     },
     {
       "PackId": 17,
@@ -3872,7 +3742,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 298
+      "Rank": 288
     },
     {
       "PackId": 22,
@@ -3885,7 +3755,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 299
+      "Rank": 289
     },
     {
       "PackId": 22,
@@ -3898,7 +3768,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 300
+      "Rank": 290
     },
     {
       "PackId": 17,
@@ -3911,7 +3781,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 301
+      "Rank": 291
     },
     {
       "PackId": 22,
@@ -3924,7 +3794,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 302
+      "Rank": 292
     },
     {
       "PackId": 22,
@@ -3937,7 +3807,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 303
+      "Rank": 293
     },
     {
       "PackId": 17,
@@ -3950,7 +3820,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 304
+      "Rank": 294
     },
     {
       "PackId": 23,
@@ -3963,7 +3833,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 305
+      "Rank": 295
     },
     {
       "PackId": 22,
@@ -3976,7 +3846,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 306
+      "Rank": 296
     },
     {
       "PackId": 17,
@@ -3989,7 +3859,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 307
+      "Rank": 297
     },
     {
       "PackId": 23,
@@ -4002,7 +3872,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 308
+      "Rank": 298
     },
     {
       "PackId": 22,
@@ -4015,7 +3885,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 309
+      "Rank": 299
     },
     {
       "PackId": 17,
@@ -4028,7 +3898,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 310
+      "Rank": 300
     },
     {
       "PackId": 23,
@@ -4041,7 +3911,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 311
+      "Rank": 301
     },
     {
       "PackId": 22,
@@ -4054,12 +3924,142 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 312
+      "Rank": 302
     },
     {
       "PackId": 17,
       "CardNumber": 106,
       "CardName": "Zoroark ex",
+      "CardLevel": 4,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 303
+    },
+    {
+      "PackId": 23,
+      "CardNumber": 43,
+      "CardName": "皮卡丘ex",
+      "CardLevel": 4,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 304
+    },
+    {
+      "PackId": 22,
+      "CardNumber": 68,
+      "CardName": "吼鯨王ex",
+      "CardLevel": 4,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 305
+    },
+    {
+      "PackId": 17,
+      "CardNumber": 124,
+      "CardName": "Corviknight ex",
+      "CardLevel": 4,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 306
+    },
+    {
+      "PackId": 23,
+      "CardNumber": 56,
+      "CardName": "超級超夢Xex",
+      "CardLevel": 4,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 307
+    },
+    {
+      "PackId": 22,
+      "CardNumber": 70,
+      "CardName": "美納斯ex",
+      "CardLevel": 4,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 308
+    },
+    {
+      "PackId": 17,
+      "CardNumber": 126,
+      "CardName": "Flygon ex",
+      "CardLevel": 4,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 309
+    },
+    {
+      "PackId": 23,
+      "CardNumber": 57,
+      "CardName": "夢幻ex",
+      "CardLevel": 4,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 310
+    },
+    {
+      "PackId": 22,
+      "CardNumber": 73,
+      "CardName": "甲賀忍蛙ex",
+      "CardLevel": 4,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 311
+    },
+    {
+      "PackId": 17,
+      "CardNumber": 141,
+      "CardName": "Mega Audino ex",
+      "CardLevel": 4,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 312
+    },
+    {
+      "PackId": 23,
+      "CardNumber": 80,
+      "CardName": "鬃岩狼人ex",
       "CardLevel": 4,
       "ImageUrl": "",
       "EloScore": 1200,

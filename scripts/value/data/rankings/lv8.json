@@ -79,279 +79,6 @@
       "Rank": 6
     },
     {
-      "PackId": 9,
-      "CardNumber": 241,
-      "CardName": "洛奇亞ex",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 7
-    },
-    {
-      "PackId": 10,
-      "CardNumber": 105,
-      "CardName": "小球飛魚",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 8
-    },
-    {
-      "PackId": 11,
-      "CardNumber": 379,
-      "CardName": "神奇糖果",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 9
-    },
-    {
-      "PackId": 13,
-      "CardNumber": 102,
-      "CardName": "",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 10
-    },
-    {
-      "PackId": 13,
-      "CardNumber": 103,
-      "CardName": "",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 11
-    },
-    {
-      "PackId": 14,
-      "CardNumber": 233,
-      "CardName": "Meloetta",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 12
-    },
-    {
-      "PackId": 14,
-      "CardNumber": 234,
-      "CardName": "Protective Poncho",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 13
-    },
-    {
-      "PackId": 15,
-      "CardNumber": 130,
-      "CardName": "戟脊龍",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 14
-    },
-    {
-      "PackId": 15,
-      "CardNumber": 131,
-      "CardName": "電器發生器",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 15
-    },
-    {
-      "PackId": 16,
-      "CardNumber": 116,
-      "CardName": "奧利瓦",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 16
-    },
-    {
-      "PackId": 16,
-      "CardNumber": 117,
-      "CardName": "金屬核心屏障",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 17
-    },
-    {
-      "PackId": 17,
-      "CardNumber": 233,
-      "CardName": "Celebi",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 18
-    },
-    {
-      "PackId": 17,
-      "CardNumber": 234,
-      "CardName": "Bombirdier",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 19
-    },
-    {
-      "PackId": 18,
-      "CardNumber": 108,
-      "CardName": "鐵武者",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 20
-    },
-    {
-      "PackId": 18,
-      "CardNumber": 109,
-      "CardName": "轟鳴月",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 21
-    },
-    {
-      "PackId": 19,
-      "CardNumber": 105,
-      "CardName": "小卡比獸",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 22
-    },
-    {
-      "PackId": 19,
-      "CardNumber": 106,
-      "CardName": "小氣球",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 23
-    },
-    {
-      "PackId": 20,
-      "CardNumber": 232,
-      "CardName": "雷丘",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 24
-    },
-    {
-      "PackId": 20,
-      "CardNumber": 233,
-      "CardName": "哈克龍",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 25
-    },
-    {
-      "PackId": 21,
-      "CardNumber": 109,
-      "CardName": "賽富豪",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 26
-    },
-    {
-      "PackId": 21,
-      "CardNumber": 110,
-      "CardName": "火箭隊的黏黏炮",
-      "CardLevel": 8,
-      "ImageUrl": "",
-      "EloScore": 1200,
-      "VoteCount": 0,
-      "DemandCount": 0,
-      "SupplyCount": 0,
-      "MarketRatio": 0.0,
-      "Rank": 27
-    },
-    {
       "PackId": 22,
       "CardNumber": 428,
       "CardName": "密勒頓ex",
@@ -362,7 +89,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 28
+      "Rank": 7
     },
     {
       "PackId": 22,
@@ -375,7 +102,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 29
+      "Rank": 8
     },
     {
       "PackId": 23,
@@ -388,7 +115,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 30
+      "Rank": 9
     },
     {
       "PackId": 23,
@@ -401,7 +128,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 31
+      "Rank": 10
     },
     {
       "PackId": 23,
@@ -414,7 +141,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 32
+      "Rank": 11
     },
     {
       "PackId": 23,
@@ -427,7 +154,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 33
+      "Rank": 12
     },
     {
       "PackId": 23,
@@ -440,7 +167,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 34
+      "Rank": 13
     },
     {
       "PackId": 23,
@@ -453,7 +180,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 35
+      "Rank": 14
     },
     {
       "PackId": 23,
@@ -466,7 +193,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 36
+      "Rank": 15
     },
     {
       "PackId": 1,
@@ -479,7 +206,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 37
+      "Rank": 16
     },
     {
       "PackId": 1,
@@ -492,7 +219,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 38
+      "Rank": 17
     },
     {
       "PackId": 1,
@@ -505,7 +232,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 39
+      "Rank": 18
     },
     {
       "PackId": 3,
@@ -518,7 +245,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 40
+      "Rank": 19
     },
     {
       "PackId": 3,
@@ -531,7 +258,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 41
+      "Rank": 20
     },
     {
       "PackId": 6,
@@ -544,7 +271,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 42
+      "Rank": 21
     },
     {
       "PackId": 6,
@@ -557,7 +284,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 43
+      "Rank": 22
     },
     {
       "PackId": 7,
@@ -570,7 +297,7 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 44
+      "Rank": 23
     },
     {
       "PackId": 8,
@@ -583,12 +310,285 @@
       "DemandCount": 0,
       "SupplyCount": 0,
       "MarketRatio": 0.0,
-      "Rank": 45
+      "Rank": 24
     },
     {
       "PackId": 9,
       "CardNumber": 240,
       "CardName": "鳳王ex",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 25
+    },
+    {
+      "PackId": 9,
+      "CardNumber": 241,
+      "CardName": "洛奇亞ex",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 26
+    },
+    {
+      "PackId": 10,
+      "CardNumber": 105,
+      "CardName": "小球飛魚",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 27
+    },
+    {
+      "PackId": 11,
+      "CardNumber": 379,
+      "CardName": "神奇糖果",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 28
+    },
+    {
+      "PackId": 13,
+      "CardNumber": 102,
+      "CardName": "",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 29
+    },
+    {
+      "PackId": 13,
+      "CardNumber": 103,
+      "CardName": "",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 30
+    },
+    {
+      "PackId": 14,
+      "CardNumber": 233,
+      "CardName": "Meloetta",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 31
+    },
+    {
+      "PackId": 14,
+      "CardNumber": 234,
+      "CardName": "Protective Poncho",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 32
+    },
+    {
+      "PackId": 15,
+      "CardNumber": 130,
+      "CardName": "戟脊龍",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 33
+    },
+    {
+      "PackId": 15,
+      "CardNumber": 131,
+      "CardName": "電器發生器",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 34
+    },
+    {
+      "PackId": 16,
+      "CardNumber": 116,
+      "CardName": "奧利瓦",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 35
+    },
+    {
+      "PackId": 16,
+      "CardNumber": 117,
+      "CardName": "金屬核心屏障",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 36
+    },
+    {
+      "PackId": 17,
+      "CardNumber": 233,
+      "CardName": "Celebi",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 37
+    },
+    {
+      "PackId": 17,
+      "CardNumber": 234,
+      "CardName": "Bombirdier",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 38
+    },
+    {
+      "PackId": 18,
+      "CardNumber": 108,
+      "CardName": "鐵武者",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 39
+    },
+    {
+      "PackId": 18,
+      "CardNumber": 109,
+      "CardName": "轟鳴月",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 40
+    },
+    {
+      "PackId": 19,
+      "CardNumber": 105,
+      "CardName": "小卡比獸",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 41
+    },
+    {
+      "PackId": 19,
+      "CardNumber": 106,
+      "CardName": "小氣球",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 42
+    },
+    {
+      "PackId": 20,
+      "CardNumber": 232,
+      "CardName": "雷丘",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 43
+    },
+    {
+      "PackId": 20,
+      "CardNumber": 233,
+      "CardName": "哈克龍",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 44
+    },
+    {
+      "PackId": 21,
+      "CardNumber": 109,
+      "CardName": "賽富豪",
+      "CardLevel": 8,
+      "ImageUrl": "",
+      "EloScore": 1200,
+      "VoteCount": 0,
+      "DemandCount": 0,
+      "SupplyCount": 0,
+      "MarketRatio": 0.0,
+      "Rank": 45
+    },
+    {
+      "PackId": 21,
+      "CardNumber": 110,
+      "CardName": "火箭隊的黏黏炮",
       "CardLevel": 8,
       "ImageUrl": "",
       "EloScore": 1200,
