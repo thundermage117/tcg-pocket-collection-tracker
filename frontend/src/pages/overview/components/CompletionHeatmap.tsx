@@ -49,16 +49,47 @@ function countByCell(cards: Card[]) {
   return new Map([...ids].map(([key, set]) => [key, set.size]))
 }
 
-// One hue (the overview's radial chart blue), dim to bright as completion rises
-function cellStyle({ collected, available }: Cell) {
-  const ratio = collected / available
-  if (collected === 0) {
-    return { backgroundColor: 'rgb(64 64 64 / 0.35)', color: 'rgb(163 163 163)' }
+// Ordinal bands, one blue brighter as a cell nears done, and the reserved "good" green (always with its 100% / ✓
+// label) once it's complete. Each step clears 2:1 against the neutral-800 card and its label clears APCA Lc 60.
+const swatches = {
+  none: { backgroundColor: 'rgb(64 64 64 / 0.35)', color: 'rgb(163 163 163)' },
+  b1: { backgroundColor: '#1c5cab', color: '#ffffff' },
+  b2: { backgroundColor: '#2a78d6', color: '#ffffff' },
+  b3: { backgroundColor: '#5598e7', color: '#ffffff' },
+  b4: { backgroundColor: '#9ec5f4', color: '#0b0b0b' },
+  done: { backgroundColor: '#0ca30c', color: '#ffffff' },
+}
+type Swatch = keyof typeof swatches
+
+// Bands follow what the cell shows: % complete (bunched where cells actually sit, 80–100), or cards left
+function cellSwatch({ collected, available }: Cell, mode: CellMode): Swatch {
+  const missing = available - collected
+  if (missing === 0) {
+    return 'done'
   }
-  return {
-    backgroundColor: `rgb(146 197 253 / ${(0.12 + 0.88 * ratio).toFixed(2)})`,
-    color: ratio >= 0.55 ? 'rgb(23 23 23)' : 'rgb(245 245 245)',
+  if (mode === 'left') {
+    return missing <= 2 ? 'b4' : missing <= 5 ? 'b3' : missing <= 15 ? 'b2' : 'b1'
   }
+  const pct = (100 * collected) / available
+  return collected === 0 ? 'none' : pct < 50 ? 'b1' : pct < 80 ? 'b2' : pct < 95 ? 'b3' : 'b4'
+}
+
+const legend: Record<CellMode, [Swatch, string][]> = {
+  pct: [
+    ['none', '0%'],
+    ['b1', '1–49%'],
+    ['b2', '50–79%'],
+    ['b3', '80–94%'],
+    ['b4', '95–99%'],
+    ['done', '100%'],
+  ],
+  left: [
+    ['b1', '16+'],
+    ['b2', '6–15'],
+    ['b3', '3–5'],
+    ['b4', '1–2'],
+    ['done', 'complete'],
+  ],
 }
 
 function formatPct({ collected, available }: Cell) {
@@ -80,10 +111,6 @@ const isNearlyDone = (col: Rarity | 'all', { collected, available }: Cell) =>
 
 // Columns of the same family (◊…◊◊◊◊, ☆…☆☆☆, ✵ ✵✵) sit together, with a gap before the next family
 const rarityFamily = (r: Rarity) => ['◊', '☆', '✵'].find((f) => r.startsWith(f)) ?? r
-
-function chanceColor(pct: number) {
-  return pct >= 10 ? 'text-green-400' : pct >= 3 ? 'text-yellow-400' : 'text-neutral-500'
-}
 
 const rarityLabel = (r: Rarity | 'all') => (r === 'all' ? 'all rarities' : r)
 
@@ -184,7 +211,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
                 aria-label={`${packName(c.pack)}: ${c.pct.toFixed(1)}% chance of a new card`}
               >
                 <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: c.pack.color }} />
-                <span className={chanceColor(c.pct)}>{c.pct.toFixed(1)}%</span>
+                <span>{c.pct.toFixed(1)}%</span>
               </button>
             )
           })}
@@ -206,7 +233,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
             aria-label={`${setName(row)}: best pack ${best.pct.toFixed(1)}% chance of a new card`}
           >
             <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: best.pack.color }} />
-            <span className={chanceColor(best.pct)}>{best.pct.toFixed(1)}%</span>
+            <span>{best.pct.toFixed(1)}%</span>
           </button>
         )}
       </td>
@@ -230,7 +257,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
         <button
           type="button"
           className={`relative min-h-10 w-full min-w-11 rounded text-xs tabular-nums transition-[filter] md:hover:brightness-125 focus-visible:outline-2 focus-visible:outline-neutral-200 md:min-h-0 md:py-1.5 ${isTotal ? 'font-semibold' : ''} ${isSelected(row, col) ? selectedRing : ''}`}
-          style={cellStyle(c)}
+          style={swatches[cellSwatch(c, cellMode)]}
           onClick={() => (isMobile ? toggle({ row, col }) : openCollection(row, col))}
           data-tooltip-id={isMobile ? undefined : 'completion-heatmap'}
           data-tooltip-content={`${label}: ${c.collected} / ${c.available}${missing > 0 ? ` · ${missing} missing` : ' · complete'}`}
@@ -282,7 +309,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
                       {c.collected} / {c.available}
                     </span>
                   )}
-                  <span className={`w-12 text-right tabular-nums ${chanceColor(c.pct)}`}>{c.pct.toFixed(1)}%</span>
+                  <span className="w-12 text-right tabular-nums">{c.pct.toFixed(1)}%</span>
                   <ChevronRight className="size-4 shrink-0 text-neutral-500" />
                 </button>
               </li>
@@ -349,11 +376,22 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
           </ToggleGroup>
         </div>
         <p className="text-neutral-400 text-xs">
-          Darker means more gaps. <span className="mx-0.5 inline-block size-1.5 rounded-full bg-amber-400 align-middle" /> 1–2 tradable cards left. "New card"
-          is the chance one pack gives a card you're missing. <span className="md:hidden">Tap for details.</span>
+          "New card" is the chance one pack gives a card you're missing. <span className="md:hidden">Tap for details.</span>
           <span className="hidden md:inline">Click to see them.</span>
         </p>
       </div>
+      <ul className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-neutral-400 text-xs" aria-label="Colour key">
+        {legend[cellMode].map(([swatch, label]) => (
+          <li key={swatch} className="flex items-center gap-1">
+            <span className="size-3 rounded-sm" style={{ backgroundColor: swatches[swatch].backgroundColor }} />
+            {label}
+          </li>
+        ))}
+        <li className="flex items-center gap-1">
+          <span className="size-1.5 rounded-full bg-amber-400" />
+          1–2 tradable cards left
+        </li>
+      </ul>
       <div className="relative">
         <div ref={scrollRef} className="overflow-x-auto" onScroll={updateScroll}>
           <table className="w-full border-separate border-spacing-0">
