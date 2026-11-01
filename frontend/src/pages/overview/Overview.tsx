@@ -31,8 +31,8 @@ function Overview() {
 
   const { t } = useTranslation(['pages/overview', 'filters', 'common/sets', 'common/packs', 'expansion-overview'])
 
-  // personal fork: filters live in the URL (?rarity=☆☆&copies=2&deck=1) and are remembered for the next visit
-  const { get, update } = useUrlFilters('overview-view', ['rarity', 'copies', 'deck'])
+  // personal fork: filters live in the URL (?rarity=☆☆&copies=2&deck=1&cells=left) and are remembered for the next visit
+  const { get, update } = useUrlFilters('overview-view', ['rarity', 'copies', 'deck', 'cells'])
   const rarityParam = get('rarity')
   const copies = Number(get('copies'))
   const number = copyOptions.includes(copies) ? copies : 1
@@ -154,7 +154,13 @@ function Overview() {
           </div>
         </section>
 
-        <CompletionHeatmap availableCards={availableCards} collectedCards={collectedCards} chances={chances} />
+        <CompletionHeatmap
+          availableCards={availableCards}
+          collectedCards={collectedCards}
+          chances={chances}
+          cellMode={get('cells') === 'left' ? 'left' : 'pct'}
+          setCellMode={(mode) => update({ cells: mode === 'left' ? 'left' : undefined })}
+        />
       </article>
 
       <Footer />

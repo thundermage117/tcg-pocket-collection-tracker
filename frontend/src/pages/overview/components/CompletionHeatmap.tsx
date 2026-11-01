@@ -5,6 +5,7 @@ import { useMediaQuery } from 'react-responsive'
 import { useNavigate } from 'react-router'
 import { Tooltip } from 'react-tooltip'
 import { SetLogo } from '@/components/CardThumb'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { expansions, getExpansionById } from '@/lib/CardsDB.ts'
 import { bestChance, type PackChance } from '@/pages/overview/packChances'
 import { type Card, type ExpansionId, type Pack, type Rarity, rarities } from '@/types'
@@ -13,7 +14,12 @@ interface Props {
   availableCards: Card[]
   collectedCards: Card[]
   chances: Map<ExpansionId, PackChance[]>
+  cellMode: CellMode
+  setCellMode: (mode: CellMode) => void
 }
+
+// What a cell shows: completion %, or how many cards are still missing
+type CellMode = 'pct' | 'left'
 
 interface Cell {
   collected: number
@@ -64,13 +70,17 @@ function formatPct({ collected, available }: Cell) {
   return `${collected > 0 ? Math.max(1, Math.min(99, Math.floor(pct))) : 0}%`
 }
 
+function formatLeft({ collected, available }: Cell) {
+  return collected === available ? '✓' : String(available - collected)
+}
+
 function chanceColor(pct: number) {
   return pct >= 10 ? 'text-green-400' : pct >= 3 ? 'text-yellow-400' : 'text-neutral-500'
 }
 
 const rarityLabel = (r: Rarity | 'all') => (r === 'all' ? 'all rarities' : r)
 
-export function CompletionHeatmap({ availableCards, collectedCards, chances }: Props) {
+export function CompletionHeatmap({ availableCards, collectedCards, chances, cellMode, setCellMode }: Props) {
   const { t } = useTranslation(['common/sets', 'common/packs'])
   const navigate = useNavigate()
   const isMobile = useMediaQuery({ query: '(max-width: 767px)' }) // tailwind "md"
@@ -212,7 +222,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances }: P
           data-tooltip-content={`${label}: ${c.collected} / ${c.available}${missing > 0 ? ` · ${missing} missing` : ' · complete'}`}
           aria-label={`${label}: ${c.collected} of ${c.available} collected`}
         >
-          {formatPct(c)}
+          {cellMode === 'left' ? formatLeft(c) : formatPct(c)}
         </button>
       </td>
     )
@@ -306,7 +316,23 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances }: P
   return (
     <section className="mt-4 rounded-lg border border-neutral-700 bg-neutral-800 p-3 sm:p-4">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 className="font-semibold text-base sm:text-lg">Completion by rarity</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="font-semibold text-base sm:text-lg">Completion by rarity</h2>
+          <ToggleGroup
+            type="single"
+            value={cellMode}
+            onValueChange={(v) => v && setCellMode(v as CellMode)}
+            className="gap-0.5 rounded-md border-1 border-neutral-700 p-0.5"
+            aria-label="Cells show"
+          >
+            <ToggleGroupItem value="pct" className="h-7 px-2 text-xs">
+              %
+            </ToggleGroupItem>
+            <ToggleGroupItem value="left" className="h-7 px-2 text-xs">
+              Cards left
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
         <p className="text-neutral-400 text-xs">
           Darker means more gaps. "New card" is the chance one pack gives a card you're missing. <span className="md:hidden">Tap for details.</span>
           <span className="hidden md:inline">Click to see them.</span>
