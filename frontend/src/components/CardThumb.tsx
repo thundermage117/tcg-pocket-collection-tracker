@@ -34,6 +34,7 @@ export function CardThumb({ card, owned, label, labelTitle, badge, className, on
         src={getLocalizedImagePath(card, i18n.language)}
         alt={name}
         loading="lazy"
+        decoding="async"
         className={cn('aspect-[367/512] w-full object-cover', owned && 'opacity-40 grayscale-[40%]')}
       />
       {owned && (
