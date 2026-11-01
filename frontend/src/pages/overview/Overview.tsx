@@ -22,8 +22,6 @@ import { oneIn } from '@/pages/packs/types'
 import { useCollection } from '@/services/collection/useCollection'
 import { type Card, type CollectionRow, type Rarity, rarities } from '@/types'
 
-const copyOptions = [1, 2, 3, 4, 5]
-
 function getUniqueCount(cards: Card[]) {
   return new Set(cards.map((c) => c.internal_id)).size
 }
@@ -33,32 +31,30 @@ function Overview() {
 
   const { t } = useTranslation(['pages/overview', 'filters', 'common/sets', 'common/packs', 'expansion-overview'])
 
-  // personal fork: filters live in the URL (?rarity=☆☆&copies=2&deck=1&value=top&cells=left) and are remembered for the next visit
-  const { get, update } = useUrlFilters('overview-view', ['rarity', 'copies', 'deck', 'value', 'cells'])
+  // personal fork: filters live in the URL (?rarity=☆☆&deck=1&value=top&cells=left) and are remembered for the next visit.
+  // No copies filter: a card counts as collected with one copy.
+  const { get, update } = useUrlFilters('overview-view', ['rarity', 'deck', 'value', 'cells'])
   const rarityParam = get('rarity')
-  const copies = Number(get('copies'))
-  const number = copyOptions.includes(copies) ? copies : 1
   const deckbuildingMode = get('deck') === '1'
   const value = valueOptions.find((v) => v === get('value')) ?? 'all'
   const filters = useMemo(
     () => ({
       rarity: (rarityParam?.split(',') ?? []).filter((r): r is Rarity => (rarities as readonly string[]).includes(r)),
-      number,
       deckbuildingMode,
       value,
     }),
-    [rarityParam, number, deckbuildingMode, value],
+    [rarityParam, deckbuildingMode, value],
   )
 
   // Memoized so the pack odds (a pullRate per pack) only rerun when the collection or filters change
   const { availableCards, collectedCards, tierCounts, chances } = useMemo(() => {
     const allAvailable = getFilteredCards(filters, ownedCards)
-    const allCollected = getFilteredCards({ ...filters, minNumber: filters.number }, ownedCards)
+    const allCollected = getFilteredCards({ ...filters, minNumber: 1 }, ownedCards)
     // Value keeps only cards in the chosen Most wanted tiers, so the ring, the pick and the heatmap count just those
     const valued = (cards: Card[]) => (filters.value === 'all' ? cards : cards.filter((c) => inValue(filters.value, c.internal_id)))
     const availableCards = valued(allAvailable)
     const collectedCards = valued(allCollected)
-    const wantedCards = valued(getFilteredCards({ ...filters, maxNumber: filters.number - 1 }, ownedCards))
+    const wantedCards = valued(getFilteredCards({ ...filters, maxNumber: 0 }, ownedCards))
     return {
       availableCards,
       collectedCards,
@@ -99,12 +95,6 @@ function Overview() {
             deckbuildingMode={filters.deckbuildingMode}
           />
           <DropdownFilter
-            label={t('f-number.numberCards', { ns: 'filters' })}
-            options={copyOptions}
-            value={filters.number}
-            onChange={(number) => update({ copies: Number(number) === 1 ? undefined : String(number) })}
-          />
-          <DropdownFilter
             label="Value"
             options={valueOptions}
             value={filters.value}
@@ -130,9 +120,7 @@ function Overview() {
               strokeWidth={24}
               className="size-28 sm:size-45"
             />
-            <h2 className="mt-2 text-balance text-center text-neutral-300 text-xs sm:mt-6 sm:text-sm sm:text-white">
-              {filters.number === 1 ? t('numberOfCopies-single') : t('numberOfCopies-plural', { numberFilter: filters.number })}
-            </h2>
+            <h2 className="mt-2 text-balance text-center text-neutral-300 text-xs sm:mt-6 sm:text-sm sm:text-white">{t('numberOfCopies-single')}</h2>
             {filters.value !== 'all' && <p className="mt-1 text-center text-neutral-400 text-xs">{valueLabels[filters.value]}</p>}
           </div>
           {/* Personal fork: links to the packs page, and names its ☆☆ pick so the two answers can't silently disagree */}
@@ -155,7 +143,7 @@ function Overview() {
               <p className="font-semibold text-center text-2xl sm:text-5xl">All caught up 🎉</p>
               <p className="mt-2 text-balance text-center text-neutral-300 text-md sm:text-xl">
                 No booster pack has a card you're missing
-                {filters.rarity.length > 0 || filters.number > 1 || filters.value !== 'all' ? ' with these filters' : ''}.
+                {filters.rarity.length > 0 || filters.value !== 'all' ? ' with these filters' : ''}.
               </p>
             </div>
           )}
