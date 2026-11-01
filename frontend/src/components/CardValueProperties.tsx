@@ -42,7 +42,7 @@ export function CardValueProperties({ cardId, expansion, onNavigate }: { cardId:
               </TierLink>
             )}
             {tier.wanted && (
-              <TierLink tier={tier.wanted} to={`/rankings?tab=wanted&set=${expansion}`} onNavigate={onNavigate}>
+              <TierLink tier={tier.wanted} to={`/rankings?tab=wanted&set=${expansion}${tier.foil ? '&foils=1' : ''}`} onNavigate={onNavigate}>
                 Most wanted
               </TierLink>
             )}

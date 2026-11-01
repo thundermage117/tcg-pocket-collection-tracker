@@ -28,13 +28,16 @@ export function getTwoStarRanking(): RankedCard[] {
   return rank(entries)
 }
 
-/** Every card anyone trades, by wishlists per offer (see demandRatio). */
-export function getMostWanted(): RankedCard[] {
+/**
+ * Every card anyone trades, by wishlists per offer (see demandRatio).
+ * Deluxe-pack foils are scarce enough to fill the top tiers on their own, so they are a separate ranking, not a filter.
+ */
+export function getMostWanted(includeFoils = false): RankedCard[] {
   const entries: Omit<RankedCard, 'position'>[] = []
   for (const card of allCards) {
     const value = getCardValue(card.card_id)
     const score = demandRatio(value)
-    if (value && score > 0) {
+    if (value && score > 0 && (includeFoils || !card.foil)) {
       entries.push({ card, value, score })
     }
   }
@@ -56,12 +59,16 @@ export interface Tier {
 }
 
 // Shares are of the full ranking, so a card keeps its tier when the list is filtered.
+// One hue per tier, hot to cool (magenta → blue), with a neutral grey at the bottom.
 export const tiers: Tier[] = [
-  { name: 'S', color: '#f5c542', upTo: 0.05 },
-  { name: 'A', color: '#f97362', upTo: 0.2 },
-  { name: 'B', color: '#a78bfa', upTo: 0.45 },
-  { name: 'C', color: '#60a5fa', upTo: 0.7 },
-  { name: 'D', color: '#737373', upTo: 1 },
+  { name: 'SSS', color: '#f472d0', upTo: 0.01 },
+  { name: 'SS', color: '#ff6b6b', upTo: 0.03 },
+  { name: 'S', color: '#ff9f43', upTo: 0.08 },
+  { name: 'A', color: '#ffd93d', upTo: 0.2 },
+  { name: 'B', color: '#8fdc5c', upTo: 0.45 },
+  { name: 'C', color: '#3fd0c9', upTo: 0.7 },
+  { name: 'D', color: '#74a9ff', upTo: 0.9 },
+  { name: 'E', color: '#a3a3a3', upTo: 1 },
 ]
 
 export function tierIndex(position: number, total: number): number {
@@ -69,12 +76,13 @@ export function tierIndex(position: number, total: number): number {
   return index === -1 ? tiers.length - 1 : index
 }
 
-let tierLookup: { elo: Map<string, Tier>; wanted: Map<string, Tier> } | undefined
+let tierLookup: { elo: Map<string, Tier>; wanted: Map<string, Tier>; wantedWithFoils: Map<string, Tier> } | undefined
 
 const tiersOf = (ranking: RankedCard[]) => new Map(ranking.map((e) => [e.card.card_id, tiers[tierIndex(e.position, ranking.length)]]))
 
-/** The card's tier on each Rankings tab, exactly as the Rankings page shows it. */
-export function cardTiers(cardId: string): { elo?: Tier; wanted?: Tier } {
-  tierLookup ??= { elo: tiersOf(getTwoStarRanking()), wanted: tiersOf(getMostWanted()) }
-  return { elo: tierLookup.elo.get(cardId), wanted: tierLookup.wanted.get(cardId) }
+/** The card's tier on each Rankings tab, exactly as the Rankings page shows it. Foils only rank with the foils switch on (`foil`). */
+export function cardTiers(cardId: string): { elo?: Tier; wanted?: Tier; foil: boolean } {
+  tierLookup ??= { elo: tiersOf(getTwoStarRanking()), wanted: tiersOf(getMostWanted()), wantedWithFoils: tiersOf(getMostWanted(true)) }
+  const plain = tierLookup.wanted.get(cardId)
+  return { elo: tierLookup.elo.get(cardId), wanted: plain ?? tierLookup.wantedWithFoils.get(cardId), foil: !plain && tierLookup.wantedWithFoils.has(cardId) }
 }

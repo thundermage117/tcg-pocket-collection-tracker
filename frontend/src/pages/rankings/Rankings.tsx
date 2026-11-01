@@ -1,5 +1,5 @@
 // Personal fork: card tier lists — ☆☆ community Elo and most-wanted by trade demand.
-// Tab and filters live in the URL (?tab=wanted&set=B1&q=…), so links, refresh and back keep the view.
+// Tab and filters live in the URL (?tab=wanted&set=B1&foils=1&q=…), so links, refresh and back keep the view.
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
@@ -27,12 +27,13 @@ const SMALL_LIST = 60
 const kindOptions: KindOption[] = ['all', 'full_art', 'trainer', 'rainbow']
 
 const rankings: Record<Tab, RankedCard[]> = { elo: getTwoStarRanking(), wanted: getMostWanted() }
+const wantedWithFoils = getMostWanted(true)
 
 const setOptions = (list: RankedCard[]): ('all' | ExpansionId)[] => {
   const present = new Set(list.map((e) => e.card.expansion))
   return ['all', ...expansions.filter((e) => present.has(e.id)).map((e) => e.id)]
 }
-const setsByTab: Record<Tab, ('all' | ExpansionId)[]> = { elo: setOptions(rankings.elo), wanted: setOptions(rankings.wanted) }
+const setsByTab: Record<Tab, ('all' | ExpansionId)[]> = { elo: setOptions(rankings.elo), wanted: setOptions(wantedWithFoils) }
 
 const scores: Record<Tab, (e: RankedCard) => string> = {
   elo: ({ value }) => `${value.adj}${isProvisional(value) ? '*' : ''}`,
@@ -50,7 +51,7 @@ const tierRange = (i: number) => {
   return `Top ${pct(tiers[i - 1].upTo)}–${pct(tiers[i].upTo)}%`
 }
 
-const defaultOpen = new Set(['S', 'A'])
+const defaultOpen = new Set(['SSS', 'SS', 'S', 'A'])
 
 export default function Rankings() {
   const { t, i18n } = useTranslation('common/sets')
@@ -67,6 +68,8 @@ export default function Rankings() {
   const kind = kindOptions.find((k) => k === params.get('kind')) ?? 'all'
   const rarityFilter = (params.get('rarity')?.split(',') ?? []).filter((r): r is Rarity => (rarities as readonly string[]).includes(r))
   const missingOnly = params.get('missing') === '1'
+  const foils = tab === 'wanted' && params.get('foils') === '1'
+  const ranking = foils ? wantedWithFoils : rankings[tab]
 
   // every filter change collapses tiers back to their previews
   const update = (changes: Record<string, string | undefined>) => {
@@ -94,7 +97,7 @@ export default function Rankings() {
 
   const owned = (card: RankedCard['card']) => ownsCard(collection, card)
   const query = search.trim().toLowerCase()
-  const filtered = rankings[tab].filter(
+  const filtered = ranking.filter(
     (e) =>
       (set === 'all' || e.card.expansion === set) &&
       (tab !== 'elo' || kind === 'all' || e.value.kind === kind) &&
@@ -102,7 +105,7 @@ export default function Rankings() {
       (!missingOnly || !collection || !owned(e.card)) &&
       (!query || getCardNameByLang(e.card, i18n.language).toLowerCase().includes(query)),
   )
-  const total = rankings[tab].length
+  const total = ranking.length
   const byTier = tiers.map((_, i) => filtered.filter((e) => tierIndex(e.position, total) === i))
   const openAll = filtered.length <= SMALL_LIST
 
@@ -121,7 +124,7 @@ export default function Rankings() {
       <Tabs
         value={tab}
         onValueChange={(v) => {
-          update({ tab: v === 'wanted' ? 'wanted' : undefined, set: undefined, kind: undefined, rarity: undefined })
+          update({ tab: v === 'wanted' ? 'wanted' : undefined, set: undefined, kind: undefined, rarity: undefined, foils: undefined })
           setOpen(defaultOpen)
         }}
         className="mb-4"
@@ -157,7 +160,13 @@ export default function Rankings() {
               show={(k) => (k === 'all' ? 'All kinds' : kindLabel[k])}
             />
           ) : (
-            <RarityFilter rarityFilter={rarityFilter} setRarityFilter={(r) => update({ rarity: r.join(',') || undefined })} />
+            <>
+              <RarityFilter rarityFilter={rarityFilter} setRarityFilter={(r) => update({ rarity: r.join(',') || undefined })} />
+              <label htmlFor="rankings-foils" className="flex cursor-pointer items-center gap-2 text-sm text-neutral-300">
+                <Switch id="rankings-foils" checked={foils} onCheckedChange={(on) => update({ foils: on ? '1' : undefined })} />
+                Deluxe foils
+              </label>
+            </>
           )}
           {collection && (
             <label htmlFor="rankings-missing-only" className="flex cursor-pointer items-center gap-2 text-sm text-neutral-300">

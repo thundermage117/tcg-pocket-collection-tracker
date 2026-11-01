@@ -28,7 +28,7 @@ export function TierSection({ tier, range, entries, score, owned, showOwned, ope
     <section className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/60">
       <button type="button" onClick={onToggle} className="flex w-full cursor-pointer items-center gap-3 px-3 py-2 text-left hover:bg-neutral-800/60">
         <span
-          className="flex size-9 shrink-0 items-center justify-center rounded-md text-lg font-black text-neutral-900"
+          className={`flex size-9 shrink-0 items-center justify-center rounded-md font-black text-neutral-900 ${tier.name.length > 2 ? 'text-sm' : 'text-lg'}`}
           style={{ backgroundColor: tier.color }}
         >
           {tier.name}
