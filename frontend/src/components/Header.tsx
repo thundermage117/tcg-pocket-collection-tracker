@@ -52,11 +52,14 @@ export function Header() {
 
   return (
     <>
-      <header id="header" className="flex max-w-7xl mx-auto min-h-fit h-14 md:h-20 shrink-0 flex-wrap items-center px-4 md:px-6">
+      <header id="header" className="flex max-w-7xl mx-auto min-h-fit h-14 md:h-20 shrink-0 flex-nowrap lg:flex-wrap items-center px-4 md:px-6">
         {/* Personal fork: below lg the pages live in BottomNav; social links (friends, community) and trade badges removed */}
         <Link to="/" className="flex min-w-0 items-center gap-2">
           <img src="/pokemon-icon128.png" alt="Logo" className="h-5" />
-          <div className="truncate pr-4 font-bold lg:hidden xl:block">TCG Pocket Collection Tracker</div>
+          <div className="truncate pr-4 font-bold lg:hidden xl:block">
+            <span className="sm:hidden">TCG Pocket Tracker</span>
+            <span className="hidden sm:inline">TCG Pocket Collection Tracker</span>
+          </div>
         </Link>
         <NavigationMenu className="hidden max-w-full justify-start lg:flex">
           <NavigationMenuList>
@@ -86,7 +89,6 @@ export function Header() {
                 .filter((item) => item.secondary)
                 .map((item) => (
                   <DropdownMenuItem key={item.href} selected={isActivePath(location.pathname, item.href)} onClick={() => navigate(item.href)}>
-                    <item.icon />
                     {t(item.title)}
                   </DropdownMenuItem>
                 ))}
@@ -94,7 +96,7 @@ export function Header() {
           </DropdownMenu>
         </div>
         <div className="grow" />
-        <div className="items-center gap-2 flex">
+        <div className="flex shrink-0 items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button className="px-2 sm:px-4" variant="ghost" size="icon">
