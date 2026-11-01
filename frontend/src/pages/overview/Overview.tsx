@@ -15,6 +15,7 @@ import { getFilteredCards } from '@/lib/filters'
 import { getBoosterValues } from '@/lib/packValue'
 import { CompletionHeatmap } from '@/pages/overview/components/CompletionHeatmap.tsx'
 import { GradientCard } from '@/pages/overview/components/GradientCard.tsx'
+import { MostWantedMissing } from '@/pages/overview/components/MostWantedMissing'
 import { bestChance, getPackChances } from '@/pages/overview/packChances'
 import { oneIn } from '@/pages/packs/types'
 import { useCollection } from '@/services/collection/useCollection'
@@ -47,7 +48,7 @@ function Overview() {
   )
 
   // Memoized so the pack odds (a pullRate per pack) only rerun when the collection or filters change
-  const { availableCards, collectedCards, totalOwned, chances } = useMemo(() => {
+  const { availableCards, collectedCards, wantedIds, totalOwned, chances } = useMemo(() => {
     const availableCards = getFilteredCards(filters, ownedCards)
     // Copies owned of the cards the filters show. Counted from the card database (same logic as CollectionCards.totalOwned)
     // so orphaned collection rows — card_ids no longer present in allCards — don't inflate the total.
@@ -61,7 +62,13 @@ function Overview() {
     }
     const collectedCards = getFilteredCards({ ...filters, minNumber: filters.number }, ownedCards)
     const wantedCards = getFilteredCards({ ...filters, maxNumber: filters.number - 1 }, ownedCards)
-    return { availableCards, collectedCards, totalOwned, chances: getPackChances(availableCards, collectedCards, wantedCards, filters.deckbuildingMode) }
+    return {
+      availableCards,
+      collectedCards,
+      wantedIds: new Set(wantedCards.map((c) => c.internal_id)),
+      totalOwned,
+      chances: getPackChances(availableCards, collectedCards, wantedCards, filters.deckbuildingMode),
+    }
   }, [filters, ownedCards])
   const bestPack = bestChance([...chances.values()].flat())
   // The ☆☆ pick ignores the filters, so only show it when ☆☆ cards are in view (deckbuilding mode hides alternate arts like ☆☆)
@@ -153,6 +160,8 @@ function Overview() {
             {filters.rarity.length > 0 && <p className="mt-1 text-center text-neutral-400 text-sm">{filters.rarity.join(' ')}</p>}
           </div>
         </section>
+
+        <MostWantedMissing wantedIds={wantedIds} rarity={filters.rarity} />
 
         <CompletionHeatmap
           availableCards={availableCards}
