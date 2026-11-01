@@ -4,6 +4,7 @@ frontend/assets/values.json, which the app bundles via lib/ValueDB.ts.
 Per card (keyed by card_id, e.g. "A1-266"):
   demand, supply  trade-board want/offer counts (pokemontcglivetrade, all rarities)
   wish, offers    wishlist / trade-list counts (pokemon.eleet.dev, all rarities)
+  same_as         reprint of that card (same internal_id), so wish/offers are its numbers too
   ☆☆ only:
   elo, rank       community vote Elo and rank among all ☆☆ (incl. deluxe)
   adj             vote-adjusted Elo, see SHRINK_K
@@ -57,6 +58,15 @@ def classify_two_stars(cards_by_id, two_star_ids):
     return kinds
 
 
+def pooled_reprints(cards):
+    """A same-art reprint (e.g. A4b-1, the Deluxe Bulbasaur) shares its original's internal_id (A1-1): the game,
+    the collection and eleet all treat them as one card. Map each reprint to the first card_id in cards.json order."""
+    first = {}
+    for c in cards:
+        first.setdefault(c['internal_id'], c['card_id'])
+    return {c['card_id']: first[c['internal_id']] for c in cards if first[c['internal_id']] != c['card_id']}
+
+
 def main():
     cards = json.loads(CARDS.read_text())
     cards_by_id = {c['card_id']: c for c in cards}
@@ -91,6 +101,8 @@ def main():
     for cid, e in eleet.items():
         if cid in cards_by_id:
             values[cid].update(e)
+    for cid, original in pooled_reprints(cards).items():
+        values[cid]['same_as'] = original
 
     if mismatched:
         print(f'note: {len(mismatched)} ranking rows disagree with cards.json (card_id, ranking rarity, cards.json rarity): {mismatched[:5]}')

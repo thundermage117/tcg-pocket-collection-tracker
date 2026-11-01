@@ -8,6 +8,7 @@ export interface CardValue {
   supply?: number // pokemontcglivetrade trade board: users offering the card
   wish?: number // pokemon.eleet.dev wishlist count
   offers?: number // pokemon.eleet.dev trade-list count
+  same_as?: string // reprint of this card_id (same internal_id), so wish/offers are that card's too
   // ☆☆ only (community vote Elo from pokemontcglivetrade):
   elo?: number
   adj?: number // vote-adjusted Elo; use this for comparisons
@@ -51,6 +52,29 @@ export function demandRatio(value: CardValue | undefined): number {
     return value.demand / Math.max(value.supply, 1)
   }
   return 0
+}
+
+// Phantom offers at the average ratio added to every card's wish/offers, like SHRINK_K for Elo: a new set's
+// card with ~80 spares listed can't outrank thousands of trades on a lucky ratio. Mature cards barely move.
+export const DEMAND_K = 200
+
+let meanRatio: number | undefined
+
+/** demandRatio shrunk toward the average by DEMAND_K; the score Rankings sorts and tiers by. */
+export function demandScore(value: CardValue | undefined): number {
+  if (value?.wish === undefined || value.offers === undefined) {
+    return demandRatio(value)
+  }
+  if (meanRatio === undefined) {
+    const eleet = Object.values(values.cards).filter((v) => v.wish !== undefined && v.offers !== undefined && !v.same_as)
+    meanRatio =
+      eleet.reduce((sum, v) => sum + (v.wish ?? 0), 0) /
+      Math.max(
+        eleet.reduce((sum, v) => sum + (v.offers ?? 0), 0),
+        1,
+      )
+  }
+  return (value.wish + DEMAND_K * meanRatio) / (value.offers + DEMAND_K)
 }
 
 /** Single sort key for "most valuable first": ☆☆ adjusted Elo when available, else demand. */

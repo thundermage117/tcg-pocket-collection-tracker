@@ -12,9 +12,9 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ValueDataAge } from '@/components/ValueDataAge'
 import { expansions, getExpansionById } from '@/lib/CardsDB'
 import { ownsCard } from '@/lib/packValue'
-import { getMostWanted, getTwoStarRanking, type RankedCard, tierIndex, tiers } from '@/lib/rankings'
+import { getMostWanted, getTwoStarRanking, type RankedCard, tiers, wantedShares } from '@/lib/rankings'
 import { getCardNameByLang } from '@/lib/utils'
-import { demandRatio, isProvisional, kindLabel, PROVISIONAL_VOTES, type TwoStarKind } from '@/lib/ValueDB'
+import { isProvisional, kindLabel, PROVISIONAL_VOTES, type TwoStarKind } from '@/lib/ValueDB'
 import { useCollection, useSelectedCard } from '@/services/collection/useCollection'
 import { type ExpansionId, type Rarity, rarities } from '@/types'
 import { TierSection } from './components/TierSection'
@@ -37,18 +37,26 @@ const setsByTab: Record<Tab, ('all' | ExpansionId)[]> = { elo: setOptions(rankin
 
 const scores: Record<Tab, (e: RankedCard) => string> = {
   elo: ({ value }) => `${value.adj}${isProvisional(value) ? '*' : ''}`,
-  wanted: ({ value }) => `×${demandRatio(value).toFixed(1)}`,
+  wanted: ({ score }) => `×${score.toFixed(1)}`,
 }
 
-const tierRange = (i: number) => {
+// ☆☆ tiers end where the Elo jumps, so they read as Elo ranges; most-wanted tiers are fixed shares
+const eloRanges = tiers.map((_, i) => {
+  const scores = rankings.elo.filter((e) => e.tier === i).map((e) => e.score)
+  return scores.length === 0 ? '' : `Elo ${Math.min(...scores)}–${Math.max(...scores)}`
+})
+const tierRange = (tab: Tab, i: number) => {
+  if (tab === 'elo') {
+    return eloRanges[i]
+  }
   const pct = (x: number) => Math.round(100 * x)
   if (i === 0) {
-    return `Top ${pct(tiers[0].upTo)}%`
+    return `Top ${pct(wantedShares[0])}%`
   }
   if (i === tiers.length - 1) {
-    return `Bottom ${pct(1 - tiers[i - 1].upTo)}%`
+    return `Bottom ${pct(1 - wantedShares[i - 1])}%`
   }
-  return `Top ${pct(tiers[i - 1].upTo)}–${pct(tiers[i].upTo)}%`
+  return `Top ${pct(wantedShares[i - 1])}–${pct(wantedShares[i])}%`
 }
 
 const defaultOpen = new Set(['SSS', 'SS', 'S', 'A'])
@@ -105,8 +113,7 @@ export default function Rankings() {
       (!missingOnly || !collection || !owned(e.card)) &&
       (!query || getCardNameByLang(e.card, i18n.language).toLowerCase().includes(query)),
   )
-  const total = ranking.length
-  const byTier = tiers.map((_, i) => filtered.filter((e) => tierIndex(e.position, total) === i))
+  const byTier = tiers.map((_, i) => filtered.filter((e) => e.tier === i))
   const openAll = filtered.length <= SMALL_LIST
 
   return (
@@ -115,8 +122,8 @@ export default function Rankings() {
         <h1 className="text-2xl font-semibold sm:text-3xl">Card rankings</h1>
         <p className="mt-1 text-sm text-neutral-400">
           {tab === 'elo'
-            ? 'All ☆☆ cards by community vote Elo (pokemontcglivetrade), adjusted for vote count.'
-            : 'Every rarity by trade demand: wishlists per trade-list offer (eleet), else trade-board want/offer.'}
+            ? 'All ☆☆ cards by community vote Elo (pokemontcglivetrade), adjusted for vote count. Tiers split where the Elo jumps.'
+            : 'Every rarity by trade demand: wishlists per trade-list offer (eleet), adjusted for how many are listed. Reprints count as their original.'}
         </p>
         <ValueDataAge className="mt-2" />
       </header>
@@ -186,7 +193,7 @@ export default function Rankings() {
               <TierSection
                 key={tier.name}
                 tier={tier}
-                range={tierRange(i)}
+                range={tierRange(tab, i)}
                 entries={byTier[i]}
                 score={scores[tab]}
                 owned={owned}

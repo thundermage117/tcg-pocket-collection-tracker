@@ -1,8 +1,9 @@
 // Personal fork: value rows for the card detail page (same layout as CardDetail's CardProperty).
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
+import { getCardById } from '@/lib/CardsDB'
 import { cardTiers, type Tier, twoStarPosition } from '@/lib/rankings'
-import { demandRatio, getCardValue, isProvisional, kindLabel, twoStarCount, valuesGeneratedAt } from '@/lib/ValueDB'
+import { demandRatio, demandScore, getCardValue, isProvisional, kindLabel, twoStarCount, valuesGeneratedAt } from '@/lib/ValueDB'
 
 function Row({ name, children }: { name: string; children: ReactNode }) {
   return (
@@ -31,6 +32,8 @@ export function CardValueProperties({ cardId, expansion, onNavigate }: { cardId:
     return null
   }
   const tier = cardTiers(cardId)
+  // a reprint is ranked as its original, so its Most wanted link goes to the original's set
+  const wantedSet = getCardById(tier.wantedAs)?.expansion ?? expansion
   return (
     <>
       {(tier.elo || tier.wanted) && (
@@ -42,8 +45,8 @@ export function CardValueProperties({ cardId, expansion, onNavigate }: { cardId:
               </TierLink>
             )}
             {tier.wanted && (
-              <TierLink tier={tier.wanted} to={`/rankings?tab=wanted&set=${expansion}${tier.foil ? '&foils=1' : ''}`} onNavigate={onNavigate}>
-                Most wanted
+              <TierLink tier={tier.wanted} to={`/rankings?tab=wanted&set=${wantedSet}${tier.foil ? '&foils=1' : ''}`} onNavigate={onNavigate}>
+                Most wanted{tier.wantedAs !== cardId && ` (as ${tier.wantedAs})`}
               </TierLink>
             )}
           </span>
@@ -58,7 +61,8 @@ export function CardValueProperties({ cardId, expansion, onNavigate }: { cardId:
       )}
       {value.wish !== undefined && (
         <Row name="Wishlists / offers">
-          {value.wish.toLocaleString()} / {value.offers?.toLocaleString()} (×{demandRatio(value).toFixed(1)})
+          {value.wish.toLocaleString()} / {value.offers?.toLocaleString()} (×{demandRatio(value).toFixed(1)}, ranked ×{demandScore(value).toFixed(1)})
+          {value.same_as && <span className="ml-2 text-neutral-400">shared with {value.same_as}</span>}
         </Row>
       )}
       {value.demand !== undefined && (
