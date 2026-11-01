@@ -1,0 +1,119 @@
+name: Sync upstream
+
+# Merges marcelpanse/tcg-pocket-collection-tracker into personal (and mirrors it to main) when it merges
+# cleanly: every Monday, or any day upstream is 10+ commits ahead. Vercel deploys the push.
+# It stops without pushing, and the run fails so GitHub emails you, when:
+#   - the merge conflicts: merge by hand (FORK.md, "Staying up to date")
+#   - upstream changes the database (scripts/sql/schema.sql or a new migration): run the SQL in our
+#     Supabase project, then re-run with "force" ticked
+#   - lint or build fails on the merged code
+# Pushing upstream's .github/workflows changes needs the SYNC_TOKEN secret (FORK.md, setup step 8).
+on:
+  schedule:
+    - cron: '41 6 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Merge even if upstream changes the database (after running its SQL)
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+# value-refresh.yml pushes to personal too
+concurrency:
+  group: push-personal
+  cancel-in-progress: false
+
+env:
+  LEFTHOOK: 0 # lint and build run as steps below; skip the git hooks
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    if: github.repository != 'marcelpanse/tcg-pocket-collection-tracker'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: personal
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN || github.token }}
+
+      - name: Check upstream
+        id: check
+        run: |
+          git remote add upstream https://github.com/marcelpanse/tcg-pocket-collection-tracker.git
+          git fetch upstream main
+          behind=$(git rev-list --count HEAD..upstream/main)
+          echo "Upstream is $behind commits ahead"
+          if [ "$behind" -eq 0 ]; then
+            echo "Up to date"
+          elif [ "$behind" -ge 10 ] || [ "$(date -u +%u)" -eq 1 ] || [ "${{ github.event_name }}" = workflow_dispatch ]; then
+            echo "merge=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Waiting for Monday or 10 commits"
+          fi
+
+      - name: Check for database changes
+        if: steps.check.outputs.merge == 'true' && !inputs.force
+        run: |
+          changed=$(git diff --name-only --diff-filter=AM HEAD...upstream/main -- scripts/sql/schema.sql scripts/sql/migrations)
+          if [ -n "$changed" ]; then
+            echo "::error::Upstream changes the database: $(echo $changed). Run the SQL our tables need in Supabase, then re-run this workflow with force."
+            exit 1
+          fi
+
+      - name: Merge
+        if: steps.check.outputs.merge == 'true'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if ! git merge --no-edit upstream/main; then
+            echo "::error::Merge conflicts in: $(git diff --name-only --diff-filter=U | tr '\n' ' '). Merge by hand."
+            git merge --abort
+            exit 1
+          fi
+
+      - uses: actions/setup-python@v5
+        if: steps.check.outputs.merge == 'true'
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        if: steps.check.outputs.merge == 'true'
+        with:
+          node-version: 22
+
+      - uses: pnpm/action-setup@v4
+        if: steps.check.outputs.merge == 'true'
+
+      - name: Lint and build
+        if: steps.check.outputs.merge == 'true'
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm lint
+          pnpm build
+
+      # A new set needs values straight away. An unknown PackId isn't a reason to hold back the merge:
+      # the next value-refresh run fails on it too, which is the reminder to add it to packs.py.
+      - name: Refresh value data for new cards
+        if: steps.check.outputs.merge == 'true'
+        run: |
+          if git diff --quiet ORIG_HEAD HEAD -- frontend/assets/cards.json; then
+            echo "No new cards"
+            exit 0
+          fi
+          if pnpm value:refresh; then
+            git add frontend/assets/values.json scripts/value/data
+            git diff --cached --quiet || git commit -m "chore: refresh value data"
+          else
+            echo "::warning::Value refresh failed (new PackId? see scripts/value/packs.py); merged without it."
+            git checkout -- frontend/assets/values.json scripts/value/data
+          fi
+
+      - name: Push
+        if: steps.check.outputs.merge == 'true'
+        run: |
+          git push origin HEAD:personal
+          git push origin upstream/main:main

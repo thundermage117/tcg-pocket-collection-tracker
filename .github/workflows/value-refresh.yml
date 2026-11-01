@@ -12,6 +12,11 @@ on:
 permissions:
   contents: write
 
+# upstream-sync.yml pushes to personal too
+concurrency:
+  group: push-personal
+  cancel-in-progress: false
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
