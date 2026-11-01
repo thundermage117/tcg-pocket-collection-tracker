@@ -1,8 +1,8 @@
 // Personal fork: species tile and progress bar shared by the Pokédex grid, its lines view and the species page.
-import { Check } from 'lucide-react'
+import { Check, Crown, Sparkles } from 'lucide-react'
 import { Link } from 'react-router'
 import { getLocalizedImagePath } from '@/lib/imageLocales'
-import { coverCard, dexName, ownedCount, type Species, speciesName, spriteUrl } from '@/lib/pokedex'
+import { coverCard, dexName, ownedCount, type Species, type SpeciesGroup, speciesName, spriteUrl } from '@/lib/pokedex'
 import { cn } from '@/lib/utils'
 import type { CardType, Collection } from '@/types'
 
@@ -30,6 +30,18 @@ export const typeStripe = (types: CardType[]) =>
   types.length === 1
     ? typeColors[types[0]]
     : `linear-gradient(90deg, ${types.map((t, i) => `${typeColors[t]} ${(100 * i) / types.length}% ${(100 * (i + 1)) / types.length}%`).join(', ')})`
+
+export const groupLabels: Record<SpeciesGroup, string> = { legendary: 'Legendary', mythical: 'Mythical' }
+
+/** Crown for legendary, sparkles for mythical. */
+export function GroupIcon({ group, className }: { group: SpeciesGroup; className?: string }) {
+  const Icon = group === 'legendary' ? Crown : Sparkles
+  return (
+    <span title={groupLabels[group]} className={cn(group === 'legendary' ? 'text-amber-300' : 'text-violet-300', className)}>
+      <Icon className="size-3.5" />
+    </span>
+  )
+}
 
 export function ProgressBar({ value, max, color, className }: { value: number; max: number; color?: string; className?: string }) {
   return (
@@ -78,6 +90,7 @@ export function SpeciesTile({ species, collection, lang, art = 'sprite', shiny, 
       )}
     >
       <span className="absolute inset-x-0 top-0 h-1" style={{ background: typeStripe(species.types) }} />
+      {species.group && <GroupIcon group={species.group} className="absolute top-2 left-2 drop-shadow" />}
       {shiny && owned > 0 && <span className="absolute top-2 right-2 text-pink-300 drop-shadow">✵</span>}
       {art === 'sprite' ? (
         <Sprite artworkId={species.dexNr} caught={owned > 0} shiny={shiny} alt={name} />

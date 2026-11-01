@@ -1,5 +1,5 @@
 // Personal fork: one tile per species in National Dex order, owned when any printing (any form) is owned.
-// Filters live in the URL (?dex=shiny&view=lines&art=card&q=…&gen=1&type=fire&show=missing&set=A1&sort=printings), so links, refresh and back keep the view.
+// Filters live in the URL (?dex=shiny&view=lines&art=card&q=…&gen=1&group=legendary&type=fire&show=missing&set=A1&sort=printings), so links, refresh and back keep the view.
 import { SlidersHorizontal, X } from 'lucide-react'
 import { Fragment, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -19,6 +19,7 @@ import {
   ownedCount,
   type Species,
   shinySpecies,
+  speciesGroupOptions,
   speciesMatches,
   speciesName,
 } from '@/lib/pokedex'
@@ -26,7 +27,7 @@ import { capitalize, cn } from '@/lib/utils'
 import { useCollection } from '@/services/collection/useCollection'
 import { type CardType, cardTypes, type ExpansionId } from '@/types'
 import { EvolutionChain } from './EvolutionChain'
-import { ProgressBar, SpeciesTile, type TileArt, typeColors } from './SpeciesTile'
+import { GroupIcon, groupLabels, ProgressBar, SpeciesTile, type TileArt, typeColors } from './SpeciesTile'
 
 const dexOptions = ['all', 'shiny'] as const
 const dexLabels = { all: 'Pokédex', shiny: '✵ Shiny' }
@@ -44,6 +45,8 @@ const showLabels: Record<ShowOption, string> = { all: 'All', missing: 'Missing',
 const sortOptions = ['dex', 'printings', 'completion'] as const
 type SortOption = (typeof sortOptions)[number]
 const sortLabels: Record<SortOption, string> = { dex: 'Dex number', printings: 'Most printings', completion: 'Closest to complete' }
+
+const groupOptions = ['all', ...speciesGroupOptions] as const
 
 const genOptions = ['all', ...generations.map((g) => String(g.nr))]
 const typeOptions: ('all' | CardType)[] = ['all', ...cardTypes.filter((t) => t !== 'trainer' && allSpecies.some((s) => s.types.includes(t)))]
@@ -67,9 +70,10 @@ export default function Pokedex() {
   const type = typeOptions.find((x) => x === params.get('type')) ?? 'all'
   const show = showOptions.find((x) => x === params.get('show')) ?? 'all'
   const set = setOptions.find((x) => x === params.get('set')) ?? 'all'
+  const group = groupOptions.find((x) => x === params.get('group')) ?? 'all'
   const sort = sortOptions.find((x) => x === params.get('sort')) ?? 'dex'
   const art = artOptions.find((x) => x === params.get('art')) ?? 'sprite'
-  const filtering = search !== '' || gen !== 'all' || type !== 'all' || show !== 'all' || set !== 'all'
+  const filtering = search !== '' || gen !== 'all' || type !== 'all' || show !== 'all' || set !== 'all' || group !== 'all'
   const [sheetOpen, setSheetOpen] = useState(false)
 
   const update = (changes: Record<string, string | undefined>) => {
@@ -109,6 +113,7 @@ export default function Pokedex() {
       (gen === 'all' || generationOf(s.dexNr).nr === Number(gen)) &&
       (type === 'all' || s.types.includes(type)) &&
       (set === 'all' || s.cards.some((c) => c.expansion === set)) &&
+      (group === 'all' || s.group === group) &&
       (show === 'all' || (show === 'missing' ? n === 0 : show === 'owned' ? n > 0 : n > 0 && n < s.cards.length)) &&
       (!query || speciesMatches(s, query))
     )
@@ -150,6 +155,25 @@ export default function Pokedex() {
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
           <h2 className="font-bold text-lg">{shiny ? 'Shiny species owned' : 'Species owned'}</h2>
           <p className="flex items-baseline gap-4 tabular-nums">
+            {/* legendary / mythical caught, each a shortcut to its filter */}
+            {speciesGroupOptions.map((g) => {
+              const inGroup = list.filter((s) => s.group === g)
+              return (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => update({ group: group === g ? undefined : g })}
+                  title={groupLabels[g]}
+                  className={cn(
+                    'flex cursor-pointer items-center gap-1 rounded px-1 text-sm text-neutral-400 hover:text-white',
+                    group === g && 'bg-neutral-700 text-white',
+                  )}
+                >
+                  <GroupIcon group={g} />
+                  {inGroup.filter((s) => ownedOf(s) > 0).length}/{inGroup.length}
+                </button>
+              )
+            })}
             {!shiny && (
               <span className="text-sm text-neutral-400">
                 {linesComplete}/{allLines.length} lines complete
@@ -229,10 +253,11 @@ export default function Pokedex() {
       </div>
 
       {/* what the sheet and the generation bars have set, each removable on its own */}
-      {(gen !== 'all' || type !== 'all' || set !== 'all') && (
+      {(gen !== 'all' || type !== 'all' || set !== 'all' || group !== 'all') && (
         <div className="mb-3 flex flex-wrap gap-2">
           {gen !== 'all' && <Chip onRemove={() => update({ gen: undefined })}>{genLabel(generations[Number(gen) - 1])}</Chip>}
           {type !== 'all' && <Chip onRemove={() => update({ type: undefined })}>{capitalize(type)}</Chip>}
+          {group !== 'all' && <Chip onRemove={() => update({ group: undefined })}>{groupLabels[group]}</Chip>}
           {set !== 'all' && <Chip onRemove={() => update({ set: undefined })}>{`${set} · ${t(getExpansionById(set).name)}`}</Chip>}
         </div>
       )}
@@ -254,6 +279,13 @@ export default function Pokedex() {
               value={gen}
               onChange={(g) => update({ gen: g })}
               show={(g) => (g === 'all' ? 'All' : genLabel(generations[Number(g) - 1]))}
+            />
+            <DropdownFilter
+              label="Group"
+              options={groupOptions}
+              value={group}
+              onChange={(x) => update({ group: x })}
+              show={(x) => (x === 'all' ? 'All' : groupLabels[x])}
             />
             <DropdownFilter
               label="Type"

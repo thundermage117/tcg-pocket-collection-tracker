@@ -15,7 +15,7 @@ import { oneIn } from '@/pages/packs/types'
 import { useCollection, useSelectedCard } from '@/services/collection/useCollection'
 import type { ExpansionId } from '@/types'
 import { EvolutionChain } from './EvolutionChain'
-import { dexLabel, ProgressBar, Sprite, typeColors } from './SpeciesTile'
+import { dexLabel, GroupIcon, groupLabels, ProgressBar, Sprite, typeColors } from './SpeciesTile'
 
 export default function SpeciesDetail() {
   const { t, i18n } = useTranslation(['common/sets', 'common/packs'])
@@ -163,6 +163,12 @@ export default function SpeciesDetail() {
                 <img key={type} src={`/images/energy/${type}.webp`} alt={type} className="size-6" />
               ))}
             </span>
+            {species.group && (
+              <span className="flex items-center gap-1 rounded-full border-1 border-neutral-600 border-solid px-2 py-0.5 font-normal text-sm">
+                <GroupIcon group={species.group} />
+                {groupLabels[species.group]}
+              </span>
+            )}
           </h1>
           {entry && (
             <>

@@ -6,6 +6,7 @@ import { capitalize, pokemonTranslations } from '@/lib/utils'
 import { type Card, type CardType, type Collection, type Rarity, rarities } from '@/types'
 import evolutions from '../../assets/evolutions.json'
 import formSprites from '../../assets/form-sprites.json'
+import speciesGroups from '../../assets/species-groups.json'
 
 // The first 1025 keys are the species in National Dex order (bulbasaur … pecharunt); forms are appended after them
 const DEX_SIZE = 1025
@@ -67,12 +68,18 @@ export function speciesKey(card: Card): string | undefined {
   return undefined
 }
 
+// From scripts/generate-species-groups.ts (PokéAPI's flags); a species is in at most one
+export const speciesGroupOptions = ['legendary', 'mythical'] as const
+export type SpeciesGroup = (typeof speciesGroupOptions)[number]
+const groupOf = (dexNr: number) => speciesGroupOptions.find((group) => speciesGroups[group].includes(dexNr))
+
 export interface Species {
   dexNr: number
   key: string
   cards: Card[] // every printing, in cards.json order
   forms: string[] // distinct card names (Charizard, Charizard ex, Mega Charizard X ex, …)
   types: CardType[]
+  group?: SpeciesGroup
 }
 
 function buildSpecies(): Species[] {
@@ -90,6 +97,7 @@ function buildSpecies(): Species[] {
       cards,
       forms: [...new Set(cards.map((c) => c.name))],
       types: [...new Set(cards.flatMap((c) => (c.secondary_energy ? [c.energy, c.secondary_energy] : [c.energy])))],
+      group: groupOf(dexNumbers.get(key) as number),
     }))
     .sort((a, b) => a.dexNr - b.dexNr)
 }
