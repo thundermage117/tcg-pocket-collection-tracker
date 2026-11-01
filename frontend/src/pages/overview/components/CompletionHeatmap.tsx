@@ -8,7 +8,7 @@ import { SetLogo } from '@/components/CardThumb'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { expansions, getExpansionById } from '@/lib/CardsDB.ts'
 import { bestChance, type PackChance } from '@/pages/overview/packChances'
-import { type Card, type ExpansionId, type Pack, type Rarity, rarities } from '@/types'
+import { type Card, type ExpansionId, type Pack, type Rarity, rarities, tradableRarities } from '@/types'
 
 interface Props {
   availableCards: Card[]
@@ -74,6 +74,13 @@ function formatLeft({ collected, available }: Cell) {
   return collected === available ? '✓' : String(available - collected)
 }
 
+// 1–2 cards from done: the easiest gaps to close with a trade, so only for rarities that can be traded
+const isNearlyDone = (col: Rarity | 'all', { collected, available }: Cell) =>
+  (tradableRarities as readonly string[]).includes(col) && available - collected > 0 && available - collected <= 2
+
+// Columns of the same family (◊…◊◊◊◊, ☆…☆☆☆, ✵ ✵✵) sit together, with a gap before the next family
+const rarityFamily = (r: Rarity) => ['◊', '☆', '✵'].find((f) => r.startsWith(f)) ?? r
+
 function chanceColor(pct: number) {
   return pct >= 10 ? 'text-green-400' : pct >= 3 ? 'text-yellow-400' : 'text-neutral-500'
 }
@@ -127,6 +134,8 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
   }
 
   const columns = rarities.filter((r) => available.has(`all|${r}`))
+  const familyStarts = new Set(columns.filter((r, i) => i > 0 && rarityFamily(columns[i - 1]) !== rarityFamily(r)))
+  const cellPad = (col: Rarity | 'all') => (col !== 'all' && familyStarts.has(col) ? 'py-0.5 pr-0.5 pl-2' : 'p-0.5')
   const rows = openable.toReversed()
 
   const setName = (row: string) => (row === 'all' ? 'All sets' : t(getExpansionById(row as ExpansionId).name, { ns: 'common/sets' }))
@@ -207,15 +216,20 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
   const renderCell = (row: string, col: Rarity | 'all', isTotal = false) => {
     const c = cell(row, col)
     if (!c) {
-      return <td key={col} className="p-0.5" />
+      // No cards of this rarity in the set, which a blank would make look like missing data
+      return (
+        <td key={col} className={`${cellPad(col)} text-center text-neutral-600 text-xs`}>
+          –
+        </td>
+      )
     }
     const missing = c.available - c.collected
     const label = col === 'all' ? setName(row) : `${setName(row)} ${col}`
     return (
-      <td key={col} className="p-0.5">
+      <td key={col} className={cellPad(col)}>
         <button
           type="button"
-          className={`min-h-10 w-full min-w-11 rounded text-xs tabular-nums transition-[filter] md:hover:brightness-125 focus-visible:outline-2 focus-visible:outline-neutral-200 md:min-h-0 md:py-1.5 ${isTotal ? 'font-semibold' : ''} ${isSelected(row, col) ? selectedRing : ''}`}
+          className={`relative min-h-10 w-full min-w-11 rounded text-xs tabular-nums transition-[filter] md:hover:brightness-125 focus-visible:outline-2 focus-visible:outline-neutral-200 md:min-h-0 md:py-1.5 ${isTotal ? 'font-semibold' : ''} ${isSelected(row, col) ? selectedRing : ''}`}
           style={cellStyle(c)}
           onClick={() => (isMobile ? toggle({ row, col }) : openCollection(row, col))}
           data-tooltip-id={isMobile ? undefined : 'completion-heatmap'}
@@ -223,6 +237,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
           aria-label={`${label}: ${c.collected} of ${c.available} collected`}
         >
           {cellMode === 'left' ? formatLeft(c) : formatPct(c)}
+          {isNearlyDone(col, c) && <span className="absolute top-0.5 right-0.5 size-1.5 rounded-full bg-amber-400" />}
         </button>
       </td>
     )
@@ -334,7 +349,8 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
           </ToggleGroup>
         </div>
         <p className="text-neutral-400 text-xs">
-          Darker means more gaps. "New card" is the chance one pack gives a card you're missing. <span className="md:hidden">Tap for details.</span>
+          Darker means more gaps. <span className="mx-0.5 inline-block size-1.5 rounded-full bg-amber-400 align-middle" /> 1–2 tradable cards left. "New card"
+          is the chance one pack gives a card you're missing. <span className="md:hidden">Tap for details.</span>
           <span className="hidden md:inline">Click to see them.</span>
         </p>
       </div>
@@ -346,7 +362,10 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
                 <th className={`${stickyCol} pr-2 text-left font-semibold text-neutral-400 text-xs uppercase tracking-wider`}>Set</th>
                 <th className="px-0.5 pb-1 text-center font-semibold text-[10px] text-neutral-400 uppercase leading-tight md:hidden">New card</th>
                 {columns.map((r) => (
-                  <th key={r} className="px-0.5 pb-1 text-center font-normal text-neutral-300 text-xs whitespace-nowrap">
+                  <th
+                    key={r}
+                    className={`${familyStarts.has(r) ? 'pr-0.5 pl-2' : 'px-0.5'} pb-1 text-center font-normal text-neutral-300 text-xs whitespace-nowrap`}
+                  >
                     {r === 'Crown Rare' ? '♛' : r}
                   </th>
                 ))}
