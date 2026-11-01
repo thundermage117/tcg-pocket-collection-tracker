@@ -1,4 +1,5 @@
-// Personal fork: every printing of one species, grouped by form, with what's owned and the best pack for a missing one.
+// Personal fork: a species' Pokédex entry and every printing of it, grouped by form, with what's owned and the best pack for a missing one.
+import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
@@ -6,14 +7,14 @@ import { CardThumb } from '@/components/CardThumb'
 import { Spinner } from '@/components/Spinner'
 import { formatRarity } from '@/components/utils'
 import { expansions, getExpansionById } from '@/lib/CardsDB'
-import { allSpecies, generationOf, getSpecies, lineOf, ownedCount, speciesName } from '@/lib/pokedex'
+import { allSpecies, dexEntriesQuery, generationOf, getSpecies, lineOf, ownedCount, speciesName } from '@/lib/pokedex'
 import { getCardNameByLang } from '@/lib/utils'
 import { getPackChances, type PackChance } from '@/pages/overview/packChances'
 import { oneIn } from '@/pages/packs/types'
 import { useCollection, useSelectedCard } from '@/services/collection/useCollection'
 import type { ExpansionId } from '@/types'
 import { EvolutionChain } from './EvolutionChain'
-import { dexLabel, ProgressBar } from './SpeciesTile'
+import { dexLabel, ProgressBar, Sprite, typeColors } from './SpeciesTile'
 
 export default function SpeciesDetail() {
   const { t, i18n } = useTranslation(['common/sets', 'common/packs'])
@@ -21,6 +22,8 @@ export default function SpeciesDetail() {
   const { data: collection, isLoading } = useCollection()
   const { setSelectedCardId } = useSelectedCard()
   const species = getSpecies(Number(nr))
+  // supportedLngs keeps resolvedLanguage to the locales that have an entries file
+  const { data: entries } = useQuery(dexEntriesQuery(i18n.resolvedLanguage ?? 'en-US'))
 
   if (isLoading) {
     return <Spinner size="lg" overlay />
@@ -43,6 +46,7 @@ export default function SpeciesDetail() {
   const prev = allSpecies[index - 1]
   const next = allSpecies[index + 1]
   const line = lineOf(species)
+  const entry = entries?.[species.dexNr]
 
   const setIndex = (id: string) => expansions.findIndex((e) => e.id === id)
   const firstSet = species.cards.reduce((a, c) => (setIndex(c.expansion) < setIndex(a.expansion) ? c : a)).expansion
@@ -76,36 +80,56 @@ export default function SpeciesDetail() {
         </span>
       </nav>
 
-      <header className="mb-6">
-        <p className="text-neutral-500 tabular-nums">
-          {dexLabel(species.dexNr)} · Gen {generationOf(species.dexNr).nr}
-        </p>
-        <h1 className="flex items-center gap-3 text-2xl font-semibold sm:text-3xl">
-          {name}
-          <span className="flex gap-1">
-            {species.types.map((type) => (
-              <img key={type} src={`/images/energy/${type}.webp`} alt={type} className="size-6" />
-            ))}
-          </span>
-        </h1>
-        <div className="mt-3 flex max-w-md items-center gap-3">
-          <ProgressBar value={owned} max={species.cards.length} className="h-2 grow" />
-          <span className="text-sm tabular-nums">
-            {owned}/{species.cards.length} printings
-          </span>
+      <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-8">
+        {/* the species' main type glows behind its artwork; uncaught species stay a silhouette */}
+        <div
+          className="relative mx-auto w-48 shrink-0 rounded-2xl border-1 border-neutral-700 border-solid p-3 sm:mx-0 sm:w-60"
+          style={{ background: `radial-gradient(circle at 50% 45%, ${typeColors[species.types[0]]}55, transparent 70%)` }}
+        >
+          <Sprite dexNr={species.dexNr} caught={owned > 0} alt={name} className={owned === 0 ? 'opacity-25' : undefined} />
+          {owned === 0 && <span className="absolute inset-x-0 bottom-3 text-center text-xs font-medium text-neutral-400">Not caught yet</span>}
         </div>
-        <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-          <Stat label="Forms">{species.forms.length}</Stat>
-          <Stat label="Illustrators">{artists.size}</Stat>
-          <Stat label="First appeared">
-            {firstSet} · {t(getExpansionById(firstSet).name)}
-          </Stat>
-          {best && best.pct > 0 && (
-            <Stat label="Best pack for a missing one">
-              {t(best.pack.name, { ns: 'common/packs' })} ({best.expansionId}) · {oneIn(best.pct / 100)} packs
-            </Stat>
+
+        <div className="min-w-0 grow">
+          <p className="text-neutral-500 tabular-nums">
+            {dexLabel(species.dexNr)} · Gen {generationOf(species.dexNr).nr} · {generationOf(species.dexNr).region}
+          </p>
+          <h1 className="flex items-center gap-3 text-2xl font-semibold sm:text-3xl">
+            {name}
+            <span className="flex gap-1">
+              {species.types.map((type) => (
+                <img key={type} src={`/images/energy/${type}.webp`} alt={type} className="size-6" />
+              ))}
+            </span>
+          </h1>
+          {entry && (
+            <>
+              <p className="text-neutral-400">{entry.g}</p>
+              <blockquote className="mt-3 max-w-xl border-l-2 border-neutral-600 pl-3 text-neutral-200 italic">{entry.f}</blockquote>
+              <p className="mt-2 text-sm text-neutral-400 tabular-nums">
+                {(entry.h / 10).toLocaleString(i18n.language)} m · {(entry.w / 10).toLocaleString(i18n.language)} kg
+              </p>
+            </>
           )}
-        </dl>
+          <div className="mt-4 flex max-w-md items-center gap-3">
+            <ProgressBar value={owned} max={species.cards.length} className="h-2 grow" />
+            <span className="text-sm tabular-nums">
+              {owned}/{species.cards.length} printings
+            </span>
+          </div>
+          <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            <Stat label="Forms">{species.forms.length}</Stat>
+            <Stat label="Illustrators">{artists.size}</Stat>
+            <Stat label="First appeared">
+              {firstSet} · {t(getExpansionById(firstSet).name)}
+            </Stat>
+            {best && best.pct > 0 && (
+              <Stat label="Best pack for a missing one">
+                {t(best.pack.name, { ns: 'common/packs' })} ({best.expansionId}) · {oneIn(best.pct / 100)} packs
+              </Stat>
+            )}
+          </dl>
+        </div>
       </header>
 
       {line.stages.length > 1 && (

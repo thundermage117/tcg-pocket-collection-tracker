@@ -1,5 +1,7 @@
 // Personal fork: cards grouped by species, in National Dex order. Forms (ex, Alolan, Mega, Team Rocket's, …) count as their base species.
+import { queryOptions } from '@tanstack/react-query'
 import { allCards } from '@/lib/CardsDB'
+import { fetchJsonAsset } from '@/lib/fetchJsonAsset'
 import { capitalize, pokemonTranslations } from '@/lib/utils'
 import { type Card, type CardType, type Collection, rarities } from '@/types'
 import evolutions from '../../assets/evolutions.json'
@@ -160,3 +162,19 @@ export const allLines: EvolutionLine[] = [...linesByRoot.values()]
   .sort((a, b) => a.species[0].dexNr - b.species[0].dexNr)
 
 export const lineOf = (species: Species) => linesByRoot.get(rootOf(species.dexNr)) as EvolutionLine
+
+// Pokédex entries, from scripts/generate-dex-entries.ts: one file per locale in public/pokedex, fetched by the species page only.
+// g: category ("Seed Pokémon"), f: flavor text, h: height in decimetres, w: weight in hectograms (PokéAPI units)
+export interface DexEntry {
+  g: string
+  f: string
+  h: number
+  w: number
+}
+
+export const dexEntriesQuery = (locale: string) =>
+  queryOptions({
+    queryKey: ['pokedex-entries', locale],
+    queryFn: () => fetchJsonAsset<Record<string, DexEntry>>(`/pokedex/${locale}.json`),
+    staleTime: Number.POSITIVE_INFINITY, // only changes on deploy
+  })
