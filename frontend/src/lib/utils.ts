@@ -21,7 +21,7 @@ import { fetchJsonAsset } from './fetchJsonAsset'
 type NameTranslations = Record<string, Partial<Record<string, string | null>>>
 
 // Fetched like cards.json (see CardsDB.ts) rather than bundled into the startup chunk
-const [pokemonTranslations, toolTranslations, trainerTranslations] = await Promise.all([
+export const [pokemonTranslations, toolTranslations, trainerTranslations] = await Promise.all([
   fetchJsonAsset<NameTranslations>(pokemonTranslationsUrl),
   fetchJsonAsset<NameTranslations>(toolTranslationsUrl),
   fetchJsonAsset<NameTranslations>(trainerTranslationsUrl),

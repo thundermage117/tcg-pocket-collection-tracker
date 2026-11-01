@@ -1,10 +1,7 @@
 // Personal fork: cards grouped by species, in National Dex order. Forms (ex, Alolan, Mega, Team Rocket's, …) count as their base species.
 import { allCards } from '@/lib/CardsDB'
-import { capitalize } from '@/lib/utils'
+import { capitalize, pokemonTranslations } from '@/lib/utils'
 import { type Card, type CardType, type Collection, rarities } from '@/types'
-import pokemonTranslations from '../../assets/pokemon_translations.json'
-
-type TranslationKey = keyof typeof pokemonTranslations
 
 // The first 1025 keys are the species in National Dex order (bulbasaur … pecharunt); forms are appended after them
 const DEX_SIZE = 1025
@@ -90,13 +87,13 @@ export const getSpecies = (dexNr: number) => allSpecies.find((s) => s.dexNr === 
 
 /** Species name in the app language, falling back to English. */
 export function speciesName(species: Species, lang: string): string {
-  const translations = pokemonTranslations[species.key as TranslationKey] as Record<string, string | null>
+  const translations = pokemonTranslations[species.key] as Record<string, string | null>
   return translations[lang] || translations['en-US'] || capitalize(species.key)
 }
 
 /** True when any language's name contains the query, so a French name finds the species in English too. */
 export function speciesMatches(species: Species, query: string): boolean {
-  const translations = pokemonTranslations[species.key as TranslationKey] as Record<string, string | null>
+  const translations = pokemonTranslations[species.key] as Record<string, string | null>
   return Object.values(translations).some((name) => name?.toLowerCase().includes(query))
 }
 
