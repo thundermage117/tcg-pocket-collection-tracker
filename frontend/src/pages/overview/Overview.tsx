@@ -31,20 +31,6 @@ function Overview() {
 
   const { t } = useTranslation(['pages/overview', 'filters', 'common/sets', 'common/packs', 'expansion-overview'])
 
-  const ownedCardsCount = () => {
-    // Count from the card database (same logic as CollectionCards.totalOwned) so orphaned
-    // collection rows — card_ids no longer present in allCards — don't inflate the total.
-    let total = 0
-    const countedIds = new Set<number>()
-    for (const card of getFilteredCards({}, ownedCards)) {
-      if (card.collected && !countedIds.has(card.internal_id)) {
-        total += card.amount_owned ?? 0
-        countedIds.add(card.internal_id)
-      }
-    }
-    return total
-  }
-
   // personal fork: filters live in the URL (?rarity=☆☆&copies=2&deck=1) and are remembered for the next visit
   const { get, update } = useUrlFilters('overview-view', ['rarity', 'copies', 'deck'])
   const rarityParam = get('rarity')
@@ -61,13 +47,25 @@ function Overview() {
   )
 
   // Memoized so the pack odds (a pullRate per pack) only rerun when the collection or filters change
-  const { availableCards, collectedCards, chances } = useMemo(() => {
+  const { availableCards, collectedCards, totalOwned, chances } = useMemo(() => {
     const availableCards = getFilteredCards(filters, ownedCards)
+    // Copies owned of the cards the filters show. Counted from the card database (same logic as CollectionCards.totalOwned)
+    // so orphaned collection rows — card_ids no longer present in allCards — don't inflate the total.
+    let totalOwned = 0
+    const countedIds = new Set<number>()
+    for (const card of availableCards) {
+      if (card.collected && !countedIds.has(card.internal_id)) {
+        totalOwned += card.amount_owned ?? 0
+        countedIds.add(card.internal_id)
+      }
+    }
     const collectedCards = getFilteredCards({ ...filters, minNumber: filters.number }, ownedCards)
     const wantedCards = getFilteredCards({ ...filters, maxNumber: filters.number - 1 }, ownedCards)
-    return { availableCards, collectedCards, chances: getPackChances(availableCards, collectedCards, wantedCards, filters.deckbuildingMode) }
+    return { availableCards, collectedCards, totalOwned, chances: getPackChances(availableCards, collectedCards, wantedCards, filters.deckbuildingMode) }
   }, [filters, ownedCards])
   const bestPack = bestChance([...chances.values()].flat())
+  // The ☆☆ pick ignores the filters, so only show it when ☆☆ cards are in view (deckbuilding mode hides alternate arts like ☆☆)
+  const showTwoStarPick = !filters.deckbuildingMode && (filters.rarity.length === 0 || filters.rarity.includes('☆☆'))
 
   // same ranking as the packs page's "Cards I'm missing" goal
   const bestTwoStarPack = useMemo(
@@ -124,21 +122,33 @@ function Overview() {
             </h2>
           </div>
           {/* Personal fork: links to the packs page, and names its ☆☆ pick so the two answers can't silently disagree */}
-          <Link to="/packs" className="col-span-8 md:col-span-4 col-start-1 md:col-start-3 flex rounded-lg transition-opacity hover:opacity-90">
-            <GradientCard title={bestPack?.pack.name ?? ''} percentage={(bestPack?.pct ?? 0) / 100} className="w-full" backgroundColor={bestPack?.pack.color}>
-              {bestTwoStarPack && bestTwoStarPack.perPackNew > 0 && (
-                <p className="mt-3 flex items-center gap-1 text-center text-sm text-slate-900/80">
-                  For ☆☆ you're missing: <span className="font-semibold">{t(bestTwoStarPack.packName, { ns: 'common/packs' })}</span> ·{' '}
-                  {oneIn(bestTwoStarPack.perPackNew)} packs
-                  <ChevronRight className="size-4" />
-                </p>
-              )}
-            </GradientCard>
-          </Link>
+          {bestPack && bestPack.pct > 0 ? (
+            <Link to="/packs" className="col-span-8 md:col-span-4 col-start-1 md:col-start-3 flex rounded-lg transition-opacity hover:opacity-90">
+              <GradientCard title={bestPack.pack.name} percentage={bestPack.pct / 100} className="w-full" backgroundColor={bestPack.pack.color}>
+                {showTwoStarPick && bestTwoStarPack && bestTwoStarPack.perPackNew > 0 && (
+                  <p className="mt-3 flex items-center gap-1 text-center text-sm text-slate-900/80">
+                    For ☆☆ you're missing: <span className="font-semibold">{t(bestTwoStarPack.packName, { ns: 'common/packs' })}</span> ·{' '}
+                    {oneIn(bestTwoStarPack.perPackNew)} packs
+                    <ChevronRight className="size-4" />
+                  </p>
+                )}
+              </GradientCard>
+            </Link>
+          ) : (
+            // Nothing missing in any openable pack: no pick to make
+            <div className="col-span-8 md:col-span-4 col-start-1 md:col-start-3 flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 bg-neutral-800 border-solid p-4 sm:p-8">
+              <p className="font-semibold text-center text-2xl sm:text-5xl">All caught up 🎉</p>
+              <p className="mt-2 text-balance text-center text-neutral-300 text-md sm:text-xl">
+                No booster pack has a card you're missing{filters.rarity.length > 0 || filters.number > 1 ? ' with these filters' : ''}.
+              </p>
+            </div>
+          )}
           <div className="col-span-8 md:col-span-2 flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 bg-neutral-800 border-solid p-3 sm:p-6 md:p-8">
             <h2 className="mb-1 text-center text-base sm:text-lg md:text-2xl">{t('youHave')}</h2>
-            <h1 className="mb-2 text-balance text-center font-semibold text-2xl sm:text-3xl md:text-7xl">{ownedCardsCount()}</h1>
+            <h1 className="mb-2 text-balance text-center font-semibold text-2xl sm:text-3xl md:text-7xl">{totalOwned}</h1>
             <h2 className="text-balance text-center text-base sm:text-lg md:text-2xl">{t('cardsTotal')}</h2>
+            {/* Follows the rarity filter like the other tiles; say so, or the number looks wrong */}
+            {filters.rarity.length > 0 && <p className="mt-1 text-center text-neutral-400 text-sm">{filters.rarity.join(' ')}</p>}
           </div>
         </section>
 
