@@ -1,6 +1,7 @@
-import { Siren } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { ChevronRight, Siren } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 import { DropdownFilter } from '@/components/Filters'
 import Footer from '@/components/Footer.tsx'
 import DeckbuildingFilter from '@/components/filters/DeckbuildingFilter'
@@ -11,9 +12,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTitle } from '@/components/ui/alert.tsx'
 import { expansions } from '@/lib/CardsDB.ts'
 import { getFilteredCards } from '@/lib/filters'
+import { getBoosterValues } from '@/lib/packValue'
 import { pullRate } from '@/lib/stats'
 import { CompletionHeatmap } from '@/pages/overview/components/CompletionHeatmap.tsx'
 import { GradientCard } from '@/pages/overview/components/GradientCard.tsx'
+import { oneIn } from '@/pages/packs/types'
 import { useCollection } from '@/services/collection/useCollection'
 import type { Card, CollectionRow, Rarity } from '@/types'
 
@@ -24,7 +27,7 @@ function getUniqueCount(cards: Card[]) {
 function Overview() {
   const { data: ownedCards = new Map<number, CollectionRow>(), isLoading } = useCollection()
 
-  const { t } = useTranslation(['pages/overview', 'filters', 'common/sets', 'expansion-overview'])
+  const { t } = useTranslation(['pages/overview', 'filters', 'common/sets', 'common/packs', 'expansion-overview'])
 
   const ownedCardsCount = () => {
     // Count from the card database (same logic as CollectionCards.totalOwned) so orphaned
@@ -70,6 +73,12 @@ function Overview() {
     return newHighestProbabilityPack
   }
   const highestProbabilityPack = getHighestProbabilityPack()
+
+  // same ranking as the packs page's "Cards I'm missing" goal
+  const bestTwoStarPack = useMemo(
+    () => (ownedCards.size === 0 ? undefined : getBoosterValues(ownedCards).toSorted((a, b) => b.perPackNew - a.perPackNew)[0]),
+    [ownedCards],
+  )
 
   if (isLoading) {
     return <Spinner size="lg" overlay />
@@ -119,12 +128,23 @@ function Overview() {
               {filters.number === 1 ? t('numberOfCopies-single') : t('numberOfCopies-plural', { numberFilter: filters.number })}
             </h2>
           </div>
-          <GradientCard
-            title={highestProbabilityPack?.packName ?? ''}
-            percentage={highestProbabilityPack?.percentage ?? 0}
-            className="col-span-8 md:col-span-4 col-start-1 md:col-start-3"
-            backgroundColor={highestProbabilityPack?.fill}
-          />
+          {/* Personal fork: links to the packs page, and names its ☆☆ pick so the two answers can't silently disagree */}
+          <Link to="/packs" className="col-span-8 md:col-span-4 col-start-1 md:col-start-3 flex rounded-lg transition-opacity hover:opacity-90">
+            <GradientCard
+              title={highestProbabilityPack?.packName ?? ''}
+              percentage={highestProbabilityPack?.percentage ?? 0}
+              className="w-full"
+              backgroundColor={highestProbabilityPack?.fill}
+            >
+              {bestTwoStarPack && bestTwoStarPack.perPackNew > 0 && (
+                <p className="mt-3 flex items-center gap-1 text-center text-sm text-slate-900/80">
+                  For ☆☆ you're missing: <span className="font-semibold">{t(bestTwoStarPack.packName, { ns: 'common/packs' })}</span> ·{' '}
+                  {oneIn(bestTwoStarPack.perPackNew)} packs
+                  <ChevronRight className="size-4" />
+                </p>
+              )}
+            </GradientCard>
+          </Link>
           <div className="col-span-8 md:col-span-2 flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 bg-neutral-800 border-solid p-3 sm:p-6 md:p-8">
             <h2 className="mb-1 text-center text-base sm:text-lg md:text-2xl">{t('youHave')}</h2>
             <h1 className="mb-2 text-balance text-center font-semibold text-2xl sm:text-3xl md:text-7xl">{ownedCardsCount()}</h1>

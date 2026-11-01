@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
@@ -6,9 +7,10 @@ interface GradientCardProps {
   className?: string
   backgroundColor?: string
   percentage: number
+  children?: ReactNode // personal fork: extra line under the odds
 }
 
-export function GradientCard({ title, percentage, className, backgroundColor }: GradientCardProps) {
+export function GradientCard({ title, percentage, className, backgroundColor, children }: GradientCardProps) {
   const { t } = useTranslation(['gradient-card', 'common/packs'])
   const chancePercentage = Math.round(percentage * 1000) / 10
 
@@ -31,6 +33,7 @@ export function GradientCard({ title, percentage, className, backgroundColor }: 
           }}
         />
       </p>
+      {children}
     </div>
   )
 }
