@@ -6,9 +6,9 @@ import { defineConfig, type Plugin, type Rolldown } from 'vite'
 import mkcert from 'vite-plugin-mkcert'
 import stripComments from 'vite-plugin-strip-comments'
 
-// CardsDB and ValueDB fetch these at startup and block rendering until they arrive. Without a preload the request
+// CardsDB, ValueDB and utils fetch these at startup and block rendering until they arrive. Without a preload the request
 // only starts once every JS chunk has downloaded and evaluated.
-const PRELOADED_JSON = ['cards.json', 'values.json']
+const PRELOADED_JSON = ['cards.json', 'values.json', 'pokemon_translations.json', 'tools_translations.json', 'trainers_translations.json']
 
 function findJsonAssets(bundle: Rolldown.OutputBundle) {
   return Object.values(bundle).filter(
