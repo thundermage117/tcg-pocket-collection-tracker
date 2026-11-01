@@ -135,10 +135,11 @@ function Overview() {
             <Link to="/packs" className="order-last col-span-8 md:order-none md:col-span-4 md:col-start-3 flex rounded-lg transition-opacity hover:opacity-90">
               <GradientCard title={bestPack.pack.name} percentage={bestPack.pct / 100} className="w-full" backgroundColor={bestPack.pack.color}>
                 {showTwoStarPick && bestTwoStarPack && bestTwoStarPack.perPackNew > 0 && (
-                  <p className="mt-3 flex items-center gap-1 text-center text-sm text-slate-900/80">
+                  // inline, not flex: flex made each text run its own column, which wrapped word by word on phones
+                  <p className="mt-3 text-balance text-center text-sm text-slate-900/80">
                     For ☆☆ you're missing: <span className="font-semibold">{t(bestTwoStarPack.packName, { ns: 'common/packs' })}</span> ·{' '}
                     {oneIn(bestTwoStarPack.perPackNew)} packs
-                    <ChevronRight className="size-4" />
+                    <ChevronRight className="ml-0.5 inline size-4 align-text-bottom" />
                   </p>
                 )}
               </GradientCard>
