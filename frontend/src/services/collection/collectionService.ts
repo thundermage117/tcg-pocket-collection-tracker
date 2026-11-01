@@ -19,9 +19,21 @@ const STALE_CACHE_KEYS = [
   'tcg_collection_cache_v5',
   'tcg_collection_timestamp_v5',
 ]
-const PAGE_SIZE = 500
+const PAGE_SIZE = 1000
+
+// The localStorage copy parsed once per email. It is the collection query's placeholder, which is read on every render
+// until the real query resolves, so it must be the same Map each time.
+let parsedCache: { email: string; collection: Collection | null } | undefined
+
+export function getCachedCollection(email: string): Collection | null {
+  if (parsedCache?.email !== email) {
+    parsedCache = { email, collection: getCollectionFromCache(email) }
+  }
+  return parsedCache.collection
+}
 
 export const removeLocalCacheItems = (email: string) => {
+  parsedCache = undefined
   // Invalidate local cache by removing records from localStorage
   localStorage.removeItem(`${COLLECTION_CACHE_KEY}_${email}`)
   localStorage.removeItem(`${COLLECTION_TIMESTAMP_KEY}_${email}`)
@@ -42,7 +54,7 @@ export async function getCollection(email: string, collectionLastUpdated?: Date)
 
   // Check if we should use cached data
   if (collectionLastUpdated) {
-    const cachedCollection = getCollectionFromCache(email)
+    const cachedCollection = getCachedCollection(email)
     const cacheLastUpdatedRaw = localStorage.getItem(`${COLLECTION_TIMESTAMP_KEY}_${email}`)
 
     if (cacheLastUpdatedRaw) {
@@ -217,7 +229,10 @@ export const setCollected = async (email: string, collection: Collection, intern
 
 // Helper functions
 async function fetchCollectionFromAPI(table: string, key: string, value: string): Promise<Collection> {
-  const { count, error } = await supabase.from(table).select('*', { count: 'exact', head: true }).eq(key, value)
+  const [{ count, error }, firstPage] = await Promise.all([
+    supabase.from(table).select('*', { count: 'exact', head: true }).eq(key, value),
+    fetchPage(table, key, value, null),
+  ])
 
   if (error) {
     throw new Error(`Error fetching collection: ${error.message}`)
@@ -227,7 +242,7 @@ async function fetchCollectionFromAPI(table: string, key: string, value: string)
     return new Map()
   }
 
-  const arr = await fetchAllRows(table, key, value)
+  const arr = await fetchRemainingRows(table, key, value, firstPage, count)
 
   // Guard against a partial fetch ending up in the cache, where it would look like the user lost cards.
   if (arr.length < count) {
@@ -239,29 +254,29 @@ async function fetchCollectionFromAPI(table: string, key: string, value: string)
 
 // Pages on internal_id rather than on an offset. internal_id is unique per collection, so every page picks up exactly
 // where the previous one ended, independent of the query plan Postgres happens to choose for that page.
-async function fetchAllRows(table: string, key: string, value: string): Promise<CollectionRow[]> {
-  const all: CollectionRow[] = []
-  let after: number | null = null
-
-  while (true) {
-    let query = supabase.from(table).select('*').eq(key, value).order('internal_id', { ascending: true }).limit(PAGE_SIZE)
-    if (after !== null) {
-      query = query.gt('internal_id', after)
-    }
-
-    const { data, error } = await query
-    if (error) {
-      throw new Error(`Error fetching collection range: ${error.message}`)
-    }
-
-    const rows = (data ?? []) as unknown as CollectionRow[]
-    all.push(...rows)
-
-    if (rows.length < PAGE_SIZE) {
-      return all
-    }
-    after = rows[rows.length - 1].internal_id
+async function fetchPage(table: string, key: string, value: string, after: number | null): Promise<CollectionRow[]> {
+  let query = supabase.from(table).select('*').eq(key, value).order('internal_id', { ascending: true }).limit(PAGE_SIZE)
+  if (after !== null) {
+    query = query.gt('internal_id', after)
   }
+
+  const { data, error } = await query
+  if (error) {
+    throw new Error(`Error fetching collection range: ${error.message}`)
+  }
+  return (data ?? []) as unknown as CollectionRow[]
+}
+
+// Stops on the count rather than on a short page, so a server-side row cap below PAGE_SIZE can't end the fetch early
+async function fetchRemainingRows(table: string, key: string, value: string, firstPage: CollectionRow[], count: number): Promise<CollectionRow[]> {
+  const all = [...firstPage]
+  let page = firstPage
+
+  while (all.length < count && page.length > 0) {
+    page = await fetchPage(table, key, value, all[all.length - 1].internal_id)
+    all.push(...page)
+  }
+  return all
 }
 
 function getCollectionFromCache(email: string): Collection | null {
@@ -315,6 +330,7 @@ function updateCollectionCache(collection: Collection, email: string, timestamp:
       // FIXIT: sometimes timestamp is a string, but I don't know why
       localStorage.setItem(`${COLLECTION_TIMESTAMP_KEY}_${email}`, typeof timestamp === 'string' ? timestamp : timestamp.toISOString())
       localStorage.setItem(`${COLLECTION_CACHE_KEY}_${email}`, JSON.stringify([...collection.values()]))
+      parsedCache = { email, collection }
     }
   } catch (error) {
     console.error('Error updating collection cache:', error)
