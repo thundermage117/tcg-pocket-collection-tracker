@@ -1,5 +1,5 @@
 import i18n from 'i18next'
-import { CircleHelp, Minus, Plus, Trash2 } from 'lucide-react'
+import { CircleHelp, Minus, Plus, Scale, Trash2 } from 'lucide-react'
 import { type ReactNode, startTransition, useEffect, useOptimistic, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
@@ -15,9 +15,10 @@ import { craftingCost, getCardByInternalId, getExpansionById } from '@/lib/Cards
 import { getLocalizedImagePath } from '@/lib/imageLocales'
 import { pullRateForSpecificCard } from '@/lib/stats'
 import { getCardNameByLang } from '@/lib/utils'
+import { isTradable } from '@/pages/trade/tradeCheckData'
 import { useAccount } from '@/services/account/useAccount'
 import { useCollection, useSelectedCard, useSetCollected, useUpdateAmountWanted } from '@/services/collection/useCollection'
-import { type Card, type CollectionRow, tradableRarities } from '@/types'
+import { type Card, type CollectionRow, defaultRaritySettings, tradableRarities } from '@/types'
 
 function CardProperty({ name, children }: { name: string; children: ReactNode }) {
   return (
@@ -86,6 +87,7 @@ export default function CardDetail() {
       ? `${tradingSettingsRow.to_collect}`
       : `${tradingSettingsRow.to_collect}-${tradingSettingsRow.to_keep}`
     : ''
+  const isSpare = (row?.amount_owned ?? 0) > (amountWanted ?? tradingSettingsRow?.to_keep ?? defaultRaritySettings.to_keep)
 
   useEffect(() => {
     if (id) {
@@ -217,9 +219,15 @@ export default function CardDetail() {
                     <Trash2 />
                   </button>
                 </div>
-                <Link className="w-fit" to={`/trade/matches/results?card_id=${card?.internal_id}`} onClick={() => setOpen(false)}>
-                  <Button>Find trades</Button>
-                </Link>
+                {card && isTradable(card) && (
+                  // personal fork: a spare goes on the give side, anything else is a card to get
+                  <Link className="w-fit" to={`/trade/check?${isSpare ? 'give' : 'get'}=${card.card_id}`} onClick={() => setOpen(false)}>
+                    <Button>
+                      <Scale />
+                      Check a trade
+                    </Button>
+                  </Link>
+                )}
               </>
             )}
 
