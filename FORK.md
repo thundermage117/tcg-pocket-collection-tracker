@@ -11,6 +11,9 @@ A single-user fork of [marcelpanse/tcg-pocket-collection-tracker](https://github
   - Score = percentile among all tradable cards of that rarity. ☆☆: 70% vote Elo + 30% demand (Elo weight scales down below 200 votes); other rarities: demand (eleet wishlists per offer).
   - Gap within 15 points is fair, over 35 is "big". Under 300 wishlists + offers or a provisional Elo makes it a lean ("Leaning steal") with a 25-point band.
   - Scoring is pure in `frontend/src/lib/tradeFairness.ts`; Shinedust and pack-point tables are there too (checked Oct 2026: trade tokens were replaced by Shinedust in July 2025, both sides pay, ☆☆☆ / Crown / promos aren't tradable). Recheck them if the game changes trading.
+- **Navigation**: below `lg` a bottom tab bar (Overview, Collection, Packs, Trade, More) replaces the hamburger; its More sheet holds the other pages and the account actions. On desktop, Decks and Missions sit behind "More". Pages are listed once in `frontend/src/components/navItems.ts`.
+- **Filters in the URL** on the overview, packs, rankings and trade pages, so refresh, back and links keep the view. `useUrlFilters` also remembers a few choices (overview filters, pack goal, trade rarity and sort) for when the URL leaves them out.
+- **Card detail** links out: "Check a trade" opens the trade check with the card filled in (give if it's a spare, else get), and a "Rankings tier" row links to its tier on each Rankings tab. Cards on the Trade page have the same trade-check shortcut.
 
 Removed from navigation (files left in place so upstream merges stay clean): friends, chat, trade offers/matching, community/blog links, analytics, donation widget.
 
