@@ -1,6 +1,7 @@
 // Personal fork: the overview's Value filter and tier tile, from the Rankings "Most wanted" tiers (deluxe foils
 // excluded, as on Rankings by default).
-import { getMostWanted } from '@/lib/rankings'
+import { getMostWanted, tiers } from '@/lib/rankings'
+import type { Card } from '@/types'
 
 export const valueOptions = ['all', 'top', 'hot'] as const
 export type ValueOption = (typeof valueOptions)[number]
@@ -24,3 +25,25 @@ export function wantedTierOf(internalId: number): number | undefined {
 
 export const inValue = (value: ValueOption, internalId: number) =>
   value === 'all' || (wantedTierOf(internalId) ?? Number.POSITIVE_INFINITY) <= valueMaxTier[value]
+
+export interface TierCount {
+  available: number
+  collected: number
+}
+
+/** Unique ranked cards per Most wanted tier in `available`, and how many of them are in `collected`. */
+export function countByTier(available: Card[], collected: Card[]): TierCount[] {
+  const count = (cards: Card[]) => {
+    const ids = tiers.map(() => new Set<number>())
+    for (const c of cards) {
+      const tier = wantedTierOf(c.internal_id)
+      if (tier !== undefined) {
+        ids[tier].add(c.internal_id)
+      }
+    }
+    return ids.map((set) => set.size)
+  }
+  const a = count(available)
+  const c = count(collected)
+  return tiers.map((_, i) => ({ available: a[i], collected: c[i] }))
+}

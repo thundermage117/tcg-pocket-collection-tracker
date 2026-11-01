@@ -15,8 +15,9 @@ import { getFilteredCards } from '@/lib/filters'
 import { getBoosterValues } from '@/lib/packValue'
 import { CompletionHeatmap } from '@/pages/overview/components/CompletionHeatmap.tsx'
 import { GradientCard } from '@/pages/overview/components/GradientCard.tsx'
+import { TierTile } from '@/pages/overview/components/TierTile'
 import { bestChance, getPackChances } from '@/pages/overview/packChances'
-import { inValue, type ValueOption, valueLabels, valueOptions } from '@/pages/overview/valueTiers'
+import { countByTier, inValue, type ValueOption, valueLabels, valueOptions } from '@/pages/overview/valueTiers'
 import { oneIn } from '@/pages/packs/types'
 import { useCollection } from '@/services/collection/useCollection'
 import { type Card, type CollectionRow, type Rarity, rarities } from '@/types'
@@ -50,23 +51,21 @@ function Overview() {
   )
 
   // Memoized so the pack odds (a pullRate per pack) only rerun when the collection or filters change
-  const { availableCards, collectedCards, totalOwned, chances } = useMemo(() => {
-    // Value keeps only cards in the chosen Most wanted tiers, so every tile, the pick and the heatmap count just those
+  const { availableCards, collectedCards, tierCounts, chances } = useMemo(() => {
+    const allAvailable = getFilteredCards(filters, ownedCards)
+    const allCollected = getFilteredCards({ ...filters, minNumber: filters.number }, ownedCards)
+    // Value keeps only cards in the chosen Most wanted tiers, so the ring, the pick and the heatmap count just those
     const valued = (cards: Card[]) => (filters.value === 'all' ? cards : cards.filter((c) => inValue(filters.value, c.internal_id)))
-    const availableCards = valued(getFilteredCards(filters, ownedCards))
-    // Copies owned of the cards the filters show. Counted from the card database (same logic as CollectionCards.totalOwned)
-    // so orphaned collection rows — card_ids no longer present in allCards — don't inflate the total.
-    let totalOwned = 0
-    const countedIds = new Set<number>()
-    for (const card of availableCards) {
-      if (card.collected && !countedIds.has(card.internal_id)) {
-        totalOwned += card.amount_owned ?? 0
-        countedIds.add(card.internal_id)
-      }
-    }
-    const collectedCards = valued(getFilteredCards({ ...filters, minNumber: filters.number }, ownedCards))
+    const availableCards = valued(allAvailable)
+    const collectedCards = valued(allCollected)
     const wantedCards = valued(getFilteredCards({ ...filters, maxNumber: filters.number - 1 }, ownedCards))
-    return { availableCards, collectedCards, totalOwned, chances: getPackChances(availableCards, collectedCards, wantedCards, filters.deckbuildingMode) }
+    return {
+      availableCards,
+      collectedCards,
+      // before the Value filter, so the tier tile always shows every tier and just dims the ones left out
+      tierCounts: countByTier(allAvailable, allCollected),
+      chances: getPackChances(availableCards, collectedCards, wantedCards, filters.deckbuildingMode),
+    }
   }, [filters, ownedCards])
   const bestPack = bestChance([...chances.values()].flat())
   // The ☆☆ pick ignores the filters, so only show it when ☆☆ cards are in view (deckbuilding mode hides alternate arts like ☆☆)
@@ -160,13 +159,8 @@ function Overview() {
               </p>
             </div>
           )}
-          <div className="col-span-4 md:col-span-2 flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 bg-neutral-800 border-solid p-3 sm:p-6 md:p-8">
-            <h2 className="mb-1 text-center text-base sm:text-lg md:text-2xl">{t('youHave')}</h2>
-            <h1 className="mb-2 text-balance text-center font-semibold text-4xl sm:text-5xl md:text-7xl">{totalOwned}</h1>
-            <h2 className="text-balance text-center text-base sm:text-lg md:text-2xl">{t('cardsTotal')}</h2>
-            {/* Follows the rarity filter like the other tiles; say so, or the number looks wrong */}
-            {filters.rarity.length > 0 && <p className="mt-1 text-center text-neutral-400 text-sm">{filters.rarity.join(' ')}</p>}
-          </div>
+          {/* Personal fork: replaces upstream's "You have N cards in total" */}
+          <TierTile counts={tierCounts} value={filters.value} rarity={filters.rarity} className="col-span-4 md:col-span-2" />
         </section>
 
         <CompletionHeatmap
