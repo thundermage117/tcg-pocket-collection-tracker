@@ -1,5 +1,5 @@
 // Personal fork: one list of pages for the desktop header, the phone tab bar and their "More" menus.
-import { ArrowLeftRight, Layers, LayoutDashboard, Library, ListChecks, type LucideIcon, Package, ScanLine, Trophy } from 'lucide-react'
+import { ArrowLeftRight, BookOpen, Layers, LayoutDashboard, Library, ListChecks, type LucideIcon, Package, ScanLine, Trophy } from 'lucide-react'
 
 export type NavItem = {
   title: string // header locale key; i18next falls back to the title for fork pages without one
@@ -14,6 +14,7 @@ export const navItems: NavItem[] = [
   { title: 'collection', href: '/collection', icon: Library, tab: true },
   { title: 'Packs', href: '/packs', icon: Package, tab: true },
   { title: 'Rankings', href: '/rankings', icon: Trophy },
+  { title: 'Pokédex', href: '/pokedex', icon: BookOpen },
   { title: 'trade', href: '/trade', icon: ArrowLeftRight, tab: true },
   { title: 'scan', href: '/scan', icon: ScanLine },
   { title: 'decks', href: '/decks', icon: Layers, secondary: true },

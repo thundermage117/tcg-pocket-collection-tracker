@@ -15,6 +15,7 @@ import { getFilteredCards } from '@/lib/filters'
 import { getBoosterValues } from '@/lib/packValue'
 import { CompletionHeatmap } from '@/pages/overview/components/CompletionHeatmap.tsx'
 import { GradientCard } from '@/pages/overview/components/GradientCard.tsx'
+import { PokedexTile } from '@/pages/overview/components/PokedexTile'
 import { TierTile } from '@/pages/overview/components/TierTile'
 import { bestChance, getPackChances } from '@/pages/overview/packChances'
 import { countByTier, inValue, type ValueOption, valueLabels, valueOptions } from '@/pages/overview/valueTiers'
@@ -150,6 +151,8 @@ function Overview() {
           {/* Personal fork: replaces upstream's "You have N cards in total" */}
           <TierTile counts={tierCounts} value={filters.value} rarity={filters.rarity} className="col-span-4 md:col-span-2" />
         </section>
+
+        <PokedexTile collection={ownedCards} className="mt-3 sm:mt-4" />
 
         <CompletionHeatmap
           availableCards={availableCards}
