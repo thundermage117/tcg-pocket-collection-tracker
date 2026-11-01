@@ -82,14 +82,14 @@ The repo's front page is `.github/README.md`, which GitHub shows instead of upst
 
 - Raw snapshots are committed in `scripts/value/data/`. The app bundles `frontend/assets/values.json`, so there are no live calls.
 - Adjusted Elo shrinks low-vote cards toward the ☆☆ mean by `votes / (votes + 200)`.
-- Demand is eleet wishlists per offer. Ranked demand (`demandScore`) adds 200 phantom offers at the average ratio (`DEMAND_K`), so a new set's card with ~80 spares listed can't outrank thousands of trades on a lucky ratio.
+- Demand is eleet wishlists per offer. Every page that ranks or compares it (Rankings, Trade flames and sort, trade check, "Sort by value") uses `demandScore`, which adds 200 phantom offers at the average ratio (`DEMAND_K`), so a new set's card with ~80 spares listed can't outrank thousands of trades on a lucky ratio. Card detail shows both the raw and the adjusted figure.
 - A same-art reprint (e.g. Deluxe A4b-1 Bulbasaur) shares its original's `internal_id` (A1-1), and eleet pools their numbers. `build_values.py` marks it `same_as: "A1-1"`; Most wanted ranks only the original.
 - ☆☆ kind is full art → trainer → rainbow by print order, verified on card images.
 - Check the Discord formatter: `pnpm tsx scripts/value/check-discord.ts`.
 
 ## Rankings
 
-`frontend/src/lib/rankings.ts`. Tiers are taken over the whole ranking, so a card keeps its tier when the list is filtered.
+`frontend/src/lib/rankings.ts`. Tiers are taken over the whole ranking, so a card keeps its tier when the list is filtered. A sticky row of tier chips (with how many of each you own) jumps to a tier, and each tier header has an ownership bar in its color. The page doesn't wait for the collection; owned marks fill in when it loads.
 
 - **☆☆ Elo**: by adjusted Elo. Tiers are Jenks natural breaks (least within-tier variance), so they end where the Elo jumps and read as Elo ranges.
 - **Most wanted**: by `demandScore`, in fixed shares: top 1 / 3 / 8 / 20 / 45 / 70 / 90 / 100%.

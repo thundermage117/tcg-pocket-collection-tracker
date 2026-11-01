@@ -3,7 +3,7 @@
 // same-rarity trade are comparable. ☆☆ blends vote Elo with demand; every other rarity is demand only.
 
 import { craftingCost } from '@/lib/CardsDB'
-import { type CardValue, demandRatio, PROVISIONAL_VOTES } from '@/lib/ValueDB'
+import { type CardValue, demandScore, PROVISIONAL_VOTES } from '@/lib/ValueDB'
 import type { Rarity, TradableRarity } from '@/types'
 
 // Shinedust each side pays for the card it receives (game8 / serebii, Oct 2026). ◊ and ◊◊ are free.
@@ -46,13 +46,13 @@ export interface RarityPool {
   elo: number[] // sorted ascending, ☆☆ adjusted Elo
 }
 
-/** Sorted demand / Elo values for one rarity, from every tradable card of it. */
+/** Sorted demand / Elo values for one rarity, from every tradable card of it. A reprint counts once, as its original. */
 export function buildPool(values: (CardValue | undefined)[]): RarityPool {
   const demand: number[] = []
   const elo: number[] = []
   for (const value of values) {
-    if (listings(value) > 0) {
-      demand.push(demandRatio(value))
+    if (listings(value) > 0 && !value?.same_as) {
+      demand.push(demandScore(value))
     }
     if (value?.adj !== undefined) {
       elo.push(value.adj)
@@ -91,7 +91,7 @@ export function percentile(sorted: number[], x: number): number {
 
 export interface CardScore {
   score?: number // 0–100, undefined without any data
-  demand?: number // wishlists per offer
+  demand?: number // adjusted wishlists per offer (demandScore)
   demandPct?: number
   eloPct?: number
   eloPosition?: number // 1 = best ☆☆
@@ -104,7 +104,7 @@ export interface CardScore {
 
 export function scoreCard(value: CardValue | undefined, pool: RarityPool): CardScore {
   const count = listings(value)
-  const demand = count > 0 ? demandRatio(value) : undefined
+  const demand = count > 0 ? demandScore(value) : undefined
   const demandPct = demand !== undefined ? percentile(pool.demand, demand) : undefined
   const provisional = value?.votes !== undefined && value.votes < PROVISIONAL_VOTES
   const base = { demand, demandPct, listings: count, provisional, thin: count < THIN_LISTINGS || provisional }
@@ -170,7 +170,7 @@ export function judgeTrade(give: CardScore, get: CardScore, rarity: Rarity): Ver
 
   if (give.demand !== undefined && get.demand !== undefined) {
     const multiple = get.demand / Math.max(give.demand, 0.01)
-    const counts = `yours ${fmtRatio(give.demand)}, theirs ${fmtRatio(get.demand)} wishlists per offer`
+    const counts = `yours ${fmtRatio(give.demand)}, theirs ${fmtRatio(get.demand)} adjusted wishlists per offer`
     if (multiple >= MORE_WANTED) {
       reasons.push(`Their card is ${fmtRatio(multiple)}× more wanted (${counts}).`)
     } else if (multiple <= 1 / MORE_WANTED) {

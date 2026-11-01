@@ -5,7 +5,7 @@ import { Link } from 'react-router'
 import { CardThumb, SetLogo } from '@/components/CardThumb'
 import { getExpansionById } from '@/lib/CardsDB'
 import { twoStarPosition } from '@/lib/rankings'
-import { demandRatio, getCardValue } from '@/lib/ValueDB'
+import { demandScore, getCardValue } from '@/lib/ValueDB'
 import { useSelectedCard } from '@/services/collection/useCollection'
 import type { SetGroup, TradeItem } from '../tradeGroups'
 
@@ -15,7 +15,7 @@ function hint(item: TradeItem) {
   if (position !== undefined) {
     return `☆☆ #${position}`
   }
-  const ratio = demandRatio(getCardValue(item.card.card_id))
+  const ratio = demandScore(getCardValue(item.card.card_id))
   return ratio > 0 ? `demand ×${ratio.toFixed(1)}` : ''
 }
 

@@ -8,13 +8,16 @@ import type { Card } from '@/types'
 // about three rows on desktop; the rest stays behind "Show all"
 const PREVIEW = 30
 
+/** Element id of a tier's section, for the jump chips. */
+export const tierAnchor = (tier: Tier) => `tier-${tier.name}`
+
 interface Props {
   tier: Tier
   range: string
   entries: RankedCard[]
   score: (e: RankedCard) => string
   owned: (card: Card) => boolean
-  showOwned: boolean
+  ownedCount?: number // left out when ownership isn't shown
   open: boolean
   showAll: boolean
   onToggle: () => void
@@ -22,10 +25,10 @@ interface Props {
   onSelect: (card: Card) => void
 }
 
-export function TierSection({ tier, range, entries, score, owned, showOwned, open, showAll, onToggle, onShowAll, onSelect }: Props) {
+export function TierSection({ tier, range, entries, score, owned, ownedCount, open, showAll, onToggle, onShowAll, onSelect }: Props) {
   const visible = showAll ? entries : entries.slice(0, PREVIEW)
   return (
-    <section className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/60">
+    <section id={tierAnchor(tier)} className="scroll-mt-14 overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/60">
       <button type="button" onClick={onToggle} className="flex w-full cursor-pointer items-center gap-3 px-3 py-2 text-left hover:bg-neutral-800/60">
         <span
           className={`flex size-9 shrink-0 items-center justify-center rounded-md font-black text-neutral-900 ${tier.name.length > 2 ? 'text-sm' : 'text-lg'}`}
@@ -36,11 +39,16 @@ export function TierSection({ tier, range, entries, score, owned, showOwned, ope
         <span className="flex-1 text-sm">
           <span className="font-medium text-neutral-200">{range}</span>
           <span className="text-neutral-500"> · {entries.length} cards</span>
-          {showOwned && (
-            <span className="text-neutral-400">
-              {' '}
-              · you own {entries.filter((e) => owned(e.card)).length} / {entries.length}
-            </span>
+          {ownedCount !== undefined && (
+            <>
+              <span className="text-neutral-400">
+                {' '}
+                · you own {ownedCount} / {entries.length}
+              </span>
+              <span aria-hidden className="mt-1.5 block h-1 max-w-64 overflow-hidden rounded-full bg-neutral-800">
+                <span className="block h-full rounded-full" style={{ width: `${(100 * ownedCount) / entries.length}%`, backgroundColor: tier.color }} />
+              </span>
+            </>
           )}
         </span>
         <ChevronDown className={cn('size-4 text-neutral-400 transition-transform', open && 'rotate-180')} />

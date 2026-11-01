@@ -6,18 +6,18 @@ import { useSearchParams } from 'react-router'
 import { DropdownFilter, TabsFilter } from '@/components/Filters'
 import RarityFilter from '@/components/filters/RarityFilter'
 import SearchInput from '@/components/filters/SearchInput'
-import { Spinner } from '@/components/Spinner'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ValueDataAge } from '@/components/ValueDataAge'
 import { expansions, getExpansionById } from '@/lib/CardsDB'
 import { ownsCard } from '@/lib/packValue'
-import { getMostWanted, getTwoStarRanking, type RankedCard, tiers, wantedShares } from '@/lib/rankings'
+import { getMostWanted, getTwoStarRanking, type RankedCard, type Tier, tiers, wantedShares } from '@/lib/rankings'
 import { getCardNameByLang } from '@/lib/utils'
 import { isProvisional, kindLabel, PROVISIONAL_VOTES, type TwoStarKind } from '@/lib/ValueDB'
 import { useCollection, useSelectedCard } from '@/services/collection/useCollection'
 import { type ExpansionId, type Rarity, rarities } from '@/types'
-import { TierSection } from './components/TierSection'
+import { TierNav } from './components/TierNav'
+import { TierSection, tierAnchor } from './components/TierSection'
 
 type Tab = 'elo' | 'wanted'
 type KindOption = 'all' | TwoStarKind
@@ -63,7 +63,8 @@ const defaultOpen = new Set(['SSS', 'SS', 'S', 'A'])
 
 export default function Rankings() {
   const { t, i18n } = useTranslation('common/sets')
-  const { data: collection, isLoading } = useCollection()
+  // rankings don't need the collection: render straight away, owned marks fill in when it arrives
+  const { data: collection } = useCollection()
   const { setSelectedCardId } = useSelectedCard()
   const [params, setParams] = useSearchParams()
   const [open, setOpen] = useState(defaultOpen)
@@ -99,10 +100,6 @@ export default function Rankings() {
   }
   const toggle = (set: Set<string>, name: string) => (set.has(name) ? new Set([...set].filter((n) => n !== name)) : new Set([...set, name]))
 
-  if (isLoading) {
-    return <Spinner size="lg" overlay />
-  }
-
   const owned = (card: RankedCard['card']) => ownsCard(collection, card)
   const query = search.trim().toLowerCase()
   const filtered = ranking.filter(
@@ -115,6 +112,15 @@ export default function Rankings() {
   )
   const byTier = tiers.map((_, i) => filtered.filter((e) => e.tier === i))
   const openAll = filtered.length <= SMALL_LIST
+  const showOwned = collection !== undefined && !missingOnly
+  const ownedByTier = byTier.map((entries) => (showOwned ? entries.filter((e) => owned(e.card)).length : undefined))
+  const navItems = tiers.flatMap((tier, i) => (byTier[i].length === 0 ? [] : [{ tier, total: byTier[i].length, owned: ownedByTier[i] }]))
+
+  const jumpTo = (tier: Tier) => {
+    setOpen(new Set([...open, tier.name]))
+    // after the tier opens, so the scroll lands on its final position
+    requestAnimationFrame(() => document.getElementById(tierAnchor(tier))?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-12">
@@ -188,6 +194,7 @@ export default function Rankings() {
         <p className="py-12 text-center text-neutral-400">No cards match these filters.</p>
       ) : (
         <div className="flex flex-col gap-3">
+          {navItems.length > 1 && <TierNav items={navItems} onJump={jumpTo} />}
           {tiers.map((tier, i) =>
             byTier[i].length === 0 ? null : (
               <TierSection
@@ -197,7 +204,7 @@ export default function Rankings() {
                 entries={byTier[i]}
                 score={scores[tab]}
                 owned={owned}
-                showOwned={collection !== undefined && !missingOnly}
+                ownedCount={ownedByTier[i]}
                 open={openAll || open.has(tier.name)}
                 showAll={showAll.has(tier.name)}
                 onToggle={() => setOpen(toggle(open, tier.name))}

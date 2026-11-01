@@ -2,7 +2,7 @@
 // Only ☆☆ has meaningful community Elo votes; every other rarity is ranked by trade demand.
 
 import { allCards } from '@/lib/CardsDB'
-import { type CardValue, demandRatio, demandScore, getCardValue } from '@/lib/ValueDB'
+import { type CardValue, demandScore, getCardValue } from '@/lib/ValueDB'
 import type { Card } from '@/types'
 
 export interface RankedCard {
@@ -108,8 +108,9 @@ export function getMostWanted(includeFoils = false): RankedCard[] {
   const entries: Omit<RankedCard, 'position' | 'tier'>[] = []
   for (const card of allCards) {
     const value = getCardValue(card.card_id)
-    if (value && !value.same_as && demandRatio(value) > 0 && (includeFoils || !card.foil)) {
-      entries.push({ card, value, score: demandScore(value) })
+    const score = demandScore(value)
+    if (value && !value.same_as && score > 0 && (includeFoils || !card.foil)) {
+      entries.push({ card, value, score })
     }
   }
   return rank(entries, byShare)

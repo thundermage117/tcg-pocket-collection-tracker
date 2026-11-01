@@ -15,7 +15,7 @@ import { useUrlFilters } from '@/hooks/useUrlFilters'
 import { expansions, getCardByInternalId, getExpansionById } from '@/lib/CardsDB'
 import { RARITY_ORDER } from '@/lib/discordTradeList'
 import { getCardNameByLang } from '@/lib/utils'
-import { demandRatio, getCardValue, valueSortKey } from '@/lib/ValueDB'
+import { demandScore, getCardValue, valueSortKey } from '@/lib/ValueDB'
 import TradeSettings from '@/pages/trade/TradeSettings.tsx'
 import { useAccount } from '@/services/account/useAccount'
 import { useLoginDialog } from '@/services/auth/useAuth'
@@ -35,7 +35,7 @@ const sortOptions: SortMode[] = ['list', 'value']
 
 const DISCORD_SECTION_ID = 'discord-export'
 
-const ratioOf = (item: TradeItem) => demandRatio(getCardValue(item.card.card_id))
+const ratioOf = (item: TradeItem) => demandScore(getCardValue(item.card.card_id))
 
 function Collapsible({ id, title, children }: { id?: string; title: string; children: ReactNode }) {
   return (
@@ -86,7 +86,7 @@ export default function PersonalTrade() {
             name: getCardNameByLang(card, i18n.language),
             number: cardNumber(card.card_id),
             count: forTrade ? (row?.amount_owned ?? 0) - keep : undefined,
-            key: forTrade ? demandRatio(getCardValue(card.card_id)) : valueSortKey(card.card_id),
+            key: forTrade ? demandScore(getCardValue(card.card_id)) : valueSortKey(card.card_id),
           },
         ]
       })

@@ -1,4 +1,5 @@
 // Personal fork: which booster to open if the pull were a guaranteed ☆☆.
+import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { TabsFilter } from '@/components/Filters'
 import { Spinner } from '@/components/Spinner'
@@ -8,6 +9,8 @@ import { ValueDataAge } from '@/components/ValueDataAge'
 import { useUrlFilters } from '@/hooks/useUrlFilters'
 import { getBoosterValues } from '@/lib/packValue'
 import { PROVISIONAL_VOTES } from '@/lib/ValueDB'
+import { useAccount } from '@/services/account/useAccount'
+import { userQuery } from '@/services/auth/useAuth'
 import { useCollection } from '@/services/collection/useCollection'
 import { PackCard } from './components/PackCard'
 import { PackSummary } from './components/PackSummary'
@@ -16,7 +19,11 @@ import { goals, type PackRow, personalSorts, type Range, type Ranges, type SortK
 const rangeOf = (xs: number[]): Range => ({ min: Math.min(...xs), max: Math.max(...xs) })
 
 export default function PackValue() {
-  const { data: collection, isLoading } = useCollection()
+  const { data: user, isLoading: userLoading } = useQuery(userQuery)
+  const { isLoading: accountLoading } = useAccount()
+  const { data: collection, isLoading: collectionLoading } = useCollection()
+  // logged in, collection on its way: only the personal goal has to wait for it, the page renders now
+  const collectionPending = userLoading || (Boolean(user) && (accountLoading || collectionLoading))
   // filters live in the URL (?goal=meanAdj&series=B&hide=1); the goal is remembered for the next visit
   const { get, update } = useUrlFilters('packs-view', ['goal'])
   const savedSort = sortOrder.find((key) => key === get('goal'))
@@ -25,8 +32,10 @@ export default function PackValue() {
 
   // missing cards is the most useful goal once we know the collection; personal goals need one,
   // so fall back without forgetting the saved choice
-  const fallback: SortKey = collection ? 'perPackNew' : 'perPackTop50'
-  const sortKey: SortKey = !savedSort || (!collection && personalSorts.includes(savedSort)) ? fallback : savedSort
+  const hasCollection = Boolean(collection) || collectionPending
+  const fallback: SortKey = hasCollection ? 'perPackNew' : 'perPackTop50'
+  const sortKey: SortKey = !savedSort || (!hasCollection && personalSorts.includes(savedSort)) ? fallback : savedSort
+  const waiting = collectionPending && personalSorts.includes(sortKey)
 
   const all: PackRow[] = useMemo(() => {
     const boosters = getBoosterValues(collection)
@@ -52,17 +61,13 @@ export default function PackValue() {
     .filter((b) => !(hideComplete && collection && b.pNew === 0))
     .toSorted((a, b) => b[sortKey] - a[sortKey])
 
-  if (isLoading) {
-    return <Spinner size="lg" overlay />
-  }
-
   return (
     <main className="mx-auto max-w-6xl px-4 pb-12">
       <header className="mb-5">
         <h1 className="text-2xl font-semibold sm:text-3xl">Best packs</h1>
         <p className="mt-1 text-sm text-neutral-400">
           Which pack should you open? Pick what you're after and packs are ranked by how well they deliver it.
-          {!collection && ' Log in to rank packs by the ☆☆ you are still missing.'}
+          {!hasCollection && ' Log in to rank packs by the ☆☆ you are still missing.'}
         </p>
         <ValueDataAge className="mt-2" />
       </header>
@@ -80,8 +85,8 @@ export default function PackValue() {
               <ToggleGroupItem
                 key={key}
                 value={key}
-                disabled={!collection && personalSorts.includes(key)}
-                title={!collection && personalSorts.includes(key) ? 'Log in to use this' : undefined}
+                disabled={!hasCollection && personalSorts.includes(key)}
+                title={!hasCollection && personalSorts.includes(key) ? 'Log in to use this' : undefined}
               >
                 {goals[key].label}
               </ToggleGroupItem>
@@ -99,9 +104,13 @@ export default function PackValue() {
         </div>
       </div>
 
-      {packs.length > 0 && <PackSummary pack={packs[0]} sortKey={sortKey} total={all.length} />}
+      {!waiting && packs.length > 0 && <PackSummary pack={packs[0]} sortKey={sortKey} total={all.length} />}
 
-      {packs.length === 0 ? (
+      {waiting ? (
+        <div className="flex justify-center py-16">
+          <Spinner size="lg" />
+        </div>
+      ) : packs.length === 0 ? (
         <p className="py-12 text-center text-neutral-400">No packs match these filters.</p>
       ) : (
         <div className="grid grid-flow-row-dense gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -60,9 +60,9 @@ export const DEMAND_K = 200
 
 let meanRatio: number | undefined
 
-/** demandRatio shrunk toward the average by DEMAND_K; the score Rankings sorts and tiers by. */
+/** demandRatio shrunk toward the average by DEMAND_K; every page ranks and compares demand by this. 0 without wishlists. */
 export function demandScore(value: CardValue | undefined): number {
-  if (value?.wish === undefined || value.offers === undefined) {
+  if (value?.wish === undefined || value.offers === undefined || demandRatio(value) === 0) {
     return demandRatio(value)
   }
   if (meanRatio === undefined) {
@@ -77,13 +77,13 @@ export function demandScore(value: CardValue | undefined): number {
   return (value.wish + DEMAND_K * meanRatio) / (value.offers + DEMAND_K)
 }
 
-/** Single sort key for "most valuable first": ☆☆ adjusted Elo when available, else demand. */
+/** Single sort key for "most valuable first": ☆☆ adjusted Elo when available, else adjusted demand. */
 export function valueSortKey(cardId: string): number {
   const value = getCardValue(cardId)
   if (value?.adj !== undefined) {
     return 1_000_000 + value.adj
   }
-  return demandRatio(value)
+  return demandScore(value)
 }
 
 export const kindLabel: Record<TwoStarKind, string> = {
