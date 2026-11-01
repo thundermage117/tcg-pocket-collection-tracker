@@ -144,6 +144,26 @@ need" side of the match query, so until it is applied, trade matching silently i
 
 ---
 
+## Step 8 — Pokédex data (personal fork)
+
+After the scraper (and `backfill-promo-b.ts`, if it ran), bring the Pokédex's data up to date. Each script skips
+what already exists, so they're cheap to rerun:
+
+```bash
+tsx scripts/backfill-evolves-from.ts   # evolves_from on cards that lack it; the scraper sets it, Promo-B cards from Serebii don't
+tsx scripts/download-form-sprites.ts   # artwork for new forms (a new Mega, regional form, …)
+pnpm lint:fix
+```
+
+Check the output: `backfill-evolves-from` lists any evolved card it found no "Evolves from" for, and
+`download-form-sprites` lists forms PokéAPI has no artwork for yet (they fall back to the species artwork; rerun later).
+
+Only when the set brings species from a **new generation** (past #1025, Pecharunt): raise `DEX_SIZE` in
+`frontend/src/lib/pokedex.ts` and the scripts, add the generation to `generations`, then rerun
+`download-sprites.ts`, `generate-evolutions.ts`, `generate-dex-entries.ts` and `generate-species-groups.ts`.
+
+---
+
 ## Important notes
 
 - `internalId` must **never change** after a set is released — the DB encoding depends on it.
