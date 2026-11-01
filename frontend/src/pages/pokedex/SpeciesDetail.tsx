@@ -1,8 +1,9 @@
 // Personal fork: a species' Pokédex entry and every printing of it, grouped by form, with what's owned and the best pack for a missing one.
 import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { CardThumb } from '@/components/CardThumb'
 import { Spinner } from '@/components/Spinner'
 import { formatRarity } from '@/components/utils'
@@ -24,6 +25,45 @@ export default function SpeciesDetail() {
   const species = getSpecies(Number(nr))
   // supportedLngs keeps resolvedLanguage to the locales that have an entries file
   const { data: entries } = useQuery(dexEntriesQuery(i18n.resolvedLanguage ?? 'en-US'))
+  const navigate = useNavigate()
+  const index = species ? allSpecies.indexOf(species) : -1
+  const prev = allSpecies[index - 1]
+  const next = allSpecies[index + 1]
+
+  // ← / → on desktop; ignored while typing or with a dialog (card detail) open
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.altKey || e.ctrlKey || e.metaKey || (e.target as HTMLElement).closest('input, textarea, select') || document.querySelector('[role="dialog"]')) {
+        return
+      }
+      const to = e.key === 'ArrowLeft' ? prev : e.key === 'ArrowRight' ? next : undefined
+      if (to) {
+        navigate(`/pokedex/${to.dexNr}`)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [prev, next, navigate])
+
+  // a mostly horizontal swipe on phones does the same
+  const touchStart = useRef<{ x: number; y: number } | undefined>(undefined)
+  const onTouchStart = (e: React.TouchEvent) => {
+    // not on the evolution line, which scrolls sideways itself
+    touchStart.current = (e.target as HTMLElement).closest('.overflow-x-auto') ? undefined : { x: e.touches[0].clientX, y: e.touches[0].clientY }
+  }
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = touchStart.current
+    touchStart.current = undefined
+    if (!start) {
+      return
+    }
+    const dx = e.changedTouches[0].clientX - start.x
+    const dy = e.changedTouches[0].clientY - start.y
+    const to = Math.abs(dx) > 80 && Math.abs(dx) > 2 * Math.abs(dy) ? (dx > 0 ? prev : next) : undefined
+    if (to) {
+      navigate(`/pokedex/${to.dexNr}`)
+    }
+  }
 
   if (isLoading) {
     return <Spinner size="lg" overlay />
@@ -42,9 +82,6 @@ export default function SpeciesDetail() {
   const owns = (id: number) => (collection?.get(id)?.amount_owned ?? 0) > 0
   const owned = ownedCount(collection, species.cards)
   const name = speciesName(species, i18n.language)
-  const index = allSpecies.indexOf(species)
-  const prev = allSpecies[index - 1]
-  const next = allSpecies[index + 1]
   const line = lineOf(species)
   const entry = entries?.[species.dexNr]
 
@@ -59,7 +96,7 @@ export default function SpeciesDetail() {
     .reduce<(PackChance & { expansionId: ExpansionId }) | undefined>((a, b) => (!a || b.pct > a.pct ? b : a), undefined)
 
   return (
-    <main className="mx-auto max-w-6xl px-4 pb-12">
+    <main className="mx-auto max-w-6xl px-4 pb-12" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       <nav className="mb-4 flex items-center justify-between text-sm text-neutral-400">
         <Link to="/pokedex" className="flex items-center hover:text-white">
           <ChevronLeft className="size-4" /> Pokédex

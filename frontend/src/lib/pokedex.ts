@@ -100,8 +100,12 @@ export function dexName(dexNr: number, lang: string): string {
 
 export const speciesName = (species: Species, lang: string) => dexName(species.dexNr, lang)
 
-/** True when any language's name contains the query, so a French name finds the species in English too. */
+/** True when any language's name contains the query, so a French name finds the species in English too. `25` or `#25` matches Pikachu. */
 export function speciesMatches(species: Species, query: string): boolean {
+  const number = /^#?0*(\d+)$/.exec(query)
+  if (number) {
+    return species.dexNr === Number(number[1])
+  }
   const translations = pokemonTranslations[species.key] as Record<string, string | null>
   return Object.values(translations).some((name) => name?.toLowerCase().includes(query))
 }
