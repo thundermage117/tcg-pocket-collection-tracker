@@ -286,7 +286,6 @@ export default function Pokedex() {
           </SheetHeader>
           <div className="flex flex-col gap-5 px-4 pb-6">
             {!shiny && <TabsFilter label="View" options={viewOptions} value={view} onChange={(x) => update({ view: x })} show={(x) => viewLabels[x]} />}
-            <TabsFilter label="Tiles" options={artOptions} value={art} onChange={(x) => update({ art: x })} show={(x) => artLabels[x]} />
             {view === 'dex' && (
               <DropdownFilter label="Sort" options={sortOptions} value={sort} onChange={(x) => update({ sort: x })} show={(x) => sortLabels[x]} />
             )}
@@ -340,14 +339,19 @@ export default function Pokedex() {
         <p className="py-12 text-center text-neutral-400">No species match these filters.</p>
       ) : (
         <>
-          <p className="mb-3 flex gap-3 text-sm text-neutral-400">
+          <div className="mb-3 flex items-center gap-3 text-sm text-neutral-400">
             {view === 'dex' ? `${filtered.length} species` : `${lines.length} evolution lines`}
             {filtering && (
-              <Link to={shiny ? '/pokedex?dex=shiny' : view === 'dex' ? '/pokedex' : '/pokedex?view=lines'} className="underline hover:text-white">
+              // keeps the mode, view and tile art: those aren't filters
+              <Link
+                to={`/pokedex?${new URLSearchParams([...(shiny ? [['dex', 'shiny']] : []), ...(view === 'lines' ? [['view', 'lines']] : []), ...(art === 'card' ? [['art', 'card']] : [])])}`}
+                className="underline hover:text-white"
+              >
                 Clear filters
               </Link>
             )}
-          </p>
+            <TabsFilter options={artOptions} value={art} onChange={(x) => update({ art: x })} show={(x) => artLabels[x]} className="ml-auto" />
+          </div>
           {view === 'dex' ? (
             // in dex order the grid splits by generation, so 993 tiles have landmarks; other sorts stay one list
             (sort === 'dex'
