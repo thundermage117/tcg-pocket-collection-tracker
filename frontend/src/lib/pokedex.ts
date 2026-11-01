@@ -11,21 +11,27 @@ const dexNumbers = new Map(dexKeys.map((key, i) => [key, i + 1]))
 
 export interface Generation {
   nr: number
+  region: string
   first: number
   last: number
 }
 
-export const generations: Generation[] = [
-  [1, 151],
-  [152, 251],
-  [252, 386],
-  [387, 493],
-  [494, 649],
-  [650, 721],
-  [722, 809],
-  [810, 905],
-  [906, 1025],
-].map(([first, last], i) => ({ nr: i + 1, first, last }))
+export const generations: Generation[] = (
+  [
+    ['Kanto', 1, 151],
+    ['Johto', 152, 251],
+    ['Hoenn', 252, 386],
+    ['Sinnoh', 387, 493],
+    ['Unova', 494, 649],
+    ['Kalos', 650, 721],
+    ['Alola', 722, 809],
+    ['Galar', 810, 905],
+    ['Paldea', 906, 1025],
+  ] as const
+).map(([region, first, last], i) => ({ nr: i + 1, region, first, last }))
+
+/** Official artwork, from scripts/download-sprites.ts. Every dex number has one, including species with no card. */
+export const spriteUrl = (dexNr: number) => `/images/sprites/${dexNr}.webp`
 
 export const generationOf = (dexNr: number) => generations.find((g) => dexNr <= g.last) as Generation
 

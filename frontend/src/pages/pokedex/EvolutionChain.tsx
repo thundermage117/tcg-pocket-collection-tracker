@@ -3,16 +3,17 @@ import { ChevronRight } from 'lucide-react'
 import { Fragment } from 'react'
 import { type EvolutionLine, getSpecies } from '@/lib/pokedex'
 import type { Collection } from '@/types'
-import { AbsentTile, SpeciesTile } from './SpeciesTile'
+import { AbsentTile, SpeciesTile, type TileArt } from './SpeciesTile'
 
 interface Props {
   line: EvolutionLine
   collection: Collection | undefined
   lang: string
+  art?: TileArt
   current?: number // dex number to highlight
 }
 
-export function EvolutionChain({ line, collection, lang, current }: Props) {
+export function EvolutionChain({ line, collection, lang, art, current }: Props) {
   return (
     <div className="flex items-center gap-1.5 sm:gap-2">
       {line.stages.map((stage, i) => (
@@ -23,7 +24,7 @@ export function EvolutionChain({ line, collection, lang, current }: Props) {
             {stage.map((dexNr) => {
               const species = getSpecies(dexNr)
               return species ? (
-                <SpeciesTile key={dexNr} species={species} collection={collection} lang={lang} current={dexNr === current} className="w-20 sm:w-24" />
+                <SpeciesTile key={dexNr} species={species} collection={collection} lang={lang} art={art} current={dexNr === current} className="w-20 sm:w-24" />
               ) : (
                 <AbsentTile key={dexNr} dexNr={dexNr} lang={lang} className="w-20 sm:w-24" />
               )

@@ -1,11 +1,35 @@
 // Personal fork: species tile and progress bar shared by the Pokédex grid, its lines view and the species page.
+import { Check } from 'lucide-react'
 import { Link } from 'react-router'
 import { getLocalizedImagePath } from '@/lib/imageLocales'
-import { coverCard, dexName, ownedCount, type Species, speciesName } from '@/lib/pokedex'
+import { coverCard, dexName, ownedCount, type Species, speciesName, spriteUrl } from '@/lib/pokedex'
 import { cn } from '@/lib/utils'
-import type { Collection } from '@/types'
+import type { CardType, Collection } from '@/types'
+
+export type TileArt = 'sprite' | 'card'
 
 export const dexLabel = (dexNr: number) => `#${String(dexNr).padStart(4, '0')}`
+
+// close to the game's energy colours, so a tile's type reads at a glance
+export const typeColors: Record<CardType, string> = {
+  grass: '#5bb450',
+  fire: '#ef5a3c',
+  water: '#3d9be9',
+  lightning: '#f2c230',
+  psychic: '#b764c8',
+  fighting: '#c8743a',
+  darkness: '#2f6f7d',
+  metal: '#9ba6ae',
+  dragon: '#b8983a',
+  colorless: '#c9c9c9',
+  trainer: '#737373',
+}
+
+/** Type stripe: one colour, or a hard split for dual types (Water/Darkness). */
+export const typeStripe = (types: CardType[]) =>
+  types.length === 1
+    ? typeColors[types[0]]
+    : `linear-gradient(90deg, ${types.map((t, i) => `${typeColors[t]} ${(100 * i) / types.length}% ${(100 * (i + 1)) / types.length}%`).join(', ')})`
 
 export function ProgressBar({ value, max, className }: { value: number; max: number; className?: string }) {
   return (
@@ -15,16 +39,30 @@ export function ProgressBar({ value, max, className }: { value: number; max: num
   )
 }
 
+/** Official artwork; a faint silhouette until caught ("Who's that Pokémon?"). */
+export function Sprite({ dexNr, caught, alt, className }: { dexNr: number; caught: boolean; alt: string; className?: string }) {
+  return (
+    <img
+      src={spriteUrl(dexNr)}
+      alt={alt}
+      loading="lazy"
+      draggable={false}
+      className={cn('aspect-square w-full object-contain', !caught && 'opacity-15 brightness-0 invert', className)}
+    />
+  )
+}
+
 interface Props {
   species: Species
   collection: Collection | undefined
   lang: string
+  art?: TileArt
   current?: boolean // the species whose page this is
   className?: string
 }
 
-/** Owned art (or a greyed common printing), dex number, owned/total printings; green border once every printing is owned. */
-export function SpeciesTile({ species, collection, lang, current, className }: Props) {
+/** Artwork (or owned card art), dex number and owned/total printings; a check once every printing is owned. */
+export function SpeciesTile({ species, collection, lang, art = 'sprite', current, className }: Props) {
   const owned = ownedCount(collection, species.cards)
   const name = speciesName(species, lang)
   const complete = owned === species.cards.length
@@ -33,21 +71,26 @@ export function SpeciesTile({ species, collection, lang, current, className }: P
       to={`/pokedex/${species.dexNr}`}
       title={name}
       className={cn(
-        'block rounded-md border-1 border-solid bg-neutral-800 p-1.5 transition-colors hover:border-neutral-400',
-        complete ? 'border-green-600' : 'border-neutral-700',
+        'relative block overflow-hidden rounded-md border-1 border-neutral-700 border-solid bg-neutral-800 p-1.5 pt-2.5 transition-colors hover:border-neutral-400',
         current && 'ring-2 ring-blue-300',
         className,
       )}
     >
-      <img
-        src={getLocalizedImagePath(coverCard(species, collection), lang)}
-        alt={name}
-        loading="lazy"
-        className={cn('aspect-[367/512] w-full rounded object-cover', owned === 0 && 'opacity-30 grayscale')}
-      />
+      <span className="absolute inset-x-0 top-0 h-1" style={{ background: typeStripe(species.types) }} />
+      {art === 'sprite' ? (
+        <Sprite dexNr={species.dexNr} caught={owned > 0} alt={name} />
+      ) : (
+        <img
+          src={getLocalizedImagePath(coverCard(species, collection), lang)}
+          alt={name}
+          loading="lazy"
+          className={cn('aspect-[367/512] w-full rounded object-cover', owned === 0 && 'opacity-30 grayscale')}
+        />
+      )}
       <div className="mt-1.5 flex items-baseline justify-between gap-1 text-[11px] tabular-nums">
         <span className="text-neutral-500">{dexLabel(species.dexNr)}</span>
-        <span className={cn(complete ? 'text-green-500' : owned > 0 ? 'text-neutral-300' : 'text-neutral-500')}>
+        <span className={cn('flex items-center gap-0.5', complete ? 'text-green-500' : owned > 0 ? 'text-neutral-300' : 'text-neutral-500')}>
+          {complete && <Check className="size-3" strokeWidth={3} />}
           {owned}/{species.cards.length}
         </span>
       </div>
@@ -56,16 +99,15 @@ export function SpeciesTile({ species, collection, lang, current, className }: P
   )
 }
 
-/** Same footprint as a tile, for line members that have no card in TCG Pocket (Pichu before it got one, Galarian evolutions, …). */
+/** Same footprint as a tile, for line members with no card in TCG Pocket (Galarian evolutions, …). */
 export function AbsentTile({ dexNr, lang, className }: { dexNr: number; lang: string; className?: string }) {
   const name = dexName(dexNr, lang)
   return (
-    <div title={`${name} has no card in TCG Pocket`} className={cn('rounded-md border-1 border-dashed border-neutral-700 p-1.5', className)}>
-      <div className="flex aspect-[367/512] w-full items-center justify-center rounded bg-neutral-800/50 px-1 text-center text-[10px] text-neutral-500">
-        Not in TCG Pocket
-      </div>
+    <div title={`${name} has no card in TCG Pocket`} className={cn('rounded-md border-1 border-dashed border-neutral-700 p-1.5 pt-2.5', className)}>
+      <Sprite dexNr={dexNr} caught={false} alt={name} className="opacity-10" />
       <p className="mt-1.5 text-[11px] text-neutral-600 tabular-nums">{dexLabel(dexNr)}</p>
       <p className="truncate text-sm text-neutral-500">{name}</p>
+      <p className="truncate text-[10px] text-neutral-600">Not in TCG Pocket</p>
     </div>
   )
 }

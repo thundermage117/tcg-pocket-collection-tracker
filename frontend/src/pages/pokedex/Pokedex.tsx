@@ -11,10 +11,13 @@ import { capitalize, cn } from '@/lib/utils'
 import { useCollection } from '@/services/collection/useCollection'
 import { type CardType, cardTypes, type ExpansionId } from '@/types'
 import { EvolutionChain } from './EvolutionChain'
-import { ProgressBar, SpeciesTile } from './SpeciesTile'
+import { ProgressBar, SpeciesTile, type TileArt } from './SpeciesTile'
 
 const viewOptions = ['dex', 'lines'] as const
 const viewLabels = { dex: 'Dex', lines: 'Evolution lines' }
+
+const artOptions: TileArt[] = ['sprite', 'card']
+const artLabels: Record<TileArt, string> = { sprite: 'Sprites', card: 'Cards' }
 
 const showOptions = ['all', 'missing', 'owned', 'incomplete'] as const
 type ShowOption = (typeof showOptions)[number]
@@ -44,6 +47,7 @@ export default function Pokedex() {
   const show = showOptions.find((x) => x === params.get('show')) ?? 'all'
   const set = setOptions.find((x) => x === params.get('set')) ?? 'all'
   const sort = sortOptions.find((x) => x === params.get('sort')) ?? 'dex'
+  const art = artOptions.find((x) => x === params.get('art')) ?? 'sprite'
   const filtering = search !== '' || gen !== 'all' || type !== 'all' || show !== 'all' || set !== 'all'
 
   const update = (changes: Record<string, string | undefined>) => {
@@ -51,7 +55,13 @@ export default function Pokedex() {
       (prev) => {
         const next = new URLSearchParams(prev)
         for (const [key, value] of Object.entries(changes)) {
-          if (value && value !== 'all' && !(key === 'view' && value === 'dex') && !(key === 'sort' && value === 'dex')) {
+          if (
+            value &&
+            value !== 'all' &&
+            !(key === 'view' && value === 'dex') &&
+            !(key === 'sort' && value === 'dex') &&
+            !(key === 'art' && value === 'sprite')
+          ) {
             next.set(key, value)
           } else {
             next.delete(key)
@@ -156,6 +166,7 @@ export default function Pokedex() {
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <TabsFilter options={viewOptions} value={view} onChange={(x) => update({ view: x })} show={(x) => viewLabels[x]} />
+          <TabsFilter options={artOptions} value={art} onChange={(x) => update({ art: x })} show={(x) => artLabels[x]} />
           <TabsFilter options={showOptions} value={show} onChange={(x) => update({ show: x })} show={(x) => showLabels[x]} />
           <DropdownFilter
             label="Generation"
@@ -193,7 +204,7 @@ export default function Pokedex() {
             <ul className="grid grid-cols-3 gap-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
               {filtered.map((s) => (
                 <li key={s.dexNr}>
-                  <SpeciesTile species={s} collection={collection} lang={i18n.language} />
+                  <SpeciesTile species={s} collection={collection} lang={i18n.language} art={art} />
                 </li>
               ))}
             </ul>
@@ -210,7 +221,7 @@ export default function Pokedex() {
                       </span>
                     </h2>
                     <div className="overflow-x-auto">
-                      <EvolutionChain line={line} collection={collection} lang={i18n.language} />
+                      <EvolutionChain line={line} collection={collection} lang={i18n.language} art={art} />
                     </div>
                   </li>
                 )
