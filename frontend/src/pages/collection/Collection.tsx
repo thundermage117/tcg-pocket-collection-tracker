@@ -1,10 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { ChevronRight } from 'lucide-react'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useLocation, useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import { Spinner } from '@/components/Spinner'
-import { Button } from '@/components/ui/button'
 import { FriendIdDisplay } from '@/components/ui/friend-id-display'
 import { publicAccountQuery, useAccount } from '@/services/account/useAccount.ts'
 import { publicCollectionQuery, useCollection } from '@/services/collection/useCollection'
@@ -52,12 +50,7 @@ function FriendCollection({ friendId }: { friendId: string }) {
               <FriendIdDisplay friendId={account.friend_id} />
             </span>
           </h1>
-          <Link to={`/trade/${friendId}`}>
-            <Button>
-              {t('showPossibleTrades')}
-              <ChevronRight />
-            </Button>
-          </Link>
+          {/* Personal fork: friend trading removed, so no "show possible trades" button */}
         </div>
       </CollectionCards>
     </div>

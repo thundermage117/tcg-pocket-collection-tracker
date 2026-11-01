@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
-import { createHashRouter, Navigate, Outlet, RouterProvider, useLocation, useParams } from 'react-router'
+import { createHashRouter, Navigate, Outlet, RouterProvider, useLocation } from 'react-router'
 import { BottomNav } from '@/components/BottomNav.tsx'
 import InstallPrompt from '@/components/InstallPrompt.tsx'
 import { useToast } from '@/hooks/use-toast.ts'
@@ -33,11 +33,6 @@ const EditProfile = lazy(() => import('./components/EditProfile.tsx'))
 const CardDetail = lazy(() => import('./pages/collection/CardDetail.tsx'))
 const Import = lazy(() => import('./pages/import/Import.tsx'))
 const Changelog = lazy(() => import('./pages/changelog/Changelog.tsx'))
-
-const TradeWithRedirect = () => {
-  const { friendId } = useParams()
-  return <Navigate to={`/trade/${friendId}`} replace />
-}
 
 function Analytics() {
   const location = useLocation()
@@ -121,7 +116,7 @@ function App() {
         { path: '/missions', element: <Missions /> },
         { path: '/collection/missions', element: <Navigate to="/missions" replace /> },
         { path: '/collection/:friendId?', element: <Collection /> },
-        { path: '/collection/:friendId/trade', element: <TradeWithRedirect /> }, // support old trading path
+        { path: '/collection/:friendId/trade', element: <Navigate to="/trade" replace /> }, // old friend-trading path; personal fork has no friend trading
         { path: '/decks', element: <Decks /> },
         { path: '/decks/edit/:id?', element: <DeckBuilder /> },
         { path: '/decks/:id', element: <DeckView /> },
