@@ -5449,93 +5449,448 @@
     "h": 3,
     "w": 3
   },
-  "10008": { "g": "Pokémon Plasma", "f": "", "h": 3, "w": 3 },
-  "10009": { "g": "Pokémon Plasma", "f": "", "h": 3, "w": 3 },
-  "10010": { "g": "Pokémon Plasma", "f": "", "h": 3, "w": 3 },
-  "10011": { "g": "Pokémon Plasma", "f": "", "h": 3, "w": 3 },
-  "10012": { "g": "Pokémon Plasma", "f": "", "h": 3, "w": 3 },
-  "10013": { "g": "Pokémon Meteo", "f": "", "h": 3, "w": 8 },
-  "10014": { "g": "Pokémon Meteo", "f": "", "h": 3, "w": 8 },
-  "10015": { "g": "Pokémon Meteo", "f": "", "h": 3, "w": 8 },
-  "10033": { "g": "Pokémon Seme", "f": "", "h": 24, "w": 1555 },
-  "10034": { "g": "Pokémon Fiamma", "f": "", "h": 17, "w": 1105 },
-  "10035": { "g": "Pokémon Fiamma", "f": "", "h": 17, "w": 1005 },
-  "10036": { "g": "Pokémon Crostaceo", "f": "", "h": 16, "w": 1011 },
-  "10038": { "g": "Pokémon Ombra", "f": "", "h": 14, "w": 405 },
-  "10039": { "g": "Pokémon Genitore", "f": "", "h": 22, "w": 1000 },
-  "10040": { "g": "Pokémon Cervolante", "f": "", "h": 17, "w": 590 },
-  "10041": { "g": "Pokémon Atroce", "f": "", "h": 65, "w": 3050 },
-  "10043": { "g": "Pokémon Genetico", "f": "", "h": 23, "w": 1270 },
-  "10044": { "g": "Pokémon Genetico", "f": "", "h": 15, "w": 330 },
-  "10045": { "g": "Pokémon Luce", "f": "", "h": 14, "w": 615 },
-  "10046": { "g": "Pokémon Chela", "f": "", "h": 20, "w": 1250 },
-  "10047": { "g": "Pokémon Monocorno", "f": "", "h": 17, "w": 625 },
-  "10048": { "g": "Pokémon Buio", "f": "", "h": 19, "w": 495 },
-  "10049": { "g": "Pokémon Armatura", "f": "", "h": 25, "w": 2550 },
+  "10008": {
+    "g": "Pokémon Plasma",
+    "f": "This Rotom has possessed a convection microwave oven. It will sear the surrounding area with its burning heat, then smile in delight.",
+    "h": 3,
+    "w": 3
+  },
+  "10009": {
+    "g": "Pokémon Plasma",
+    "f": "The model of washing machine that Rotom can inspirit has been discontinued, so these appliances are now traded at high prices.",
+    "h": 3,
+    "w": 3
+  },
+  "10010": { "g": "Pokémon Plasma", "f": "The special motor within the refrigerator is the key to bringing about Rotom’s change in form.", "h": 3, "w": 3 },
+  "10011": {
+    "g": "Pokémon Plasma",
+    "f": "There are several appliances that Rotom can inspirit, but the first one to be developed was the electric fan.",
+    "h": 3,
+    "w": 3
+  },
+  "10012": {
+    "g": "Pokémon Plasma",
+    "f": "This Rotom has possessed a lawn mower. It will mow down grass and flowers, then swagger around with pride at its accomplishments.",
+    "h": 3,
+    "w": 3
+  },
+  "10013": {
+    "g": "Pokémon Meteo",
+    "f": "Castform changes to this form when it basks in bright sunlight. When you touch its glowing skin, it feels all dried out!",
+    "h": 3,
+    "w": 8
+  },
+  "10014": {
+    "g": "Pokémon Meteo",
+    "f": "This is Castform’s form when pelted by rain. In an experiment where it was placed in a shower, this Pokémon didn’t change to this form.",
+    "h": 3,
+    "w": 8
+  },
+  "10015": {
+    "g": "Pokémon Meteo",
+    "f": "This is Castform’s form when caught in a hailstorm. Its whole body is chilled, and its skin is partially frozen!",
+    "h": 3,
+    "w": 8
+  },
+  "10033": {
+    "g": "Pokémon Seme",
+    "f": "In order to support its flower, which has grown larger due to Mega Evolution, its back and legs have become stronger.",
+    "h": 24,
+    "w": 1555
+  },
+  "10034": {
+    "g": "Pokémon Fiamma",
+    "f": "The overwhelming power that fills its entire body causes it to turn black and create intense blue flames.",
+    "h": 17,
+    "w": 1105
+  },
+  "10035": {
+    "g": "Pokémon Fiamma",
+    "f": "Its bond with its Trainer is the source of its power. It boasts speed and maneuverability greater than that of a jet fighter.",
+    "h": 17,
+    "w": 1005
+  },
+  "10036": {
+    "g": "Pokémon Crostaceo",
+    "f": "The cannon on its back is as powerful as a tank gun. Its tough legs and back enable it to withstand the recoil from firing the cannon.",
+    "h": 16,
+    "w": 1011
+  },
+  "10038": {
+    "g": "Pokémon Ombra",
+    "f": "It can pass through other dimensions and can appear anywhere. It caused a stir one time when it stuck just one leg out of a wall.",
+    "h": 14,
+    "w": 405
+  },
+  "10039": {
+    "g": "Pokémon Genitore",
+    "f": "Its child has grown rapidly, thanks to the energy of Mega Evolution. Mother and child show their harmonious teamwork in battle.",
+    "h": 22,
+    "w": 1000
+  },
+  "10040": {
+    "g": "Pokémon Cervolante",
+    "f": "With its vaunted horns, it can lift an opponent 10 times heavier than itself and fly about with ease.",
+    "h": 17,
+    "w": 590
+  },
+  "10041": {
+    "g": "Pokémon Atroce",
+    "f": "Although it obeys its instinctive drive to destroy everything within its reach, it will respond to orders from a Trainer it truly trusts.",
+    "h": 65,
+    "w": 3050
+  },
+  "10043": {
+    "g": "Pokémon Genetico",
+    "f": "Psychic power has augmented its muscles. It has a grip strength of one ton and can sprint a hundred meters in two seconds flat!",
+    "h": 23,
+    "w": 1270
+  },
+  "10044": {
+    "g": "Pokémon Genetico",
+    "f": "Despite its diminished size, its mental power has grown phenomenally. With a mere thought, it can smash a skyscraper to smithereens.",
+    "h": 15,
+    "w": 330
+  },
+  "10045": {
+    "g": "Pokémon Luce",
+    "f": "Massive amounts of energy intensely stimulated Ampharos’s cells, apparently awakening its long-sleeping dragon’s blood.",
+    "h": 14,
+    "w": 615
+  },
+  "10046": {
+    "g": "Pokémon Chela",
+    "f": "It’s better at beating things than grasping them. When it battles for a long time, the weight of its pincers becomes too much to bear.",
+    "h": 20,
+    "w": 1250
+  },
+  "10047": {
+    "g": "Pokémon Monocorno",
+    "f": "A tremendous influx of energy builds it up, but when Mega Evolution ends, Heracross is bothered by terrible soreness in its muscles.",
+    "h": 17,
+    "w": 625
+  },
+  "10048": {
+    "g": "Pokémon Buio",
+    "f": "Houndoom’s entire body generates heat when it Mega Evolves. Its fearsome fiery breath turns its opponents to ash.",
+    "h": 19,
+    "w": 495
+  },
+  "10049": {
+    "g": "Pokémon Armatura",
+    "f": "The effects of Mega Evolution make it more ferocious than ever. It’s unclear whether it can even hear its Trainer’s orders.",
+    "h": 25,
+    "w": 2550
+  },
   "10050": { "g": "Pokémon Vampe", "f": "", "h": 19, "w": 520 },
   "10051": { "g": "Pokémon Abbraccio", "f": "", "h": 16, "w": 484 },
-  "10052": { "g": "Pokémon Inganno", "f": "", "h": 10, "w": 235 },
+  "10052": {
+    "g": "Pokémon Inganno",
+    "f": "Its two sets of jaws thrash about violently as if they each had a will of their own. One gnash from them can turn a boulder to dust.",
+    "h": 10,
+    "w": 235
+  },
   "10054": { "g": "Pokémon Meditazione", "f": "", "h": 13, "w": 315 },
-  "10055": { "g": "Pokémon Scossa", "f": "", "h": 18, "w": 440 },
-  "10057": { "g": "Pokémon Catastrofe", "f": "", "h": 12, "w": 490 },
-  "10058": { "g": "Pokémon Mach", "f": "", "h": 19, "w": 950 },
-  "10059": { "g": "Pokémon Aura", "f": "", "h": 13, "w": 575 },
+  "10055": {
+    "g": "Pokémon Scossa",
+    "f": "Too much electricity has built up in its body, irritating Manectric. Its explosive speed is equal to that of a lightning bolt.",
+    "h": 18,
+    "w": 440
+  },
+  "10057": {
+    "g": "Pokémon Catastrofe",
+    "f": "It converts the energy from Mega Evolution into an intimidating aura. Fainthearted people expire from shock at the sight of it.",
+    "h": 12,
+    "w": 490
+  },
+  "10058": {
+    "g": "Pokémon Mach",
+    "f": "Its disposition is more vicious than before its Mega Evolution. Garchomp carves its opponents up with the scythes on both arms.",
+    "h": 19,
+    "w": 950
+  },
+  "10059": {
+    "g": "Pokémon Aura",
+    "f": "Bathed in explosive energy, its combative instincts have awakened. For its enemies, it has no mercy whatsoever.",
+    "h": 13,
+    "w": 575
+  },
   "10063": { "g": "Pokémon Eone", "f": "", "h": 23, "w": 700 },
   "10064": { "g": "Pokémon Fango Pesce", "f": "", "h": 19, "w": 1020 },
   "10065": { "g": "Pokémon Foresta", "f": "", "h": 19, "w": 552 },
-  "10066": { "g": "Pokémon Oscurità", "f": "", "h": 5, "w": 1610 },
+  "10066": {
+    "g": "Pokémon Oscurità",
+    "f": "It blocks any and all attacks with its giant-sized gemstone. However, the stone’s a heavy burden, and it limits Mega Sableye’s movements.",
+    "h": 5,
+    "w": 1610
+  },
   "10067": { "g": "Pokémon Canterino", "f": "", "h": 15, "w": 206 },
   "10068": { "g": "Pokémon Lama", "f": "", "h": 16, "w": 564 },
   "10069": { "g": "Pokémon Ascolto", "f": "", "h": 15, "w": 320 },
-  "10070": { "g": "Pokémon Brutale", "f": "", "h": 25, "w": 1303 },
-  "10071": { "g": "Pokémon Paguro", "f": "", "h": 20, "w": 1200 },
+  "10070": {
+    "g": "Pokémon Brutale",
+    "f": "The moment it charges into its opponent, sharp spikes pop out of Sharpedo’s head, leaving its opponent with deep wounds.",
+    "h": 25,
+    "w": 1303
+  },
+  "10071": {
+    "g": "Pokémon Paguro",
+    "f": "Under the influence of Shellder’s digestive fluids, Slowpoke has awakened, gaining a great deal of power—and a little motivation to boot.",
+    "h": 20,
+    "w": 1200
+  },
   "10072": { "g": "Pokémon Ferroserpe", "f": "", "h": 105, "w": 7400 },
-  "10073": { "g": "Pokémon Uccello", "f": "", "h": 22, "w": 505 },
+  "10073": {
+    "g": "Pokémon Uccello",
+    "f": "With its muscular strength now greatly increased, it can fly continuously for two weeks without resting.",
+    "h": 22,
+    "w": 505
+  },
   "10075": { "g": "Pokémon Gemma", "f": "", "h": 11, "w": 278 },
-  "10076": { "g": "Pokémon Ferrarto", "f": "", "h": 25, "w": 9429 },
+  "10076": {
+    "g": "Pokémon Ferrarto",
+    "f": "When it knows it can’t win, it digs the claws on its legs into its opponent and starts the countdown to a big explosion.",
+    "h": 25,
+    "w": 9429
+  },
   "10079": { "g": "Pokémon Stratosfera", "f": "", "h": 108, "w": 3920 },
   "10087": { "g": "Pokémon Eruzione", "f": "", "h": 25, "w": 3205 },
-  "10088": { "g": "Pokémon Coniglio", "f": "", "h": 13, "w": 283 },
-  "10091": { "g": "Pokémon Topo", "f": "", "h": 3, "w": 38 },
-  "10092": { "g": "Pokémon Topo", "f": "", "h": 7, "w": 255 },
-  "10100": { "g": "Pokémon Topo", "f": "", "h": 7, "w": 210 },
-  "10101": { "g": "Pokémon Topo", "f": "", "h": 7, "w": 400 },
-  "10102": { "g": "Pokémon Topo", "f": "", "h": 12, "w": 550 },
-  "10103": { "g": "Pokémon Volpe", "f": "", "h": 6, "w": 99 },
-  "10104": { "g": "Pokémon Volpe", "f": "", "h": 11, "w": 199 },
-  "10105": { "g": "Pokémon Talpa", "f": "", "h": 2, "w": 10 },
-  "10106": { "g": "Pokémon Talpa", "f": "", "h": 7, "w": 666 },
-  "10107": { "g": "Pokémon Graffimiao", "f": "", "h": 4, "w": 42 },
-  "10108": { "g": "Pokémon Nobilgatto", "f": "", "h": 11, "w": 330 },
-  "10109": { "g": "Pokémon Roccia", "f": "", "h": 4, "w": 203 },
-  "10110": { "g": "Pokémon Roccia", "f": "", "h": 10, "w": 1100 },
-  "10111": { "g": "Pokémon Megatone", "f": "", "h": 17, "w": 3160 },
-  "10112": { "g": "Pokémon Melma", "f": "", "h": 7, "w": 420 },
-  "10113": { "g": "Pokémon Melma", "f": "", "h": 10, "w": 520 },
-  "10114": { "g": "Pokémon Nocecocco", "f": "", "h": 109, "w": 4156 },
-  "10115": { "g": "Pokémon Guardaossi", "f": "", "h": 10, "w": 340 },
-  "10155": { "g": "Pokémon Prisma", "f": "", "h": 38, "w": 4600 },
-  "10156": { "g": "Pokémon Prisma", "f": "", "h": 42, "w": 3500 },
-  "10157": { "g": "Pokémon Prisma", "f": "", "h": 75, "w": 2300 },
-  "10161": { "g": "Pokémon Graffimiao", "f": "", "h": 4, "w": 75 },
-  "10162": { "g": "Pokémon Cavalfuoco", "f": "", "h": 8, "w": 240 },
-  "10163": { "g": "Pokémon Cavalfuoco", "f": "", "h": 17, "w": 800 },
-  "10168": { "g": "Pokémon Barriera", "f": "", "h": 14, "w": 568 },
-  "10173": { "g": "Pokémon Corallo", "f": "", "h": 6, "w": 5 },
-  "10174": { "g": "Pokémon Procione", "f": "", "h": 4, "w": 175 },
-  "10175": { "g": "Pokémon Sfrecciante", "f": "", "h": 5, "w": 325 },
-  "10180": { "g": "Pokémon Trappola", "f": "", "h": 7, "w": 205 },
-  "10191": { "g": "Pokémon Kung Fu", "f": "", "h": 19, "w": 1050 },
-  "10237": { "g": "Pokémon Fiorfronzolo", "f": "", "h": 12, "w": 192 },
-  "10238": { "g": "Pokémon Malavolpe", "f": "", "h": 7, "w": 125 },
-  "10239": { "g": "Pokémon Mutevolpe", "f": "", "h": 16, "w": 730 },
-  "10241": { "g": "Pokémon Mollusco", "f": "", "h": 7, "w": 685 },
-  "10242": { "g": "Pokémon Drago", "f": "", "h": 17, "w": 3341 },
-  "10245": { "g": "Pokémon Tempo", "f": "", "h": 70, "w": 8487 },
-  "10246": { "g": "Pokémon Spazio", "f": "", "h": 63, "w": 6590 },
-  "10247": { "g": "Pokémon Irruenza", "f": "", "h": 10, "w": 180 },
-  "10250": { "g": "Pokémon Torobrado", "f": "", "h": 14, "w": 1150 },
-  "10253": { "g": "Pokémon Acquapesce", "f": "", "h": 4, "w": 110 },
+  "10088": {
+    "g": "Pokémon Coniglio",
+    "f": "Mega Evolution awakens its combative instincts. It has shed any fur that got in the way of its attacks.",
+    "h": 13,
+    "w": 283
+  },
+  "10091": {
+    "g": "Pokémon Topo",
+    "f": "Its whiskers provide it with a keen sense of smell, enabling it to pick up the scent of hidden food and locate it instantly.",
+    "h": 3,
+    "w": 38
+  },
+  "10092": {
+    "g": "Pokémon Topo",
+    "f": "It makes its Rattata underlings gather food for it, dining solely on the most nutritious and delicious fare.",
+    "h": 7,
+    "w": 255
+  },
+  "10100": {
+    "g": "Pokémon Topo",
+    "f": "This Pokémon rides on its tail while it uses its psychic powers to levitate. It attacks with star-shaped thunderbolts.",
+    "h": 7,
+    "w": 210
+  },
+  "10101": {
+    "g": "Pokémon Topo",
+    "f": "It lives in snowy mountains on southern islands. When a blizzard rolls in, this Pokémon hunkers down in the snow to avoid getting blown away.",
+    "h": 7,
+    "w": 400
+  },
+  "10102": {
+    "g": "Pokémon Topo",
+    "f": "Many people climb snowy mountains, hoping to see the icy spikes of these Pokémon glistening in the light of dawn.",
+    "h": 12,
+    "w": 550
+  },
+  "10103": {
+    "g": "Pokémon Volpe",
+    "f": "These Pokémon live in packs in the snowy mountains and defend themselves with icy breath. I suspect this species changed its form to adapt to the frigid climate.",
+    "h": 6,
+    "w": 99
+  },
+  "10104": {
+    "g": "Pokémon Volpe",
+    "f": "Dwells on sacred peaks perpetually covered in snow. Said to appear to virtuous people who have lost their way on mountain paths—it then guides them back down to the mountain’s base.",
+    "h": 11,
+    "w": 199
+  },
+  "10105": {
+    "g": "Pokémon Talpa",
+    "f": "Its three hairs change shape depending on Diglett’s mood. They’re a useful communication tool among these Pokémon.",
+    "h": 2,
+    "w": 10
+  },
+  "10106": {
+    "g": "Pokémon Talpa",
+    "f": "The three of them get along very well. Through their formidable teamwork, they defeat powerful opponents.",
+    "h": 7,
+    "w": 666
+  },
+  "10107": {
+    "g": "Pokémon Graffimiao",
+    "f": "Deeply proud and keenly smart, this Pokémon moves with cunning during battle and relentlessly attacks enemies’ weak points.",
+    "h": 4,
+    "w": 42
+  },
+  "10108": {
+    "g": "Pokémon Nobilgatto",
+    "f": "This Pokémon is one tough opponent. Not only does it have formidable physical abilities, but it’s also not above fighting dirty.",
+    "h": 11,
+    "w": 330
+  },
+  "10109": {
+    "g": "Pokémon Roccia",
+    "f": "Its stone head is imbued with electricity and magnetism. If you carelessly step on one, you’ll be in for a painful shock.",
+    "h": 4,
+    "w": 203
+  },
+  "10110": {
+    "g": "Pokémon Roccia",
+    "f": "When it comes rolling down a mountain path, anything in its way gets zapped by electricity and sent flying.",
+    "h": 10,
+    "w": 1100
+  },
+  "10111": {
+    "g": "Pokémon Megatone",
+    "f": "It uses magnetism to accelerate and fire off rocks tinged with electricity. Even if it doesn’t score a direct hit, the jolt of electricity will do the job.",
+    "h": 17,
+    "w": 3160
+  },
+  "10112": {
+    "g": "Pokémon Melma",
+    "f": "It has a passion for trash above all else, speedily digesting it and creating brilliant crystals of sparkling poison.",
+    "h": 7,
+    "w": 420
+  },
+  "10113": { "g": "Pokémon Melma", "f": "Muk’s coloration becomes increasingly vivid the more it feasts on its favorite dish—trash.", "h": 10, "w": 520 },
+  "10114": {
+    "g": "Pokémon Nocecocco",
+    "f": "This Pokémon’s psychic powers aren’t as strong as they once were. The head on this Exeggutor’s tail scans surrounding areas with weak telepathy.",
+    "h": 109,
+    "w": 4156
+  },
+  "10115": {
+    "g": "Pokémon Guardaossi",
+    "f": "The cursed flames that light up the bone carried by this Pokémon are said to cause both mental and physical pain that will never fade.",
+    "h": 10,
+    "w": 340
+  },
+  "10155": {
+    "g": "Pokémon Prisma",
+    "f": "Necrozma has attached itself to Solgaleo. It siphons away its host’s limitless energy, exploiting that energy to fuel a rampage.",
+    "h": 38,
+    "w": 4600
+  },
+  "10156": {
+    "g": "Pokémon Prisma",
+    "f": "When Necrozma latches on to Lunala, it becomes vicious, seeing enemies everywhere it looks. It will burn the world with lasers.",
+    "h": 42,
+    "w": 3500
+  },
+  "10157": {
+    "g": "Pokémon Prisma",
+    "f": "The light pouring out from all over its body affects living things and nature, impacting them in various ways.",
+    "h": 75,
+    "w": 2300
+  },
+  "10161": {
+    "g": "Pokémon Graffimiao",
+    "f": "These daring Pokémon have coins on their foreheads. Darker coins are harder, and harder coins garner more respect among Meowth.",
+    "h": 4,
+    "w": 75
+  },
+  "10162": {
+    "g": "Pokémon Cavalfuoco",
+    "f": "This Pokémon will look into your eyes and read the contents of your heart. If it finds evil there, it promptly hides away.",
+    "h": 8,
+    "w": 240
+  },
+  "10163": {
+    "g": "Pokémon Cavalfuoco",
+    "f": "Brave and prideful, this Pokémon dashes airily through the forest, its steps aided by the psychic power stored in the fur on its fetlocks.",
+    "h": 17,
+    "w": 800
+  },
+  "10168": {
+    "g": "Pokémon Barriera",
+    "f": "It can radiate chilliness from the bottoms of its feet. It’ll spend the whole day tap-dancing on a frozen floor.",
+    "h": 14,
+    "w": 568
+  },
+  "10173": {
+    "g": "Pokémon Corallo",
+    "f": "Sudden climate change wiped out this ancient kind of Corsola. This Pokémon absorbs others’ life-force through its branches.",
+    "h": 6,
+    "w": 5
+  },
+  "10174": {
+    "g": "Pokémon Procione",
+    "f": "Thought to be the oldest form of Zigzagoon, it moves in zigzags and wreaks havoc upon its surroundings.",
+    "h": 4,
+    "w": 175
+  },
+  "10175": { "g": "Pokémon Sfrecciante", "f": "This very aggressive Pokémon will recklessly challenge opponents stronger than itself.", "h": 5, "w": 325 },
+  "10180": {
+    "g": "Pokémon Trappola",
+    "f": "Its conspicuous lips lure prey in as it lies in wait in the mud. When prey gets close, Stunfisk clamps its jagged steel fins down on them.",
+    "h": 7,
+    "w": 205
+  },
+  "10191": {
+    "g": "Pokémon Kung Fu",
+    "f": "This form of Urshifu is a strong believer in defeating foes by raining many blows down on them. Its strikes are nonstop, flowing like a river.",
+    "h": 19,
+    "w": 1050
+  },
+  "10237": {
+    "g": "Pokémon Fiorfronzolo",
+    "f": "I suspect that its well-developed legs are the result of a life spent on mountains covered in deep snow. The scent it exudes from its flower crown heartens those in proximity.",
+    "h": 12,
+    "w": 192
+  },
+  "10238": {
+    "g": "Pokémon Malavolpe",
+    "f": "A once-departed soul, returned to life in Hisui. Derives power from resentment, which rises as energy atop its head and takes on the forms of foes. In this way, Zorua vents lingering malice.",
+    "h": 7,
+    "w": 125
+  },
+  "10239": {
+    "g": "Pokémon Mutevolpe",
+    "f": "With its disheveled white fur, it looks like an embodiment of death. Heedless of its own safety, Zoroark attacks its nemeses with a bitter energy so intense, it lacerates Zoroark’s own body.",
+    "h": 16,
+    "w": 730
+  },
+  "10241": {
+    "g": "Pokémon Mollusco",
+    "f": "A creature given to melancholy. I suspect its metallic shell developed as a result of the mucus on its skin reacting with the iron in Hisui’s water.",
+    "h": 7,
+    "w": 685
+  },
+  "10242": {
+    "g": "Pokémon Drago",
+    "f": "Able to freely control the hardness of its metallic shell. It loathes solitude and is extremely clingy—it will fume and run riot if those dearest to it ever leave its side.",
+    "h": 17,
+    "w": 3341
+  },
+  "10245": {
+    "g": "Pokémon Tempo",
+    "f": "Radiant light caused Dialga to take on a form bearing a striking resemblance to the creator Pokémon. Dialga now wields such colossal strength that one must conclude this is its true form.",
+    "h": 70,
+    "w": 8487
+  },
+  "10246": {
+    "g": "Pokémon Spazio",
+    "f": "It soars across the sky in a form that greatly resembles the creator of all things. Perhaps this imitation of appearance is Palkia’s strategy for gaining Arceus’s powers.",
+    "h": 63,
+    "w": 6590
+  },
+  "10247": {
+    "g": "Pokémon Irruenza",
+    "f": "Though it differs from other Basculin in several respects, including demeanor—this one is gentle—I have categorized it as a regional form given the vast array of shared qualities.",
+    "h": 10,
+    "w": 180
+  },
+  "10250": {
+    "g": "Pokémon Torobrado",
+    "f": "This kind of Tauros, known as the Combat Breed, is distinguished by its thick, powerful muscles and its fierce disposition.",
+    "h": 14,
+    "w": 1150
+  },
+  "10253": {
+    "g": "Pokémon Acquapesce",
+    "f": "It’s dangerous for Wooper to travel alone. They line up in groups of three or four and help each other as they walk around the wetlands.",
+    "h": 4,
+    "w": 110
+  },
   "10273": { "g": "Mask Pokémon", "f": "", "h": 12, "w": 398 },
   "10274": { "g": "Mask Pokémon", "f": "", "h": 12, "w": 398 },
   "10275": { "g": "Mask Pokémon", "f": "", "h": 12, "w": 398 }
