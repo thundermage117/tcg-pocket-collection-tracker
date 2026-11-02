@@ -44,3 +44,16 @@ node .claude/skills/screenshot/drive.mjs /pokedex "$SCRATCH/dex" 390 844 -- \
 Steps run in order. `js:<expr>` evaluates in the page and prints the value, `wait:<ms>` pauses, and
 `shot` writes `<prefix>-<n>.png`. Asserting with `js:` (what's highlighted, `scrollY`, `location.hash`)
 is often more reliable than reading a screenshot.
+
+## Saved checks: `checks/`
+
+```bash
+node .claude/skills/screenshot/checks/pokedex.mjs
+```
+
+Run this after changing the Pokédex (`frontend/src/pages/pokedex/`, `lib/pokedex.ts`), with the sandbox
+disabled and the dev server running. It checks the sticky bar, the generation jump, the folded breakdown
+on phones, the filter badge and empty state, the species page's filtered ←/→ and back link (scroll
+restored, no extra history entry), and the form sections. It prints ✓/✗ per check and exits 1 on a
+failure. New checks go in the same file. `browser.mjs` (`launch()` → `newPage(route, { width, height })`
+→ `evaluate` / `waitFor` / `screenshot`) is shared with `drive.mjs` for scripts of your own.
