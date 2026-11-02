@@ -8,7 +8,7 @@ import { CardThumb } from '@/components/CardThumb'
 import { Spinner } from '@/components/Spinner'
 import { formatRarity } from '@/components/utils'
 import { expansions, getExpansionById } from '@/lib/CardsDB'
-import { allSpecies, dexEntriesQuery, formArtworkId, generationOf, getSpecies, lineOf, ownedCount, shinySpecies, speciesName } from '@/lib/pokedex'
+import { allSpecies, dexEntriesQuery, formArtworkId, generationOf, getSpecies, lineOf, loadReturn, ownedCount, shinySpecies, speciesName } from '@/lib/pokedex'
 import { getCardNameByLang } from '@/lib/utils'
 import { getPackChances, type PackChance } from '@/pages/overview/packChances'
 import { oneIn } from '@/pages/packs/types'
@@ -38,7 +38,7 @@ export default function SpeciesDetail() {
       }
       const to = e.key === 'ArrowLeft' ? prev : e.key === 'ArrowRight' ? next : undefined
       if (to) {
-        navigate(`/pokedex/${to.dexNr}`)
+        navigate(`/pokedex/${to.dexNr}`, { replace: true })
       }
     }
     window.addEventListener('keydown', onKey)
@@ -51,6 +51,8 @@ export default function SpeciesDetail() {
   const [showShiny, setShowShiny] = useState(searchParams.has('shiny'))
   const shinyCards = shinySpecies.find((s) => s.dexNr === species?.dexNr)?.cards ?? []
   const shinyOwned = ownedCount(collection, shinyCards)
+  // stepping on to a species with no shiny card falls back to the regular artwork (it has no toggle to flip back)
+  const shiny = showShiny && shinyCards.length > 0
 
   const touchStart = useRef<{ x: number; y: number } | undefined>(undefined)
   const onTouchStart = (e: React.TouchEvent) => {
@@ -67,7 +69,7 @@ export default function SpeciesDetail() {
     const dy = e.changedTouches[0].clientY - start.y
     const to = Math.abs(dx) > 80 && Math.abs(dx) > 2 * Math.abs(dy) ? (dx > 0 ? prev : next) : undefined
     if (to) {
-      navigate(`/pokedex/${to.dexNr}`)
+      navigate(`/pokedex/${to.dexNr}`, { replace: true })
     }
   }
 
@@ -104,18 +106,18 @@ export default function SpeciesDetail() {
   return (
     <main className="mx-auto max-w-6xl px-4 pb-12" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       <nav className="mb-4 flex items-center justify-between text-sm text-neutral-400">
-        <Link to="/pokedex" className="flex items-center hover:text-white">
+        <Link to={`/pokedex${loadReturn()?.search ?? ''}`} state={{ returning: true }} className="flex items-center hover:text-white">
           <ChevronLeft className="size-4" /> Pokédex
         </Link>
         <span className="flex gap-4">
           {prev && (
-            <Link to={`/pokedex/${prev.dexNr}`} className="flex items-center hover:text-white">
+            <Link to={`/pokedex/${prev.dexNr}`} replace className="flex items-center hover:text-white">
               <ChevronLeft className="size-4" />
               {speciesName(prev, i18n.language)}
             </Link>
           )}
           {next && (
-            <Link to={`/pokedex/${next.dexNr}`} className="flex items-center hover:text-white">
+            <Link to={`/pokedex/${next.dexNr}`} replace className="flex items-center hover:text-white">
               {speciesName(next, i18n.language)}
               <ChevronRight className="size-4" />
             </Link>
@@ -129,7 +131,7 @@ export default function SpeciesDetail() {
           className="relative mx-auto w-48 shrink-0 rounded-2xl border-1 border-neutral-700 border-solid p-3 sm:mx-0 sm:w-60"
           style={{ background: `radial-gradient(circle at 50% 45%, ${typeColors[species.types[0]]}55, transparent 70%)` }}
         >
-          {showShiny ? (
+          {shiny ? (
             <>
               <Sprite artworkId={species.dexNr} caught={shinyOwned > 0} shiny alt={name} className={shinyOwned === 0 ? 'opacity-25' : undefined} />
               {shinyOwned === 0 && <span className="absolute inset-x-0 bottom-3 text-center text-xs font-medium text-neutral-400">No shiny caught yet</span>}
@@ -143,9 +145,9 @@ export default function SpeciesDetail() {
           {shinyCards.length > 0 && (
             <button
               type="button"
-              onClick={() => setShowShiny(!showShiny)}
-              title={showShiny ? 'Show regular artwork' : `Show shiny artwork (${shinyOwned}/${shinyCards.length} shiny cards)`}
-              className={`absolute top-2 right-2 cursor-pointer rounded-full border-1 border-solid px-2 py-0.5 text-xs transition-colors ${showShiny ? 'border-pink-300 bg-pink-300/20 text-pink-200' : 'border-neutral-600 bg-neutral-900/60 text-neutral-300 hover:border-pink-300'}`}
+              onClick={() => setShowShiny(!shiny)}
+              title={shiny ? 'Show regular artwork' : `Show shiny artwork (${shinyOwned}/${shinyCards.length} shiny cards)`}
+              className={`absolute top-2 right-2 cursor-pointer rounded-full border-1 border-solid px-2 py-0.5 text-xs transition-colors ${shiny ? 'border-pink-300 bg-pink-300/20 text-pink-200' : 'border-neutral-600 bg-neutral-900/60 text-neutral-300 hover:border-pink-300'}`}
             >
               ✵ {shinyOwned}/{shinyCards.length}
             </button>

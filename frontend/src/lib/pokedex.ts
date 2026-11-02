@@ -286,3 +286,23 @@ export function formChains(line: EvolutionLine): FormChain[] {
     return { from: formEvolvesFrom.get(first[0].name), stage: evolutionType === 'stage2' ? 2 : evolutionType === 'stage1' ? 1 : 0, stages }
   })
 }
+
+// Where the species page's back link returns to: the Pokédex's filters (its query string) and scroll position
+const returnKey = 'pokedex-return'
+export interface Return {
+  search: string
+  y: number
+}
+// sessionStorage can throw (private mode, blocked storage); returning is a convenience
+export const saveReturn = (r: Return) => {
+  try {
+    sessionStorage.setItem(returnKey, JSON.stringify(r))
+  } catch {}
+}
+export const loadReturn = (): Return | undefined => {
+  try {
+    return JSON.parse(sessionStorage.getItem(returnKey) ?? 'null') ?? undefined
+  } catch {
+    return undefined
+  }
+}
