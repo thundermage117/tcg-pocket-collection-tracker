@@ -1,7 +1,7 @@
 // Personal fork: a species' Pokédex entry and every printing of it, grouped by form, with what's owned and the best pack for a missing one.
 import { useQuery } from '@tanstack/react-query'
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { CardThumb } from '@/components/CardThumb'
@@ -35,6 +35,10 @@ export default function SpeciesDetail() {
   const index = species ? steps.findIndex((s) => s.dexNr === species.dexNr) : -1
   const prev = steps[index - 1]
   const next = steps[index + 1]
+  // a species opens at the top, not at the scroll position of the list or species it came from
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0)
+  }, [nr])
   const stepTo = (to: { dexNr: number }) => navigate(`/pokedex/${to.dexNr}`, { replace: true, state: location.state })
 
   // ← / → on desktop; ignored while typing or with a dialog (card detail) open
@@ -113,7 +117,18 @@ export default function SpeciesDetail() {
   return (
     <main className="mx-auto max-w-6xl px-4 pb-12" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       <nav className="mb-4 flex items-center justify-between text-sm text-neutral-400">
-        <Link to={`/pokedex${loadReturn()?.search ?? ''}`} state={{ returning: true }} className="flex items-center hover:text-white">
+        <Link
+          to={`/pokedex${loadReturn()?.search ?? ''}`}
+          state={{ returning: true }}
+          onClick={(e) => {
+            // came from the Pokédex (←/→ replace entries, so it's one back): go back rather than stack another entry
+            if (location.state?.fromDex) {
+              e.preventDefault()
+              navigate(-1)
+            }
+          }}
+          className="flex items-center hover:text-white"
+        >
           <ChevronLeft className="size-4" /> Pokédex
         </Link>
         <span className="flex items-center gap-4">

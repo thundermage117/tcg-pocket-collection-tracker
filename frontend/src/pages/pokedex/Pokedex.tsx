@@ -56,8 +56,9 @@ export default function Pokedex() {
   // the species page links back with these filters; coming back (that link or browser back) restores the scroll position
   const location = useLocation()
   const returning = useNavigationType() === 'POP' || location.state?.returning === true
-  useEffect(() => {
-    // saved now, not only on leaving: the species page renders before this unmounts
+  // saved now, not only on leaving: the species page renders before this unmounts. A layout cleanup, so the scroll
+  // position is read before the species page's layout effect scrolls to the top
+  useLayoutEffect(() => {
     const search = location.search
     if (loadReturn()?.search !== search) {
       saveReturn({ search, y: 0 })
