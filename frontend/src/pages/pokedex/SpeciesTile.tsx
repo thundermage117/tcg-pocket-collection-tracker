@@ -95,7 +95,8 @@ export function SpeciesTile({ species, collection, lang, art = 'sprite', shiny, 
       )}
     >
       <span className="absolute inset-x-0 top-0 h-1" style={{ background: typeStripe(species.types) }} />
-      {species.group && <GroupIcon group={species.group} className="absolute top-2 left-2 drop-shadow" />}
+      {/* starters are a quarter of the early generations, so on tiles only legendary and mythical get a mark */}
+      {species.group && species.group !== 'starter' && <GroupIcon group={species.group} className="absolute top-2 left-2 drop-shadow" />}
       {shiny && owned > 0 && <span className="absolute top-2 right-2 text-pink-300 drop-shadow">✵</span>}
       {art === 'sprite' ? (
         <Sprite artworkId={species.dexNr} caught={owned > 0} shiny={shiny} alt={name} />
