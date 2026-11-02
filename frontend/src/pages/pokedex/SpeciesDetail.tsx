@@ -58,16 +58,29 @@ export default function SpeciesDetail() {
 
   // a mostly horizontal swipe on phones does the same
   // ?shiny (from the Shiny Pokédex) opens on the shiny artwork; the ✵ button flips it
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [showShiny, setShowShiny] = useState(searchParams.has('shiny'))
   const shinyCards = shinySpecies.find((s) => s.dexNr === species?.dexNr)?.cards ?? []
   const shinyOwned = ownedCount(collection, shinyCards)
-  // the hero's form (Alolan Vulpix, Mega Charizard X): kept with its dex number, so stepping to another species shows the plain one
-  const [picked, setPicked] = useState<{ dexNr: number; artworkId: number }>()
-  const heroArtworkId = species && picked?.dexNr === species.dexNr ? picked.artworkId : species?.dexNr
+  // the hero's form (Alolan Vulpix, Mega Charizard X) is in the URL (?form=<artwork id>), so evolution-line form tiles open on it
+  // and stepping to another species drops it
+  const formParam = Number(searchParams.get('form')) || undefined
+  const pickForm = (artworkId: number | undefined) =>
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (artworkId) {
+          next.set('form', String(artworkId))
+        } else {
+          next.delete('form')
+        }
+        return next
+      },
+      { replace: true, state: location.state },
+    )
   // stepping on to a species with no shiny card falls back to the regular artwork (it has no toggle to flip back);
   // shiny artwork exists for species only, not forms
-  const shiny = showShiny && shinyCards.length > 0 && heroArtworkId === species?.dexNr
+  const shiny = showShiny && shinyCards.length > 0 && !formParam
 
   const touchStart = useRef<{ x: number; y: number } | undefined>(undefined)
   const onTouchStart = (e: React.TouchEvent) => {
@@ -113,7 +126,7 @@ export default function SpeciesDetail() {
       const cards = species.cards.filter((c) => forms.includes(c.name))
       return { artworkId, cards, name: getCardNameByLang(cards[0], i18n.language).replace(/ ex$/, '') }
     })
-  const heroForm = heroForms.find((f) => f.artworkId === heroArtworkId)
+  const heroForm = heroForms.find((f) => f.artworkId === formParam)
   const heroOwned = heroForm ? ownedCount(collection, heroForm.cards) : owned
   const entry = entries?.[heroForm?.artworkId ?? species.dexNr]
 
@@ -180,7 +193,7 @@ export default function SpeciesDetail() {
             ) : (
               <>
                 <Sprite
-                  artworkId={heroArtworkId ?? species.dexNr}
+                  artworkId={heroForm?.artworkId ?? species.dexNr}
                   caught={heroOwned > 0}
                   alt={heroForm?.name ?? name}
                   className={heroOwned === 0 ? 'opacity-25' : undefined}
@@ -193,7 +206,7 @@ export default function SpeciesDetail() {
                 type="button"
                 onClick={() => {
                   setShowShiny(!shiny)
-                  setPicked(undefined)
+                  pickForm(undefined)
                 }}
                 title={shiny ? 'Show regular artwork' : `Show shiny artwork (${shinyOwned}/${shinyCards.length} shiny cards)`}
                 className={`absolute top-2 right-2 cursor-pointer rounded-full border-1 border-solid px-2 py-0.5 text-xs transition-colors ${shiny ? 'border-pink-300 bg-pink-300/20 text-pink-200' : 'border-neutral-600 bg-neutral-900/60 text-neutral-300 hover:border-pink-300'}`}
@@ -206,7 +219,7 @@ export default function SpeciesDetail() {
             <div className="flex flex-wrap justify-center gap-1">
               {[{ artworkId: species.dexNr, name, caught: owned > 0 }, ...heroForms.map((f) => ({ ...f, caught: ownedCount(collection, f.cards) > 0 }))].map(
                 (f) => {
-                  const selected = f.artworkId === (heroArtworkId ?? species.dexNr)
+                  const selected = f.artworkId === (heroForm?.artworkId ?? species.dexNr)
                   return (
                     <button
                       key={f.artworkId}
@@ -214,7 +227,7 @@ export default function SpeciesDetail() {
                       title={f.name}
                       aria-pressed={selected}
                       onClick={() => {
-                        setPicked({ dexNr: species.dexNr, artworkId: f.artworkId })
+                        pickForm(f.artworkId === species.dexNr ? undefined : f.artworkId)
                         setShowShiny(false)
                       }}
                       className={`cursor-pointer rounded-lg border-1 border-solid p-0.5 transition-colors ${selected ? 'border-blue-300 bg-neutral-800' : 'border-neutral-700 hover:border-neutral-500'}`}

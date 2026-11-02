@@ -141,7 +141,8 @@ export function FormTile({ form, collection, lang, className }: { form: FormNode
   const complete = owned === form.cards.length
   return (
     <Link
-      to={`/pokedex/${form.species.dexNr}`}
+      // opens the species page on this form when it has artwork of its own
+      to={`/pokedex/${form.species.dexNr}${form.artworkId === form.species.dexNr ? '' : `?form=${form.artworkId}`}`}
       title={name}
       className={cn(
         'relative block overflow-hidden rounded-md border-1 border-neutral-700 border-solid bg-neutral-800 p-1.5 pt-2.5 transition-colors hover:border-neutral-400',
