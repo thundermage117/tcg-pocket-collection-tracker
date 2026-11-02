@@ -26,5 +26,21 @@ Then `Read` the PNG to look at it. Save screenshots in the session scratchpad, n
 - **The browser is logged out**, with a fresh profile, so collection-dependent UI shows the empty
   state (every species uncaught, 0/N). Keep that in mind when judging owned/complete styling.
 - `WAIT_MS=` sets how long the page gets to settle (default 10000). Raise it if images are blank.
-- It can't click or scroll. To show a UI state, link to it by URL: Pokédex filters live in the
+- `shot.sh` can't click or scroll. To show a UI state, link to it by URL: Pokédex filters live in the
   query string (`'/pokedex?view=lines&gen=1'`).
+
+## Scrolling, clicking, checking state: `drive.mjs`
+
+For anything a static shot can't show (sticky bars, scroll restoration, what a click does), drive the
+same shell over the DevTools protocol. It needs no npm packages (Node's built-in WebSocket), uses a
+throwaway profile, and sets mobile emulation below 600px wide.
+
+```bash
+node .claude/skills/screenshot/drive.mjs /pokedex "$SCRATCH/dex" 390 844 -- \
+  'js:scrollTo(0, 5000)' wait:600 shot \
+  "js:document.querySelector('[data-gen-chip=\"5\"]').click()" wait:1500 shot 'js:scrollY'
+```
+
+Steps run in order. `js:<expr>` evaluates in the page and prints the value, `wait:<ms>` pauses, and
+`shot` writes `<prefix>-<n>.png`. Asserting with `js:` (what's highlighted, `scrollY`, `location.hash`)
+is often more reliable than reading a screenshot.
