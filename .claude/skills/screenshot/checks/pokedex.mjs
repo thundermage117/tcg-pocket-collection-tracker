@@ -149,7 +149,7 @@ try {
     }
   }
 } finally {
-  browser.close()
+  await browser.close()
 }
 console.log(failed ? `${failed} of ${checks.length} checks failed` : `all ${checks.length} checks passed`)
 process.exit(failed ? 1 : 0)

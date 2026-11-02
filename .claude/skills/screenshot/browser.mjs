@@ -117,10 +117,13 @@ export async function launch() {
 
   return {
     newPage,
-    close() {
+    // waits for chrome to exit: it still writes to the profile while shutting down
+    async close() {
       socket.close()
+      const exited = chrome.exitCode === null ? new Promise((r) => chrome.once('exit', r)) : Promise.resolve()
       chrome.kill()
-      fs.rmSync(profile, { recursive: true, force: true })
+      await exited
+      fs.rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
     },
   }
 }

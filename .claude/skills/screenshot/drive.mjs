@@ -36,5 +36,5 @@ try {
     await shot()
   }
 } finally {
-  browser.close()
+  await browser.close()
 }
