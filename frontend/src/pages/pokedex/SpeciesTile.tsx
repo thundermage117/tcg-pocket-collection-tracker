@@ -31,6 +31,15 @@ export const typeStripe = (types: CardType[]) =>
     ? typeColors[types[0]]
     : `linear-gradient(90deg, ${types.map((t, i) => `${typeColors[t]} ${(100 * i) / types.length}% ${(100 * (i + 1)) / types.length}%`).join(', ')})`
 
+/** A soft glow of the type colour behind artwork, one per type for dual types; alpha is a hex byte ('40'). */
+export const typeGlow = (types: CardType[], alpha: string) =>
+  types.length === 1
+    ? `radial-gradient(circle at 50% 40%, ${typeColors[types[0]]}${alpha}, transparent 70%)`
+    : `radial-gradient(circle at 25% 30%, ${typeColors[types[0]]}${alpha}, transparent 60%), radial-gradient(circle at 75% 60%, ${typeColors[types[1]]}${alpha}, transparent 60%)`
+
+// on tiles the glow is a hint until caught, so caught species stand out across a grid
+const tileGlow = (types: CardType[], caught: boolean) => ({ backgroundImage: typeGlow(types, caught ? '55' : '14') })
+
 export const groupLabels: Record<SpeciesGroup, string> = { legendary: 'Legendary', mythical: 'Mythical', starter: 'Starter' }
 
 const groupIcons = { legendary: Crown, mythical: Sparkles, starter: CircleDot }
@@ -93,6 +102,7 @@ export function SpeciesTile({ species, collection, lang, art = 'sprite', shiny, 
         current && 'ring-2 ring-blue-300',
         className,
       )}
+      style={tileGlow(species.types, owned > 0)}
     >
       <span className="absolute inset-x-0 top-0 h-1" style={{ background: typeStripe(species.types) }} />
       {/* starters are a quarter of the early generations, so on tiles only legendary and mythical get a mark */}
@@ -153,6 +163,7 @@ export function FormTile({ form, collection, lang, art = 'sprite', showDex, from
   // without " ex", like the form's own name: Mega Charizard X ex keeps its X when it wraps
   const name = plain ? speciesName(form.species, lang) : getCardNameByLang(form.cards[0], lang).replace(/ ex$/, '')
   const complete = owned === form.cards.length
+  const types = typesOf(form.cards)
   return (
     <Link
       // opens the species page on this form when it has artwork of its own
@@ -163,9 +174,10 @@ export function FormTile({ form, collection, lang, art = 'sprite', showDex, from
         'relative block overflow-hidden rounded-md border-1 border-neutral-700 border-solid bg-neutral-800 p-1.5 pt-2.5 transition-colors hover:border-neutral-400',
         className,
       )}
+      style={tileGlow(types, owned > 0)}
     >
       {/* the form's own types: Alolan Vulpix is Water, Vulpix Fire */}
-      <span className="absolute inset-x-0 top-0 h-1" style={{ background: typeStripe(typesOf(form.cards)) }} />
+      <span className="absolute inset-x-0 top-0 h-1" style={{ background: typeStripe(types) }} />
       {art === 'sprite' ? (
         <Sprite artworkId={form.artworkId} caught={owned > 0} alt={name} />
       ) : (
