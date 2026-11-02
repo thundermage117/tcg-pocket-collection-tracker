@@ -9,83 +9,43 @@ import SearchInput from '@/components/filters/SearchInput'
 import { Spinner } from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { expansions, getExpansionById } from '@/lib/CardsDB'
-import {
-  allLines,
-  allSpecies,
-  type Feature,
-  featureOptions,
-  type Generation,
-  generationOf,
-  generations,
-  loadReturn,
-  ownedCount,
-  type Species,
-  type Stage,
-  saveReturn,
-  shinySpecies,
-  speciesGroupOptions,
-  speciesMatches,
-  speciesName,
-  stageOptions,
-} from '@/lib/pokedex'
+import { getExpansionById } from '@/lib/CardsDB'
+import { allLines, type Generation, generationOf, generations, loadReturn, saveReturn, speciesGroupOptions, speciesName } from '@/lib/pokedex'
 import { capitalize, cn } from '@/lib/utils'
 import { useCollection } from '@/services/collection/useCollection'
-import { type CardType, cardTypes, type ExpansionId } from '@/types'
+import {
+  artLabels,
+  artOptions,
+  dexLabels,
+  dexMatcher,
+  dexOptions,
+  genOptions,
+  groupOptions,
+  hasLabels,
+  hasOptions,
+  parseDexFilters,
+  setOptions,
+  showLabels,
+  showOptions,
+  sortLabels,
+  sortOptions,
+  stageFilterOptions,
+  stageLabels,
+  typeOptions,
+  viewLabels,
+  viewOptions,
+} from './dexFilters'
 import { EvolutionChain } from './EvolutionChain'
-import { GroupIcon, groupLabels, ProgressBar, SpeciesTile, type TileArt, typeColors } from './SpeciesTile'
-
-const dexOptions = ['all', 'shiny'] as const
-const dexLabels = { all: 'Pokédex', shiny: '✵ Shiny' }
-
-const viewOptions = ['dex', 'lines'] as const
-const viewLabels = { dex: 'Dex', lines: 'Evolution lines' }
-
-const artOptions: TileArt[] = ['sprite', 'card']
-const artLabels: Record<TileArt, string> = { sprite: 'Sprites', card: 'Cards' }
-
-const showOptions = ['all', 'missing', 'owned', 'incomplete'] as const
-type ShowOption = (typeof showOptions)[number]
-const showLabels: Record<ShowOption, string> = { all: 'All', missing: 'Missing', owned: 'Owned', incomplete: 'Incomplete' }
-
-const sortOptions = ['dex', 'printings', 'completion'] as const
-type SortOption = (typeof sortOptions)[number]
-const sortLabels: Record<SortOption, string> = { dex: 'Dex number', printings: 'Most printings', completion: 'Closest to complete' }
-
-const groupOptions = ['all', ...speciesGroupOptions] as const
-const stageFilterOptions = ['all', ...stageOptions] as const
-const stageLabels: Record<Stage, string> = { basic: 'Basic', stage1: 'Stage 1', stage2: 'Stage 2' }
-const hasOptions = ['all', ...featureOptions] as const
-const hasLabels: Record<Feature, string> = { ex: 'An ex card', mega: 'A Mega form', regional: 'A regional form' }
-
-const genOptions = ['all', ...generations.map((g) => String(g.nr))]
-const typeOptions: ('all' | CardType)[] = ['all', ...cardTypes.filter((t) => t !== 'trainer' && allSpecies.some((s) => s.types.includes(t)))]
-const setOptions: ('all' | ExpansionId)[] = [
-  'all',
-  ...expansions.filter((e) => allSpecies.some((s) => s.cards.some((c) => c.expansion === e.id))).map((e) => e.id),
-]
+import { GroupIcon, groupLabels, ProgressBar, SpeciesTile, typeColors } from './SpeciesTile'
 
 export default function Pokedex() {
   const { t, i18n } = useTranslation('common/sets')
   const { data: collection, isLoading } = useCollection()
   const [params, setParams] = useSearchParams()
 
-  // defaults are left out of the URL; unknown values fall back to them
-  const dex = dexOptions.find((x) => x === params.get('dex')) ?? 'all'
-  const shiny = dex === 'shiny'
-  // lines are about catching every member, which doesn't carry over to shinies
-  const view = shiny ? 'dex' : (viewOptions.find((x) => x === params.get('view')) ?? 'dex')
-  const search = params.get('q') ?? ''
-  const gen = genOptions.find((g) => g === params.get('gen')) ?? 'all'
-  const type = typeOptions.find((x) => x === params.get('type')) ?? 'all'
-  const show = showOptions.find((x) => x === params.get('show')) ?? 'all'
-  const set = setOptions.find((x) => x === params.get('set')) ?? 'all'
-  const group = groupOptions.find((x) => x === params.get('group')) ?? 'all'
-  const stage = stageFilterOptions.find((x) => x === params.get('stage')) ?? 'all'
-  const has = hasOptions.find((x) => x === params.get('has')) ?? 'all'
+  const filters = parseDexFilters(params)
+  const { dex, shiny, view, search, gen, type, show, set, group, stage, has, sort, art } = filters
   const sheetFiltering = gen !== 'all' || type !== 'all' || set !== 'all' || group !== 'all' || stage !== 'all' || has !== 'all'
-  const sort = sortOptions.find((x) => x === params.get('sort')) ?? 'dex'
-  const art = artOptions.find((x) => x === params.get('art')) ?? 'sprite'
   const filtering = search !== '' || show !== 'all' || sheetFiltering
   const sheetFilterCount = [gen, type, set, group, stage, has].filter((x) => x !== 'all').length
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -97,7 +57,11 @@ export default function Pokedex() {
   const location = useLocation()
   const returning = useNavigationType() === 'POP' || location.state?.returning === true
   useEffect(() => {
+    // saved now, not only on leaving: the species page renders before this unmounts
     const search = location.search
+    if (loadReturn()?.search !== search) {
+      saveReturn({ search, y: 0 })
+    }
     return () => saveReturn({ search, y: window.scrollY })
   }, [location.search])
   const restored = useRef(false)
@@ -139,32 +103,7 @@ export default function Pokedex() {
     return <Spinner size="lg" overlay />
   }
 
-  const list = shiny ? shinySpecies : allSpecies
-  const owned = new Map(list.map((s) => [s.dexNr, ownedCount(collection, s.cards)]))
-  const ownedOf = (s: Species) => owned.get(s.dexNr) as number
-  const query = search.trim().toLowerCase()
-  const matches = (s: Species) => {
-    const n = ownedOf(s)
-    return (
-      (gen === 'all' || generationOf(s.dexNr).nr === Number(gen)) &&
-      (type === 'all' || s.types.includes(type)) &&
-      (set === 'all' || s.cards.some((c) => c.expansion === set)) &&
-      (group === 'all' || s.group === group) &&
-      (stage === 'all' || s.stages.includes(stage)) &&
-      (has === 'all' || s.features.includes(has)) &&
-      (show === 'all' || (show === 'missing' ? n === 0 : show === 'owned' ? n > 0 : n > 0 && n < s.cards.length)) &&
-      (!query || speciesMatches(s, query))
-    )
-  }
-
-  const share = (s: Species) => ownedOf(s) / s.cards.length
-  const sorters: Record<SortOption, (a: Species, b: Species) => number> = {
-    dex: (a, b) => a.dexNr - b.dexNr,
-    printings: (a, b) => b.cards.length - a.cards.length || a.dexNr - b.dexNr,
-    // complete species go last: there's nothing left to chase
-    completion: (a, b) => Number(share(a) === 1) - Number(share(b) === 1) || share(b) - share(a) || a.dexNr - b.dexNr,
-  }
-  const filtered = list.filter(matches).sort(sorters[sort])
+  const { list, ownedOf, matches, filtered } = dexMatcher(filters, collection)
   // a line shows when any member matches, and then shows whole
   const lines = allLines.filter((line) => line.species.some(matches))
 
@@ -422,7 +361,7 @@ export default function Pokedex() {
                   <ul className="mb-6 grid grid-cols-3 gap-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
                     {species.map((s) => (
                       <li key={s.dexNr}>
-                        <SpeciesTile species={s} collection={collection} lang={i18n.language} art={art} shiny={shiny} />
+                        <SpeciesTile species={s} collection={collection} lang={i18n.language} art={art} shiny={shiny} fromDex />
                       </li>
                     ))}
                   </ul>
@@ -441,7 +380,7 @@ export default function Pokedex() {
                       </span>
                     </h2>
                     <div className="overflow-x-auto">
-                      <EvolutionChain line={line} collection={collection} lang={i18n.language} art={art} />
+                      <EvolutionChain line={line} collection={collection} lang={i18n.language} art={art} fromDex />
                     </div>
                   </li>
                 )

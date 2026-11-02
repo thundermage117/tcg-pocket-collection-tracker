@@ -14,6 +14,7 @@ interface Props {
   lang: string
   art?: TileArt
   current?: number // dex number to highlight
+  fromDex?: boolean
 }
 
 const tileWidth = 'w-20 sm:w-24'
@@ -34,7 +35,7 @@ function Stages<T>({ stages, render, keyOf }: { stages: T[][]; render: (item: T)
   ))
 }
 
-export function EvolutionChain({ line, collection, lang, art, current }: Props) {
+export function EvolutionChain({ line, collection, lang, art, current, fromDex }: Props) {
   const chains = formChains(line)
   // localized name of the plain card a form chain starts from
   const fromName = (name: string) => {
@@ -50,7 +51,15 @@ export function EvolutionChain({ line, collection, lang, art, current }: Props) 
           render={(dexNr) => {
             const species = getSpecies(dexNr)
             return species ? (
-              <SpeciesTile species={species} collection={collection} lang={lang} art={art} current={dexNr === current} className={tileWidth} />
+              <SpeciesTile
+                species={species}
+                collection={collection}
+                lang={lang}
+                art={art}
+                current={dexNr === current}
+                fromDex={fromDex}
+                className={tileWidth}
+              />
             ) : (
               <AbsentTile dexNr={dexNr} lang={lang} className={tileWidth} />
             )

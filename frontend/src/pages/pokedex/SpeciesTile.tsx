@@ -74,17 +74,19 @@ interface Props {
   art?: TileArt
   shiny?: boolean // shiny artwork, and a sparkle once caught
   current?: boolean // the species whose page this is
+  fromDex?: boolean // on the Pokédex: the species page then steps through its filtered list
   className?: string
 }
 
 /** Artwork (or owned card art), dex number and owned/total printings; a check once every printing is owned. */
-export function SpeciesTile({ species, collection, lang, art = 'sprite', shiny, current, className }: Props) {
+export function SpeciesTile({ species, collection, lang, art = 'sprite', shiny, current, fromDex, className }: Props) {
   const owned = ownedCount(collection, species.cards)
   const name = speciesName(species, lang)
   const complete = owned === species.cards.length
   return (
     <Link
       to={`/pokedex/${species.dexNr}${shiny ? '?shiny' : ''}`}
+      state={fromDex ? { fromDex } : undefined}
       title={name}
       className={cn(
         'relative block overflow-hidden rounded-md border-1 border-neutral-700 border-solid bg-neutral-800 p-1.5 pt-2.5 transition-colors hover:border-neutral-400',

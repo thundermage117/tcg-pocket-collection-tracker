@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { CardThumb } from '@/components/CardThumb'
 import { Spinner } from '@/components/Spinner'
 import { formatRarity } from '@/components/utils'
@@ -14,6 +14,7 @@ import { getPackChances, type PackChance } from '@/pages/overview/packChances'
 import { oneIn } from '@/pages/packs/types'
 import { useCollection, useSelectedCard } from '@/services/collection/useCollection'
 import type { ExpansionId } from '@/types'
+import { dexMatcher, parseDexFilters } from './dexFilters'
 import { EvolutionChain } from './EvolutionChain'
 import { dexLabel, GroupIcon, groupLabels, ProgressBar, Sprite, typeColors } from './SpeciesTile'
 
@@ -26,9 +27,15 @@ export default function SpeciesDetail() {
   // supportedLngs keeps resolvedLanguage to the locales that have an entries file
   const { data: entries } = useQuery(dexEntriesQuery(i18n.resolvedLanguage ?? 'en-US'))
   const navigate = useNavigate()
-  const index = species ? allSpecies.indexOf(species) : -1
-  const prev = allSpecies[index - 1]
-  const next = allSpecies[index + 1]
+  // opened from the Pokédex, ← / → step through its filtered list (in its sort order); otherwise through every species
+  const location = useLocation()
+  const saved = location.state?.fromDex === true ? loadReturn() : undefined
+  const dexList = saved ? dexMatcher(parseDexFilters(new URLSearchParams(saved.search)), collection).filtered : allSpecies
+  const steps = species && dexList.some((s) => s.dexNr === species.dexNr) ? dexList : allSpecies
+  const index = species ? steps.findIndex((s) => s.dexNr === species.dexNr) : -1
+  const prev = steps[index - 1]
+  const next = steps[index + 1]
+  const stepTo = (to: { dexNr: number }) => navigate(`/pokedex/${to.dexNr}`, { replace: true, state: location.state })
 
   // ← / → on desktop; ignored while typing or with a dialog (card detail) open
   useEffect(() => {
@@ -38,12 +45,12 @@ export default function SpeciesDetail() {
       }
       const to = e.key === 'ArrowLeft' ? prev : e.key === 'ArrowRight' ? next : undefined
       if (to) {
-        navigate(`/pokedex/${to.dexNr}`, { replace: true })
+        stepTo(to)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [prev, next, navigate])
+  }, [prev, next, stepTo])
 
   // a mostly horizontal swipe on phones does the same
   // ?shiny (from the Shiny Pokédex) opens on the shiny artwork; the ✵ button flips it
@@ -69,7 +76,7 @@ export default function SpeciesDetail() {
     const dy = e.changedTouches[0].clientY - start.y
     const to = Math.abs(dx) > 80 && Math.abs(dx) > 2 * Math.abs(dy) ? (dx > 0 ? prev : next) : undefined
     if (to) {
-      navigate(`/pokedex/${to.dexNr}`, { replace: true })
+      stepTo(to)
     }
   }
 
@@ -109,15 +116,20 @@ export default function SpeciesDetail() {
         <Link to={`/pokedex${loadReturn()?.search ?? ''}`} state={{ returning: true }} className="flex items-center hover:text-white">
           <ChevronLeft className="size-4" /> Pokédex
         </Link>
-        <span className="flex gap-4">
+        <span className="flex items-center gap-4">
           {prev && (
-            <Link to={`/pokedex/${prev.dexNr}`} replace className="flex items-center hover:text-white">
+            <Link to={`/pokedex/${prev.dexNr}`} replace state={location.state} className="flex items-center hover:text-white">
               <ChevronLeft className="size-4" />
               {speciesName(prev, i18n.language)}
             </Link>
           )}
+          {steps !== allSpecies && (
+            <span title="Position in the Pokédex's filtered list" className="tabular-nums">
+              {index + 1}/{steps.length}
+            </span>
+          )}
           {next && (
-            <Link to={`/pokedex/${next.dexNr}`} replace className="flex items-center hover:text-white">
+            <Link to={`/pokedex/${next.dexNr}`} replace state={location.state} className="flex items-center hover:text-white">
               {speciesName(next, i18n.language)}
               <ChevronRight className="size-4" />
             </Link>
