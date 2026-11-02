@@ -62,8 +62,12 @@ export default function SpeciesDetail() {
   const [showShiny, setShowShiny] = useState(searchParams.has('shiny'))
   const shinyCards = shinySpecies.find((s) => s.dexNr === species?.dexNr)?.cards ?? []
   const shinyOwned = ownedCount(collection, shinyCards)
-  // stepping on to a species with no shiny card falls back to the regular artwork (it has no toggle to flip back)
-  const shiny = showShiny && shinyCards.length > 0
+  // the hero's form (Alolan Vulpix, Mega Charizard X): kept with its dex number, so stepping to another species shows the plain one
+  const [picked, setPicked] = useState<{ dexNr: number; artworkId: number }>()
+  const heroArtworkId = species && picked?.dexNr === species.dexNr ? picked.artworkId : species?.dexNr
+  // stepping on to a species with no shiny card falls back to the regular artwork (it has no toggle to flip back);
+  // shiny artwork exists for species only, not forms
+  const shiny = showShiny && shinyCards.length > 0 && heroArtworkId === species?.dexNr
 
   const touchStart = useRef<{ x: number; y: number } | undefined>(undefined)
   const onTouchStart = (e: React.TouchEvent) => {
@@ -102,7 +106,16 @@ export default function SpeciesDetail() {
   const owned = ownedCount(collection, species.cards)
   const name = speciesName(species, i18n.language)
   const line = lineOf(species)
-  const entry = entries?.[species.dexNr]
+  // forms with artwork of their own, cards pooled by artwork (Mega Charizard X ex and a plain Mega Charizard X would share one)
+  const heroForms = [...Map.groupBy(species.forms, (form) => formArtworkId(species, form))]
+    .filter(([artworkId]) => artworkId !== species.dexNr)
+    .map(([artworkId, forms]) => {
+      const cards = species.cards.filter((c) => forms.includes(c.name))
+      return { artworkId, cards, name: getCardNameByLang(cards[0], i18n.language).replace(/ ex$/, '') }
+    })
+  const heroForm = heroForms.find((f) => f.artworkId === heroArtworkId)
+  const heroOwned = heroForm ? ownedCount(collection, heroForm.cards) : owned
+  const entry = entries?.[heroForm?.artworkId ?? species.dexNr]
 
   const setIndex = (id: string) => expansions.findIndex((e) => e.id === id)
   const firstSet = species.cards.reduce((a, c) => (setIndex(c.expansion) < setIndex(a.expansion) ? c : a)).expansion
@@ -153,31 +166,65 @@ export default function SpeciesDetail() {
       </nav>
 
       <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-8">
-        {/* the species' main type glows behind its artwork; uncaught species stay a silhouette */}
-        <div
-          className="relative mx-auto w-48 shrink-0 rounded-2xl border-1 border-neutral-700 border-solid p-3 sm:mx-0 sm:w-60"
-          style={{ background: `radial-gradient(circle at 50% 45%, ${typeColors[species.types[0]]}55, transparent 70%)` }}
-        >
-          {shiny ? (
-            <>
-              <Sprite artworkId={species.dexNr} caught={shinyOwned > 0} shiny alt={name} className={shinyOwned === 0 ? 'opacity-25' : undefined} />
-              {shinyOwned === 0 && <span className="absolute inset-x-0 bottom-3 text-center text-xs font-medium text-neutral-400">No shiny caught yet</span>}
-            </>
-          ) : (
-            <>
-              <Sprite artworkId={species.dexNr} caught={owned > 0} alt={name} className={owned === 0 ? 'opacity-25' : undefined} />
-              {owned === 0 && <span className="absolute inset-x-0 bottom-3 text-center text-xs font-medium text-neutral-400">Not caught yet</span>}
-            </>
-          )}
-          {shinyCards.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setShowShiny(!shiny)}
-              title={shiny ? 'Show regular artwork' : `Show shiny artwork (${shinyOwned}/${shinyCards.length} shiny cards)`}
-              className={`absolute top-2 right-2 cursor-pointer rounded-full border-1 border-solid px-2 py-0.5 text-xs transition-colors ${shiny ? 'border-pink-300 bg-pink-300/20 text-pink-200' : 'border-neutral-600 bg-neutral-900/60 text-neutral-300 hover:border-pink-300'}`}
-            >
-              ✵ {shinyOwned}/{shinyCards.length}
-            </button>
+        <div className="mx-auto flex w-48 shrink-0 flex-col gap-2 sm:mx-0 sm:w-60">
+          {/* the species' main type glows behind its artwork; uncaught species stay a silhouette */}
+          <div
+            className="relative rounded-2xl border-1 border-neutral-700 border-solid p-3"
+            style={{ background: `radial-gradient(circle at 50% 45%, ${typeColors[species.types[0]]}55, transparent 70%)` }}
+          >
+            {shiny ? (
+              <>
+                <Sprite artworkId={species.dexNr} caught={shinyOwned > 0} shiny alt={name} className={shinyOwned === 0 ? 'opacity-25' : undefined} />
+                {shinyOwned === 0 && <span className="absolute inset-x-0 bottom-3 text-center text-xs font-medium text-neutral-400">No shiny caught yet</span>}
+              </>
+            ) : (
+              <>
+                <Sprite
+                  artworkId={heroArtworkId ?? species.dexNr}
+                  caught={heroOwned > 0}
+                  alt={heroForm?.name ?? name}
+                  className={heroOwned === 0 ? 'opacity-25' : undefined}
+                />
+                {heroOwned === 0 && <span className="absolute inset-x-0 bottom-3 text-center text-xs font-medium text-neutral-400">Not caught yet</span>}
+              </>
+            )}
+            {shinyCards.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowShiny(!shiny)
+                  setPicked(undefined)
+                }}
+                title={shiny ? 'Show regular artwork' : `Show shiny artwork (${shinyOwned}/${shinyCards.length} shiny cards)`}
+                className={`absolute top-2 right-2 cursor-pointer rounded-full border-1 border-solid px-2 py-0.5 text-xs transition-colors ${shiny ? 'border-pink-300 bg-pink-300/20 text-pink-200' : 'border-neutral-600 bg-neutral-900/60 text-neutral-300 hover:border-pink-300'}`}
+              >
+                ✵ {shinyOwned}/{shinyCards.length}
+              </button>
+            )}
+          </div>
+          {heroForms.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-1">
+              {[{ artworkId: species.dexNr, name, caught: owned > 0 }, ...heroForms.map((f) => ({ ...f, caught: ownedCount(collection, f.cards) > 0 }))].map(
+                (f) => {
+                  const selected = f.artworkId === (heroArtworkId ?? species.dexNr)
+                  return (
+                    <button
+                      key={f.artworkId}
+                      type="button"
+                      title={f.name}
+                      aria-pressed={selected}
+                      onClick={() => {
+                        setPicked({ dexNr: species.dexNr, artworkId: f.artworkId })
+                        setShowShiny(false)
+                      }}
+                      className={`cursor-pointer rounded-lg border-1 border-solid p-0.5 transition-colors ${selected ? 'border-blue-300 bg-neutral-800' : 'border-neutral-700 hover:border-neutral-500'}`}
+                    >
+                      <Sprite artworkId={f.artworkId} caught={f.caught} alt={f.name} className="size-9" />
+                    </button>
+                  )
+                },
+              )}
+            </div>
           )}
         </div>
 
@@ -199,10 +246,12 @@ export default function SpeciesDetail() {
               </span>
             )}
           </h1>
+          {heroForm && <p className="font-medium text-blue-200 text-sm">{heroForm.name}</p>}
           {entry && (
             <>
               <p className="text-neutral-400">{entry.g}</p>
-              <blockquote className="mt-3 max-w-xl border-l-2 border-neutral-600 pl-3 text-neutral-200 italic">{entry.f}</blockquote>
+              {/* a form without a known entry shows none rather than the species' */}
+              {entry.f && <blockquote className="mt-3 max-w-xl border-l-2 border-neutral-600 pl-3 text-neutral-200 italic">{entry.f}</blockquote>}
               <p className="mt-2 text-sm text-neutral-400 tabular-nums">
                 {(entry.h / 10).toLocaleString(i18n.language)} m · {(entry.w / 10).toLocaleString(i18n.language)} kg
               </p>
