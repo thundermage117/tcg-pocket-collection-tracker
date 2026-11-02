@@ -8,15 +8,27 @@ import { CardThumb } from '@/components/CardThumb'
 import { Spinner } from '@/components/Spinner'
 import { formatRarity } from '@/components/utils'
 import { expansions, getExpansionById } from '@/lib/CardsDB'
-import { allSpecies, dexEntriesQuery, formArtworkId, generationOf, getSpecies, lineOf, loadReturn, ownedCount, shinySpecies, speciesName } from '@/lib/pokedex'
-import { getCardNameByLang } from '@/lib/utils'
+import {
+  allSpecies,
+  dexEntriesQuery,
+  formArtworkId,
+  generationOf,
+  getSpecies,
+  lineOf,
+  loadReturn,
+  ownedCount,
+  shinySpecies,
+  speciesName,
+  typesOf,
+} from '@/lib/pokedex'
+import { cn, getCardNameByLang } from '@/lib/utils'
 import { getPackChances, type PackChance } from '@/pages/overview/packChances'
 import { oneIn } from '@/pages/packs/types'
 import { useCollection, useSelectedCard } from '@/services/collection/useCollection'
 import type { ExpansionId } from '@/types'
 import { dexMatcher, parseDexFilters } from './dexFilters'
 import { EvolutionChain } from './EvolutionChain'
-import { dexLabel, GroupIcon, groupLabels, ProgressBar, Sprite, typeColors } from './SpeciesTile'
+import { dexLabel, GroupIcon, groupLabels, ProgressBar, Sprite, typeColors, typeGlow } from './SpeciesTile'
 
 export default function SpeciesDetail() {
   const { t, i18n } = useTranslation(['common/sets', 'common/packs'])
@@ -128,6 +140,10 @@ export default function SpeciesDetail() {
     })
   const heroForm = heroForms.find((f) => f.artworkId === formParam)
   const heroOwned = heroForm ? ownedCount(collection, heroForm.cards) : owned
+  // the plain species glows in its own types only: Vulpix Fire, though Alolan Vulpix makes the species Fire and Water
+  // (a species with only form cards, like a Galarian-only one, falls back to the species' types)
+  const plainCards = species.cards.filter((c) => !heroForms.some((f) => f.cards.includes(c)))
+  const heroTypes = heroForm ? typesOf(heroForm.cards) : plainCards.length > 0 ? typesOf(plainCards) : species.types
   const entry = entries?.[heroForm?.artworkId ?? species.dexNr]
 
   const setIndex = (id: string) => expansions.findIndex((e) => e.id === id)
@@ -179,11 +195,11 @@ export default function SpeciesDetail() {
       </nav>
 
       <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-8">
-        <div className="mx-auto flex w-48 shrink-0 flex-col gap-2 sm:mx-0 sm:w-60">
-          {/* the species' main type glows behind its artwork; uncaught species stay a silhouette */}
+        <div className="mx-auto flex w-56 shrink-0 flex-col gap-2 sm:mx-0 sm:w-72 lg:w-80">
+          {/* the shown form's types glow behind its artwork (Alolan Vulpix in Water); uncaught species stay a silhouette */}
           <div
-            className="relative rounded-2xl border-1 border-neutral-700 border-solid p-3"
-            style={{ background: `radial-gradient(circle at 50% 45%, ${typeColors[species.types[0]]}55, transparent 70%)` }}
+            className="relative rounded-2xl border-1 border-neutral-700 border-solid bg-neutral-800/60 p-4"
+            style={{ backgroundImage: typeGlow(heroTypes, '70') }}
           >
             {shiny ? (
               <>
@@ -232,7 +248,7 @@ export default function SpeciesDetail() {
                       }}
                       className={`cursor-pointer rounded-lg border-1 border-solid p-0.5 transition-colors ${selected ? 'border-blue-300 bg-neutral-800' : 'border-neutral-700 hover:border-neutral-500'}`}
                     >
-                      <Sprite artworkId={f.artworkId} caught={f.caught} alt={f.name} className="size-9" />
+                      <Sprite artworkId={f.artworkId} caught={f.caught} alt={f.name} className="size-11" />
                     </button>
                   )
                 },
@@ -270,20 +286,24 @@ export default function SpeciesDetail() {
               </p>
             </>
           )}
-          <div className="mt-4 flex max-w-md items-center gap-3">
-            <ProgressBar value={owned} max={species.cards.length} className="h-2 grow" />
-            <span className="text-sm tabular-nums">
-              {owned}/{species.cards.length} printings
-            </span>
-          </div>
-          <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          {/* stats fill the width beside the larger artwork: printings first, then a tile each */}
+          <dl className="mt-5 grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
+            <Stat label="Printings" className="col-span-full">
+              <span className="flex items-center gap-3">
+                <span className="font-semibold text-lg tabular-nums">
+                  {owned}
+                  <span className="font-normal text-neutral-400 text-sm">/{species.cards.length}</span>
+                </span>
+                <ProgressBar value={owned} max={species.cards.length} color={typeColors[species.types[0]]} className="h-2 grow" />
+              </span>
+            </Stat>
             <Stat label="Forms">{species.forms.length}</Stat>
             <Stat label="Illustrators">{artists.size}</Stat>
-            <Stat label="First appeared">
+            <Stat label="First appeared" className="col-span-full sm:col-span-1">
               {firstSet} · {t(getExpansionById(firstSet).name)}
             </Stat>
             {best && best.pct > 0 && (
-              <Stat label="Best pack for a missing one">
+              <Stat label="Best pack for a missing one" className="col-span-full">
                 {t(best.pack.name, { ns: 'common/packs' })} ({best.expansionId}) · {oneIn(best.pct / 100)} packs
               </Stat>
             )}
@@ -356,9 +376,9 @@ export default function SpeciesDetail() {
   )
 }
 
-function Stat({ label, children }: { label: string; children: React.ReactNode }) {
+function Stat({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <div>
+    <div className={cn('rounded-lg border-1 border-neutral-700 border-solid bg-neutral-800/60 px-3 py-2', className)}>
       <dt className="text-[10px] font-medium uppercase tracking-wider text-neutral-500">{label}</dt>
       <dd className="text-neutral-200">{children}</dd>
     </div>
