@@ -12,8 +12,8 @@ export type NavItem = {
 export const navItems: NavItem[] = [
   { title: 'overview', href: '/', icon: LayoutDashboard, tab: true },
   { title: 'collection', href: '/collection', icon: Library, tab: true },
-  { title: 'Packs', href: '/packs', icon: Package, tab: true },
-  { title: 'Rankings', href: '/rankings', icon: Trophy },
+  { title: 'Packs', href: '/packs', icon: Package },
+  { title: 'Rankings', href: '/rankings', icon: Trophy, tab: true },
   { title: 'Pokédex', href: '/pokedex', icon: BookOpen },
   { title: 'trade', href: '/trade', icon: ArrowLeftRight, tab: true },
   { title: 'scan', href: '/scan', icon: ScanLine },
