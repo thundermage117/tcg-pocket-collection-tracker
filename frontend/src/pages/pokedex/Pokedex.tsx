@@ -1,12 +1,11 @@
 // Personal fork: one tile per species in National Dex order, owned when any printing (any form) is owned.
 // The forms view gives each form with artwork of its own (Alolan Vulpix, Mega Charizard X) a tile of its own, next to its species'.
 // Filters live in the URL (?dex=shiny&view=forms&art=card&q=…&gen=1&group=legendary&stage=stage2&has=mega&type=fire&show=missing&set=A1&sort=printings), so links, refresh and back keep the view.
-import { ChevronDown, SlidersHorizontal, X } from 'lucide-react'
+import { ChevronDown, PawPrint, RectangleVertical, Search, SlidersHorizontal, X } from 'lucide-react'
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigationType, useSearchParams } from 'react-router'
 import { DropdownFilter, TabsFilter } from '@/components/Filters'
-import SearchInput from '@/components/filters/SearchInput'
 import { Spinner } from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -49,10 +48,10 @@ import {
   viewOptions,
 } from './dexFilters'
 import { EvolutionChain } from './EvolutionChain'
-import { FormTile, GroupIcon, groupLabels, ProgressBar, SpeciesTile, typeColors } from './SpeciesTile'
+import { FormTile, GroupIcon, groupLabels, ProgressBar, SpeciesTile, type TileArt, typeColors } from './SpeciesTile'
 
 export default function Pokedex() {
-  const { t, i18n } = useTranslation('common/sets')
+  const { t, i18n } = useTranslation(['common/sets', 'search-input'])
   const { data: collection, isLoading } = useCollection()
   const [params, setParams] = useSearchParams()
 
@@ -313,12 +312,32 @@ export default function Pokedex() {
       </section>
 
       {/* search, filters and the generation jump stay on screen through ~1000 tiles */}
-      <div ref={barRef} className="sticky top-0 z-20 -mx-4 mb-3 flex flex-col gap-2 bg-[#181818]/90 px-4 py-2 backdrop-blur">
-        <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
-          <SearchInput value={search} setValue={(q) => update({ q: q.trim() || undefined })} className="sm:flex-1" />
-          <div className="flex items-center gap-3">
-            <TabsFilter options={showOptions} value={show} onChange={(x) => update({ show: x })} show={(x) => showLabels[x]} className="whitespace-nowrap" />
-            <Button variant="outline" onClick={() => setSheetOpen(true)} className="h-[38px] shrink-0 border-neutral-700 bg-neutral-800">
+      <div ref={barRef} className="sticky top-0 z-20 -mx-4 mb-3 flex flex-col gap-3 bg-[#181818]/90 px-4 py-2 backdrop-blur">
+        {/* one height, border and radius across the controls; on phones search and the tile art share a row */}
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="flex gap-2 sm:flex-1">
+            <label className="relative flex grow items-center">
+              <Search className="pointer-events-none absolute left-3 size-4 text-neutral-500" />
+              <input
+                type="search"
+                placeholder={t('search', { ns: 'search-input' })}
+                defaultValue={search}
+                onChange={(e) => update({ q: e.target.value.trim() || undefined })}
+                className={cn(control, 'w-full pr-3 pl-9 outline-none placeholder:text-neutral-500 focus:border-blue-300')}
+              />
+            </label>
+            <ArtToggle value={art} onChange={(x) => update({ art: x })} className="sm:hidden" />
+          </div>
+          <div className="flex items-center gap-2">
+            <TabsFilter
+              options={showOptions}
+              value={show}
+              onChange={(x) => update({ show: x })}
+              show={(x) => showLabels[x]}
+              className="h-10 grow whitespace-nowrap rounded-lg"
+            />
+            <ArtToggle value={art} onChange={(x) => update({ art: x })} className="hidden sm:flex" />
+            <Button variant="outline" onClick={() => setSheetOpen(true)} className={cn(control, 'shrink-0 hover:bg-neutral-700')}>
               <SlidersHorizontal />
               <span className="hidden sm:inline">Filters</span>
               {sheetFilterCount > 0 && (
@@ -329,30 +348,48 @@ export default function Pokedex() {
             </Button>
           </div>
         </div>
-        {sections.length > 1 && sections[0].g && (
-          <nav ref={genNavRef} aria-label="Jump to generation" className="-mx-4 flex gap-1.5 overflow-x-auto px-4">
-            {sections.map(({ g, tiles }) =>
-              g ? (
-                <button
-                  key={g.nr}
-                  type="button"
-                  data-gen-chip={g.nr}
-                  onClick={() => jumpTo(g.nr)}
-                  title={`${genLabel(g)} · ${tiles.length} shown`}
-                  className={cn(
-                    'flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-neutral-700 bg-neutral-900 py-0.5 pr-2.5 pl-0.5 text-xs text-neutral-400 transition-colors hover:border-neutral-500',
-                    currentGen === g.nr && 'border-blue-300 text-white',
-                  )}
-                >
-                  <span className={cn('rounded-full bg-neutral-700 px-1.5 font-bold text-neutral-200', currentGen === g.nr && 'bg-blue-300 text-neutral-900')}>
-                    {g.nr}
-                  </span>
-                  {g.region}
-                </button>
-              ) : null,
+        {/* the generation jump, with what's shown at the end */}
+        <div className="flex items-center gap-3">
+          {sections.length > 1 && sections[0].g && (
+            <nav
+              ref={genNavRef}
+              aria-label="Jump to generation"
+              // fades out at the right where it scrolls on; the padding lets the last chip clear the fade
+              className="-ml-4 flex min-w-0 grow gap-1.5 overflow-x-auto pr-8 pl-4 [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)]"
+            >
+              {sections.map(({ g, tiles }) =>
+                g ? (
+                  <button
+                    key={g.nr}
+                    type="button"
+                    data-gen-chip={g.nr}
+                    onClick={() => jumpTo(g.nr)}
+                    title={`${genLabel(g)} · ${tiles.length} shown`}
+                    className={cn(
+                      'flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-neutral-700 bg-neutral-900 py-0.5 pr-2.5 pl-0.5 text-xs text-neutral-400 transition-colors hover:border-neutral-500',
+                      currentGen === g.nr && 'border-blue-300 text-white',
+                    )}
+                  >
+                    <span
+                      className={cn('rounded-full bg-neutral-700 px-1.5 font-bold text-neutral-200', currentGen === g.nr && 'bg-blue-300 text-neutral-900')}
+                    >
+                      {g.nr}
+                    </span>
+                    {g.region}
+                  </button>
+                ) : null,
+              )}
+            </nav>
+          )}
+          <span className="ml-auto flex shrink-0 items-center gap-2 text-neutral-500 text-xs tabular-nums">
+            {view === 'dex' ? `${filtered.length} species` : view === 'forms' ? `${forms.length} forms` : `${lines.length} lines`}
+            {filtering && (
+              <Link to={clearUrl} className="text-neutral-400 underline hover:text-white">
+                Clear
+              </Link>
             )}
-          </nav>
-        )}
+          </span>
+        </div>
       </div>
 
       {/* what the sheet and the generation bars have set, each removable on its own */}
@@ -441,62 +478,49 @@ export default function Pokedex() {
             Clear filters
           </Link>
         </div>
-      ) : (
-        <>
-          <div className="mb-3 flex items-center gap-3 text-sm text-neutral-400">
-            {view === 'dex' ? `${filtered.length} species` : view === 'forms' ? `${forms.length} forms` : `${lines.length} evolution lines`}
-            {filtering && (
-              <Link to={clearUrl} className="underline hover:text-white">
-                Clear filters
-              </Link>
+      ) : view !== 'lines' ? (
+        sections.map(({ g, tiles }) => (
+          <Fragment key={g?.nr ?? 'all'}>
+            {g && (
+              <h2 data-gen={g.nr} className="mb-3 flex items-baseline justify-between gap-3 border-neutral-800 border-b pb-2">
+                <span className="font-semibold">{genLabel(g)}</span>
+                <span className="text-sm text-neutral-400 tabular-nums">{genCaught(g)}</span>
+              </h2>
             )}
-            <TabsFilter options={artOptions} value={art} onChange={(x) => update({ art: x })} show={(x) => artLabels[x]} className="ml-auto" />
-          </div>
-          {view !== 'lines' ? (
-            sections.map(({ g, tiles }) => (
-              <Fragment key={g?.nr ?? 'all'}>
-                {g && (
-                  <h2 data-gen={g.nr} className="mb-3 flex items-baseline justify-between gap-3 border-neutral-800 border-b pb-2">
-                    <span className="font-semibold">{genLabel(g)}</span>
-                    <span className="text-sm text-neutral-400 tabular-nums">{genCaught(g)}</span>
-                  </h2>
-                )}
-                <ul className="mb-6 grid grid-cols-3 gap-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
-                  {view === 'forms'
-                    ? (tiles as typeof forms).map((x) => (
-                        <li key={`${x.dexNr} ${x.form.name}`}>
-                          <FormTile form={x.form} collection={collection} lang={i18n.language} art={art} showDex fromDex className="h-full" />
-                        </li>
-                      ))
-                    : (tiles as typeof filtered).map((s) => (
-                        <li key={s.dexNr}>
-                          <SpeciesTile species={s} collection={collection} lang={i18n.language} art={art} shiny={shiny} fromDex />
-                        </li>
-                      ))}
-                </ul>
-              </Fragment>
-            ))
-          ) : (
-            <ul className="grid gap-3 lg:grid-cols-2">
-              {lines.map((line) => {
-                const ownedInLine = line.species.filter((s) => ownedOf(s) > 0).length
-                return (
-                  <li key={line.root} className="rounded-lg border-1 border-neutral-700 border-solid bg-neutral-800/40 p-3">
-                    <h2 className="mb-2 flex items-baseline justify-between gap-3">
-                      <span className="font-semibold">{speciesName(line.species[0], i18n.language)} line</span>
-                      <span className={cn('text-sm tabular-nums', ownedInLine === line.species.length ? 'text-green-500' : 'text-neutral-400')}>
-                        {ownedInLine}/{line.species.length} species
-                      </span>
-                    </h2>
-                    <div className="overflow-x-auto">
-                      <EvolutionChain line={line} collection={collection} lang={i18n.language} art={art} fromDex />
-                    </div>
-                  </li>
-                )
-              })}
+            <ul className="mb-6 grid grid-cols-3 gap-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
+              {view === 'forms'
+                ? (tiles as typeof forms).map((x) => (
+                    <li key={`${x.dexNr} ${x.form.name}`}>
+                      <FormTile form={x.form} collection={collection} lang={i18n.language} art={art} showDex fromDex className="h-full" />
+                    </li>
+                  ))
+                : (tiles as typeof filtered).map((s) => (
+                    <li key={s.dexNr}>
+                      <SpeciesTile species={s} collection={collection} lang={i18n.language} art={art} shiny={shiny} fromDex />
+                    </li>
+                  ))}
             </ul>
-          )}
-        </>
+          </Fragment>
+        ))
+      ) : (
+        <ul className="grid gap-3 lg:grid-cols-2">
+          {lines.map((line) => {
+            const ownedInLine = line.species.filter((s) => ownedOf(s) > 0).length
+            return (
+              <li key={line.root} className="rounded-lg border-1 border-neutral-700 border-solid bg-neutral-800/40 p-3">
+                <h2 className="mb-2 flex items-baseline justify-between gap-3">
+                  <span className="font-semibold">{speciesName(line.species[0], i18n.language)} line</span>
+                  <span className={cn('text-sm tabular-nums', ownedInLine === line.species.length ? 'text-green-500' : 'text-neutral-400')}>
+                    {ownedInLine}/{line.species.length} species
+                  </span>
+                </h2>
+                <div className="overflow-x-auto">
+                  <EvolutionChain line={line} collection={collection} lang={i18n.language} art={art} fromDex />
+                </div>
+              </li>
+            )
+          })}
+        </ul>
       )}
     </main>
   )
@@ -514,6 +538,37 @@ function Chip({ children, onRemove }: { children: React.ReactNode; onRemove: () 
       {children}
       <X className="size-3.5 text-neutral-400" />
     </button>
+  )
+}
+
+// the sticky bar's controls share a height, border and radius
+const control = 'h-10 rounded-lg border-1 border-neutral-700 border-solid bg-neutral-800 text-sm transition-colors hover:border-neutral-500'
+
+/** Tile art as two icons: the Pokémon's artwork or its card. */
+function ArtToggle({ value, onChange, className }: { value: TileArt; onChange: (x: TileArt) => void; className?: string }) {
+  const icons = { sprite: PawPrint, card: RectangleVertical }
+  return (
+    <fieldset aria-label="Tile art" className={cn(control, 'm-0 flex shrink-0 items-center gap-0.5 p-1 hover:border-neutral-700', className)}>
+      {artOptions.map((x) => {
+        const Icon = icons[x]
+        return (
+          <button
+            key={x}
+            type="button"
+            title={artLabels[x]}
+            aria-label={artLabels[x]}
+            aria-pressed={value === x}
+            onClick={() => onChange(x)}
+            className={cn(
+              'flex h-full cursor-pointer items-center rounded-md px-2 text-neutral-400 transition-colors hover:text-white',
+              value === x && 'bg-neutral-700 text-white',
+            )}
+          >
+            <Icon className="size-4" />
+          </button>
+        )
+      })}
+    </fieldset>
   )
 }
 
