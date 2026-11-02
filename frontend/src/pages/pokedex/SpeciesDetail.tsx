@@ -1,6 +1,6 @@
 // Personal fork: a species' Pokédex entry and every printing of it, grouped by form, with what's owned and the best pack for a missing one.
 import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
@@ -231,15 +231,27 @@ export default function SpeciesDetail() {
       {species.forms.map((form) => {
         const cards = species.cards.filter((c) => c.name === form)
         const formOwned = cards.some((c) => owns(c.internal_id))
+        const artworkId = formArtworkId(species, form)
+        // a form with its own PokéAPI entry has its own size (Mega Charizard X weighs 110.5 kg, Charizard 90.5)
+        const formEntry = artworkId !== species.dexNr ? entries?.[artworkId] : undefined
         return (
-          <section key={form} className="mb-8">
-            <h2 className="mb-3 flex items-center gap-3 font-semibold text-lg">
-              <Sprite artworkId={formArtworkId(species, form)} caught={formOwned} alt="" className="size-10 shrink-0" />
-              {getCardNameByLang(cards[0], i18n.language)}
+          // long sections (Pikachu has dozens of printings) fold away; open by default
+          <details key={form} open className="group mb-8">
+            <summary className="mb-3 flex cursor-pointer list-none items-center gap-3 font-semibold text-lg [&::-webkit-details-marker]:hidden">
+              <Sprite artworkId={artworkId} caught={formOwned} alt="" className="size-10 shrink-0" />
+              <span className="min-w-0">
+                {getCardNameByLang(cards[0], i18n.language)}
+                {formEntry && (
+                  <span className="block font-normal text-neutral-400 text-xs tabular-nums">
+                    {(formEntry.h / 10).toLocaleString(i18n.language)} m · {(formEntry.w / 10).toLocaleString(i18n.language)} kg
+                  </span>
+                )}
+              </span>
               <span className="text-sm text-neutral-400 tabular-nums">
                 {cards.filter((c) => owns(c.internal_id)).length}/{cards.length}
               </span>
-            </h2>
+              <ChevronDown className="size-4 shrink-0 text-neutral-500 transition-transform group-open:rotate-180" />
+            </summary>
             <ul className="grid grid-cols-3 gap-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
               {cards.map((card) => {
                 const amount = collection?.get(card.internal_id)?.amount_owned ?? 0
@@ -247,7 +259,7 @@ export default function SpeciesDetail() {
                   <li key={card.internal_id}>
                     <CardThumb
                       card={card}
-                      className={amount === 0 ? 'opacity-40 grayscale' : undefined}
+                      className={amount === 0 ? 'opacity-55 transition-opacity hover:opacity-100' : undefined}
                       onClick={() => setSelectedCardId(card.internal_id)}
                       label={
                         <>
@@ -260,7 +272,7 @@ export default function SpeciesDetail() {
                 )
               })}
             </ul>
-          </section>
+          </details>
         )
       })}
     </main>
