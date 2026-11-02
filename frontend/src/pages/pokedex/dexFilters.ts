@@ -1,27 +1,33 @@
 // Personal fork: the Pokédex's URL filters, parsed and applied here so the species page can step through the same list.
 import { expansions } from '@/lib/CardsDB'
 import {
+  allForms,
   allSpecies,
   type Feature,
+  type FormNode,
   featureOptions,
+  featuresOf,
   generationOf,
   generations,
   ownedCount,
   type Species,
+  type SpeciesGroup,
   type Stage,
   shinySpecies,
   speciesGroupOptions,
   speciesMatches,
   stageOptions,
+  stagesOf,
+  typesOf,
 } from '@/lib/pokedex'
-import { type CardType, type Collection, cardTypes, type ExpansionId } from '@/types'
+import { type Card, type CardType, type Collection, cardTypes, type ExpansionId } from '@/types'
 import type { TileArt } from './SpeciesTile'
 
 export const dexOptions = ['all', 'shiny'] as const
 export const dexLabels = { all: 'Pokédex', shiny: '✵ Shiny' }
 
-export const viewOptions = ['dex', 'lines'] as const
-export const viewLabels = { dex: 'Dex', lines: 'Evolution lines' }
+export const viewOptions = ['dex', 'forms', 'lines'] as const
+export const viewLabels = { dex: 'Dex', forms: 'Forms', lines: 'Evolution lines' }
 
 export const artOptions: TileArt[] = ['sprite', 'card']
 export const artLabels: Record<TileArt, string> = { sprite: 'Sprites', card: 'Cards' }
@@ -71,33 +77,71 @@ export function parseDexFilters(params: URLSearchParams) {
   }
 }
 
-/** The mode's species, which of them match the filters, and the sort order. */
+/** What the filters look at, for a species or one of its forms (whose types, stages and features are its own cards'). */
+interface Entry {
+  dexNr: number
+  cards: Card[]
+  types: CardType[]
+  stages: Stage[]
+  features: Feature[]
+  group?: SpeciesGroup
+}
+
+export interface DexForm extends Entry {
+  form: FormNode
+}
+
+// in dex order, a species' forms keep the order speciesForms gives them (the plain species first)
+const formEntries: DexForm[] = allForms.map((form) => ({
+  form,
+  dexNr: form.species.dexNr,
+  cards: form.cards,
+  types: typesOf(form.cards),
+  stages: stagesOf(form.cards),
+  features: featuresOf(form.cards),
+  group: form.species.group,
+}))
+
+/** The mode's species, which of them match the filters, and the sort order; in the forms view, the matching forms too. */
 export function dexMatcher(f: DexFilters, collection: Collection | undefined) {
   const list = f.shiny ? shinySpecies : allSpecies
   const owned = new Map(list.map((s) => [s.dexNr, ownedCount(collection, s.cards)]))
   const ownedOf = (s: Species) => owned.get(s.dexNr) as number
   const query = f.search.trim().toLowerCase()
-  const matches = (s: Species) => {
-    const n = ownedOf(s)
-    return (
-      (f.gen === 'all' || generationOf(s.dexNr).nr === Number(f.gen)) &&
-      (f.type === 'all' || s.types.includes(f.type)) &&
-      (f.set === 'all' || s.cards.some((c) => c.expansion === f.set)) &&
-      (f.group === 'all' || s.group === f.group) &&
-      (f.stage === 'all' || s.stages.includes(f.stage)) &&
-      (f.has === 'all' || s.features.includes(f.has)) &&
-      (f.show === 'all' || (f.show === 'missing' ? n === 0 : f.show === 'owned' ? n > 0 : n > 0 && n < s.cards.length)) &&
-      (!query || speciesMatches(s, query))
-    )
+  const entryMatches = (e: Entry, n: number) =>
+    (f.gen === 'all' || generationOf(e.dexNr).nr === Number(f.gen)) &&
+    (f.type === 'all' || e.types.includes(f.type)) &&
+    (f.set === 'all' || e.cards.some((c) => c.expansion === f.set)) &&
+    (f.group === 'all' || e.group === f.group) &&
+    (f.stage === 'all' || e.stages.includes(f.stage)) &&
+    (f.has === 'all' || e.features.includes(f.has)) &&
+    (f.show === 'all' || (f.show === 'missing' ? n === 0 : f.show === 'owned' ? n > 0 : n > 0 && n < e.cards.length))
+  const matches = (s: Species) => entryMatches(s, ownedOf(s)) && (!query || speciesMatches(s, query))
+  const sorter = (ownedIn: (e: Entry) => number) => {
+    const share = (e: Entry) => ownedIn(e) / e.cards.length
+    const sorters: Record<SortOption, (a: Entry, b: Entry) => number> = {
+      dex: (a, b) => a.dexNr - b.dexNr,
+      printings: (a, b) => b.cards.length - a.cards.length || a.dexNr - b.dexNr,
+      // complete species go last: there's nothing left to chase
+      completion: (a, b) => Number(share(a) === 1) - Number(share(b) === 1) || share(b) - share(a) || a.dexNr - b.dexNr,
+    }
+    // the lines view has no sort: it's in dex order
+    return f.view === 'lines' ? sorters.dex : sorters[f.sort]
   }
-  const share = (s: Species) => ownedOf(s) / s.cards.length
-  const sorters: Record<SortOption, (a: Species, b: Species) => number> = {
-    dex: (a, b) => a.dexNr - b.dexNr,
-    printings: (a, b) => b.cards.length - a.cards.length || a.dexNr - b.dexNr,
-    // complete species go last: there's nothing left to chase
-    completion: (a, b) => Number(share(a) === 1) - Number(share(b) === 1) || share(b) - share(a) || a.dexNr - b.dexNr,
-  }
-  // the lines view has no sort: it's in dex order
-  const sort = f.view === 'lines' ? sorters.dex : sorters[f.sort]
-  return { list, ownedOf, matches, filtered: list.filter(matches).sort(sort) }
+  const filtered = list.filter(matches).sort(sorter((e) => ownedOf(e as Species)))
+
+  // each form is filtered on its own (a missing Alolan Vulpix shows under Missing though Vulpix is owned); a search also finds
+  // a form by its card name (alolan, mega)
+  const formOwned = new Map<DexForm, number>()
+  const formOwnedOf = (e: DexForm) => formOwned.get(e) as number
+  const forms =
+    f.view === 'forms'
+      ? formEntries
+          .filter((e) => {
+            formOwned.set(e, ownedCount(collection, e.cards))
+            return entryMatches(e, formOwnedOf(e)) && (!query || speciesMatches(e.form.species, query) || e.form.name.toLowerCase().includes(query))
+          })
+          .sort(sorter((e) => formOwnedOf(e as DexForm)))
+      : []
+  return { list, ownedOf, matches, filtered, forms }
 }

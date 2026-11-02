@@ -2,7 +2,7 @@
 import { Check, CircleDot, Crown, Sparkles } from 'lucide-react'
 import { Link } from 'react-router'
 import { getLocalizedImagePath } from '@/lib/imageLocales'
-import { coverCard, dexName, type FormNode, ownedCount, type Species, type SpeciesGroup, speciesName, spriteUrl } from '@/lib/pokedex'
+import { coverCard, dexName, type FormNode, ownedCount, type Species, type SpeciesGroup, speciesName, spriteUrl, typesOf } from '@/lib/pokedex'
 import { cn, getCardNameByLang } from '@/lib/utils'
 import type { CardType, Collection } from '@/types'
 
@@ -102,7 +102,7 @@ export function SpeciesTile({ species, collection, lang, art = 'sprite', shiny, 
         <Sprite artworkId={species.dexNr} caught={owned > 0} shiny={shiny} alt={name} />
       ) : (
         <img
-          src={getLocalizedImagePath(coverCard(species, collection), lang)}
+          src={getLocalizedImagePath(coverCard(species.cards, collection), lang)}
           alt={name}
           loading="lazy"
           className={cn('aspect-[367/512] w-full rounded object-cover', owned === 0 && 'opacity-30 grayscale')}
@@ -133,25 +133,51 @@ export function AbsentTile({ dexNr, lang, className }: { dexNr: number; lang: st
   )
 }
 
-/** A form in an evolution line's form chain: its artwork, localized card name and owned/total of that form's cards. */
-export function FormTile({ form, collection, lang, className }: { form: FormNode; collection: Collection | undefined; lang: string; className?: string }) {
+interface FormTileProps {
+  form: FormNode
+  collection: Collection | undefined
+  lang: string
+  art?: TileArt
+  showDex?: boolean // on the Pokédex's forms view, where tiles aren't next to their species
+  fromDex?: boolean
+  className?: string
+}
+
+/**
+ * A form (in an evolution line's form chain, or on the Pokédex's forms view): its artwork, localized card name and owned/total
+ * of that form's cards. The plain species' form (artwork of the species itself) goes by the species name.
+ */
+export function FormTile({ form, collection, lang, art = 'sprite', showDex, fromDex, className }: FormTileProps) {
   const owned = ownedCount(collection, form.cards)
+  const plain = form.name.toLowerCase() === form.species.key
   // without " ex", like the form's own name: Mega Charizard X ex keeps its X when it wraps
-  const name = getCardNameByLang(form.cards[0], lang).replace(/ ex$/, '')
+  const name = plain ? speciesName(form.species, lang) : getCardNameByLang(form.cards[0], lang).replace(/ ex$/, '')
   const complete = owned === form.cards.length
   return (
     <Link
       // opens the species page on this form when it has artwork of its own
       to={`/pokedex/${form.species.dexNr}${form.artworkId === form.species.dexNr ? '' : `?form=${form.artworkId}`}`}
+      state={fromDex ? { fromDex } : undefined}
       title={name}
       className={cn(
         'relative block overflow-hidden rounded-md border-1 border-neutral-700 border-solid bg-neutral-800 p-1.5 pt-2.5 transition-colors hover:border-neutral-400',
         className,
       )}
     >
-      <span className="absolute inset-x-0 top-0 h-1" style={{ background: typeStripe(form.species.types) }} />
-      <Sprite artworkId={form.artworkId} caught={owned > 0} alt={name} />
-      <div className="mt-1.5 flex items-baseline justify-end gap-1 text-[11px] tabular-nums">
+      {/* the form's own types: Alolan Vulpix is Water, Vulpix Fire */}
+      <span className="absolute inset-x-0 top-0 h-1" style={{ background: typeStripe(typesOf(form.cards)) }} />
+      {art === 'sprite' ? (
+        <Sprite artworkId={form.artworkId} caught={owned > 0} alt={name} />
+      ) : (
+        <img
+          src={getLocalizedImagePath(coverCard(form.cards, collection), lang)}
+          alt={name}
+          loading="lazy"
+          className={cn('aspect-[367/512] w-full rounded object-cover', owned === 0 && 'opacity-30 grayscale')}
+        />
+      )}
+      <div className={cn('mt-1.5 flex items-baseline gap-1 text-[11px] tabular-nums', showDex ? 'justify-between' : 'justify-end')}>
+        {showDex && <span className="text-neutral-500">{dexLabel(form.species.dexNr)}</span>}
         <span className={cn('flex items-center gap-0.5', complete ? 'text-green-500' : owned > 0 ? 'text-neutral-300' : 'text-neutral-500')}>
           {complete && <Check className="size-3" strokeWidth={3} />}
           {owned}/{form.cards.length}

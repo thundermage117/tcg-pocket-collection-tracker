@@ -79,10 +79,13 @@ export type Stage = (typeof stageOptions)[number]
 export const featureOptions = ['ex', 'mega', 'regional'] as const
 export type Feature = (typeof featureOptions)[number]
 
+export const typesOf = (cards: Card[]): CardType[] => [...new Set(cards.flatMap((c) => (c.secondary_energy ? [c.energy, c.secondary_energy] : [c.energy])))]
+export const stagesOf = (cards: Card[]): Stage[] => stageOptions.filter((stage) => cards.some((c) => c.evolution_type === stage))
+
 const regionalPrefix = /^(Alolan|Galarian|Hisuian|Paldean) /
 
-/** What a species has among its cards: an ex card, a Mega form, a regional form. */
-const featuresOf = (cards: Card[]): Feature[] =>
+/** What a species (or form) has among its cards: an ex card, a Mega form, a regional form. */
+export const featuresOf = (cards: Card[]): Feature[] =>
   featureOptions.filter((f) => cards.some((c) => (f === 'ex' ? c.ex : f === 'mega' ? c.name.startsWith('Mega ') : regionalPrefix.test(c.name))))
 
 export interface Species {
@@ -110,9 +113,9 @@ function buildSpecies(): Species[] {
       key,
       cards,
       forms: [...new Set(cards.map((c) => c.name))],
-      types: [...new Set(cards.flatMap((c) => (c.secondary_energy ? [c.energy, c.secondary_energy] : [c.energy])))],
+      types: typesOf(cards),
       group: groupOf(dexNumbers.get(key) as number),
-      stages: stageOptions.filter((stage) => cards.some((c) => c.evolution_type === stage)),
+      stages: stagesOf(cards),
       features: featuresOf(cards),
     }))
     .sort((a, b) => a.dexNr - b.dexNr)
@@ -134,7 +137,7 @@ export const shinySpecies: Species[] = allSpecies.flatMap((species) => {
           ...species,
           cards,
           forms: [...new Set(cards.map((c) => c.name))],
-          stages: stageOptions.filter((st) => cards.some((c) => c.evolution_type === st)),
+          stages: stagesOf(cards),
           features: featuresOf(cards),
         },
       ]
@@ -164,10 +167,10 @@ export const ownedCount = (collection: Collection | undefined, cards: Card[]) =>
 
 const rarityIndex = (card: Card) => rarities.indexOf(card.rarity)
 
-/** Art for the species tile: the most common owned printing, or the most common printing when none is owned. */
-export function coverCard(species: Species, collection: Collection | undefined): Card {
-  const owned = species.cards.filter((c) => (collection?.get(c.internal_id)?.amount_owned ?? 0) > 0)
-  const pool = owned.length > 0 ? owned : species.cards
+/** Art for a species or form tile: the most common owned printing, or the most common printing when none is owned. */
+export function coverCard(cards: Card[], collection: Collection | undefined): Card {
+  const owned = cards.filter((c) => (collection?.get(c.internal_id)?.amount_owned ?? 0) > 0)
+  const pool = owned.length > 0 ? owned : cards
   return pool.reduce((best, c) => (rarityIndex(c) < rarityIndex(best) ? c : best))
 }
 
@@ -249,6 +252,34 @@ export interface FormChain {
   stage: number // 0 basic, 1 stage 1, 2 stage 2: where the chain starts, so it lines up under the species line
   stages: FormNode[][]
 }
+
+/**
+ * A species' forms, the plain species first: those with artwork of their own (Alolan Vulpix, Mega Charizard X, Castform Rainy Form),
+ * and Megas and regional forms PokéAPI has no artwork for (Mega Dragonite), which use the species'. Mega Charizard X ex counts as
+ * Mega Charizard X; Charizard ex and Team Rocket's Raticate count as their plain species.
+ */
+export function speciesForms(species: Species): FormNode[] {
+  const plain = capitalize(species.key)
+  const formOf = (card: Card) => {
+    const name = baseCardName(card.name)
+    return formArtworkId(species, name) !== species.dexNr || name.startsWith('Mega ') || regionalPrefix.test(name) ? name : plain
+  }
+  // Mega Charizard X and Mega Charizard X ex have the same artwork, so they're grouped by artwork first
+  const byForm = Map.groupBy(species.cards, (c) => {
+    const form = formOf(c)
+    const artworkId = formArtworkId(species, form)
+    return artworkId === species.dexNr ? form : artworkId
+  })
+  return [...byForm.values()]
+    .map((cards) => {
+      const name = formOf(cards[0])
+      return { name, species, cards, artworkId: formArtworkId(species, name) }
+    })
+    .sort((a, b) => Number(b.name === plain) - Number(a.name === plain))
+}
+
+/** Every species' forms, for the Pokédex's forms view. */
+export const allForms: FormNode[] = allSpecies.flatMap(speciesForms)
 
 /**
  * The line's forms as their own chains, since PokéAPI's evolution data is per species: Alolan Vulpix → Alolan Ninetales,

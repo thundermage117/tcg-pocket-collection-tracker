@@ -1,5 +1,6 @@
 // Personal fork: one tile per species in National Dex order, owned when any printing (any form) is owned.
-// Filters live in the URL (?dex=shiny&view=lines&art=card&q=…&gen=1&group=legendary&stage=stage2&has=mega&type=fire&show=missing&set=A1&sort=printings), so links, refresh and back keep the view.
+// The forms view gives each form with artwork of its own (Alolan Vulpix, Mega Charizard X) a tile of its own, next to its species'.
+// Filters live in the URL (?dex=shiny&view=forms&art=card&q=…&gen=1&group=legendary&stage=stage2&has=mega&type=fire&show=missing&set=A1&sort=printings), so links, refresh and back keep the view.
 import { ChevronDown, SlidersHorizontal, X } from 'lucide-react'
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -10,7 +11,18 @@ import { Spinner } from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { getExpansionById } from '@/lib/CardsDB'
-import { allLines, type Generation, generationOf, generations, loadReturn, saveReturn, speciesGroupOptions, speciesName } from '@/lib/pokedex'
+import {
+  allForms,
+  allLines,
+  type Generation,
+  generationOf,
+  generations,
+  loadReturn,
+  ownedCount,
+  saveReturn,
+  speciesGroupOptions,
+  speciesName,
+} from '@/lib/pokedex'
 import { capitalize, cn } from '@/lib/utils'
 import { useCollection } from '@/services/collection/useCollection'
 import {
@@ -36,7 +48,7 @@ import {
   viewOptions,
 } from './dexFilters'
 import { EvolutionChain } from './EvolutionChain'
-import { GroupIcon, groupLabels, ProgressBar, SpeciesTile, typeColors } from './SpeciesTile'
+import { FormTile, GroupIcon, groupLabels, ProgressBar, SpeciesTile, typeColors } from './SpeciesTile'
 
 export default function Pokedex() {
   const { t, i18n } = useTranslation('common/sets')
@@ -51,7 +63,7 @@ export default function Pokedex() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [breakdownOpen, setBreakdownOpen] = useState(false)
   // clearing keeps the mode, view and tile art: those aren't filters
-  const clearUrl = `/pokedex?${new URLSearchParams([...(shiny ? [['dex', 'shiny']] : []), ...(view === 'lines' ? [['view', 'lines']] : []), ...(art === 'card' ? [['art', 'card']] : [])])}`
+  const clearUrl = `/pokedex?${new URLSearchParams([...(shiny ? [['dex', 'shiny']] : []), ...(view !== 'dex' ? [['view', view]] : []), ...(art === 'card' ? [['art', 'card']] : [])])}`
 
   // the species page links back with these filters; coming back (that link or browser back) restores the scroll position
   const location = useLocation()
@@ -144,21 +156,26 @@ export default function Pokedex() {
     return <Spinner size="lg" overlay />
   }
 
-  const { list, ownedOf, matches, filtered } = dexMatcher(filters, collection)
+  const { list, ownedOf, matches, filtered, forms } = dexMatcher(filters, collection)
+  // the grid's tiles: species, or in the forms view each form
+  const tiles: { dexNr: number }[] = view === 'forms' ? forms : filtered
   // in dex order the grid splits by generation, so ~1000 tiles have landmarks; other sorts stay one list
   const sections = (
-    view === 'dex' && sort === 'dex'
-      ? generations.map((g) => ({ g, species: filtered.filter((s) => generationOf(s.dexNr) === g) }))
-      : [{ g: undefined, species: filtered }]
-  ).filter((section) => section.species.length > 0)
+    view !== 'lines' && sort === 'dex' ? generations.map((g) => ({ g, tiles: tiles.filter((x) => generationOf(x.dexNr) === g) })) : [{ g: undefined, tiles }]
+  ).filter((section) => section.tiles.length > 0)
   // a line shows when any member matches, and then shows whole
   const lines = allLines.filter((line) => line.species.some(matches))
 
   const speciesOwned = list.filter((s) => ownedOf(s) > 0).length
   const genCaught = (g: Generation) => {
+    if (view === 'forms') {
+      const inGen = allForms.filter((form) => generationOf(form.species.dexNr) === g)
+      return `${inGen.filter((form) => ownedCount(collection, form.cards) > 0).length}/${inGen.length} forms caught`
+    }
     const inGen = list.filter((s) => generationOf(s.dexNr) === g)
     return `${inGen.filter((s) => ownedOf(s) > 0).length}/${inGen.length} caught`
   }
+  const formsCaught = allForms.filter((form) => ownedCount(collection, form.cards) > 0).length
   const linesComplete = allLines.filter((line) => line.species.every((s) => ownedOf(s) > 0)).length
 
   return (
@@ -205,9 +222,19 @@ export default function Pokedex() {
             )
           })}
           {!shiny && (
-            <span className="text-sm text-neutral-400">
-              {linesComplete}/{allLines.length} lines complete
-            </span>
+            <>
+              {/* a shortcut to the forms view */}
+              <button
+                type="button"
+                onClick={() => update({ view: view === 'forms' ? undefined : 'forms' })}
+                className={cn('cursor-pointer rounded px-1 text-sm text-neutral-400 hover:text-white', view === 'forms' && 'bg-neutral-700 text-white')}
+              >
+                {formsCaught}/{allForms.length} forms
+              </button>
+              <span className="text-sm text-neutral-400">
+                {linesComplete}/{allLines.length} lines complete
+              </span>
+            </>
           )}
         </div>
         {/* on phones the generation and type bars fold away, so the grid starts on the first screen */}
@@ -296,14 +323,14 @@ export default function Pokedex() {
         </div>
         {sections.length > 1 && sections[0].g && (
           <nav ref={genNavRef} aria-label="Jump to generation" className="-mx-4 flex gap-1.5 overflow-x-auto px-4">
-            {sections.map(({ g, species }) =>
+            {sections.map(({ g, tiles }) =>
               g ? (
                 <button
                   key={g.nr}
                   type="button"
                   data-gen-chip={g.nr}
                   onClick={() => jumpTo(g.nr)}
-                  title={`${genLabel(g)} · ${species.length} shown`}
+                  title={`${genLabel(g)} · ${tiles.length} shown`}
                   className={cn(
                     'flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-neutral-700 bg-neutral-900 py-0.5 pr-2.5 pl-0.5 text-xs text-neutral-400 transition-colors hover:border-neutral-500',
                     currentGen === g.nr && 'border-blue-300 text-white',
@@ -341,7 +368,7 @@ export default function Pokedex() {
           </SheetHeader>
           <div className="flex flex-col gap-5 px-4 pb-6">
             {!shiny && <TabsFilter label="View" options={viewOptions} value={view} onChange={(x) => update({ view: x })} show={(x) => viewLabels[x]} />}
-            {view === 'dex' && (
+            {view !== 'lines' && (
               <DropdownFilter label="Sort" options={sortOptions} value={sort} onChange={(x) => update({ sort: x })} show={(x) => sortLabels[x]} />
             )}
             <DropdownFilter
@@ -399,9 +426,9 @@ export default function Pokedex() {
         </SheetContent>
       </Sheet>
 
-      {(view === 'dex' ? filtered : lines).length === 0 ? (
+      {(view === 'lines' ? lines : tiles).length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-12 text-neutral-400">
-          No species match these filters.
+          No {view === 'forms' ? 'forms' : 'species'} match these filters.
           <Link to={clearUrl} className="rounded-md border-1 border-neutral-700 border-solid px-3 py-1.5 text-sm text-white hover:border-neutral-500">
             Clear filters
           </Link>
@@ -409,7 +436,7 @@ export default function Pokedex() {
       ) : (
         <>
           <div className="mb-3 flex items-center gap-3 text-sm text-neutral-400">
-            {view === 'dex' ? `${filtered.length} species` : `${lines.length} evolution lines`}
+            {view === 'dex' ? `${filtered.length} species` : view === 'forms' ? `${forms.length} forms` : `${lines.length} evolution lines`}
             {filtering && (
               <Link to={clearUrl} className="underline hover:text-white">
                 Clear filters
@@ -417,8 +444,8 @@ export default function Pokedex() {
             )}
             <TabsFilter options={artOptions} value={art} onChange={(x) => update({ art: x })} show={(x) => artLabels[x]} className="ml-auto" />
           </div>
-          {view === 'dex' ? (
-            sections.map(({ g, species }) => (
+          {view !== 'lines' ? (
+            sections.map(({ g, tiles }) => (
               <Fragment key={g?.nr ?? 'all'}>
                 {g && (
                   <h2 data-gen={g.nr} className="mb-3 flex items-baseline justify-between gap-3 border-neutral-800 border-b pb-2">
@@ -427,11 +454,17 @@ export default function Pokedex() {
                   </h2>
                 )}
                 <ul className="mb-6 grid grid-cols-3 gap-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
-                  {species.map((s) => (
-                    <li key={s.dexNr}>
-                      <SpeciesTile species={s} collection={collection} lang={i18n.language} art={art} shiny={shiny} fromDex />
-                    </li>
-                  ))}
+                  {view === 'forms'
+                    ? (tiles as typeof forms).map((x) => (
+                        <li key={`${x.dexNr} ${x.form.name}`}>
+                          <FormTile form={x.form} collection={collection} lang={i18n.language} art={art} showDex fromDex className="h-full" />
+                        </li>
+                      ))
+                    : (tiles as typeof filtered).map((s) => (
+                        <li key={s.dexNr}>
+                          <SpeciesTile species={s} collection={collection} lang={i18n.language} art={art} shiny={shiny} fromDex />
+                        </li>
+                      ))}
                 </ul>
               </Fragment>
             ))
