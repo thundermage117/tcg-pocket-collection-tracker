@@ -5,6 +5,7 @@ import sharp from 'sharp'
 // Matches each form card name to a PokéAPI form, writes frontend/assets/form-sprites.json ({ "Alolan Vulpix": 10103 })
 // and downloads the artwork to frontend/public/images/sprites/<PokéAPI id>.webp (form ids start at 10001, clear of dex numbers).
 // Forms PokéAPI has no artwork for yet (new Megas) and Team Rocket's cards fall back to the species artwork.
+// Also writes the native 475px artwork to sprites/large/ for the species page's hero (see download-sprites.ts).
 // Rerun after a set adds forms: `tsx scripts/download-form-sprites.ts`.
 
 const CARDS = 'frontend/assets/cards.json'
@@ -12,7 +13,10 @@ const TRANSLATIONS = 'frontend/assets/pokemon_translations.json'
 const OUT_JSON = 'frontend/assets/form-sprites.json'
 const OUT_DIR = 'frontend/public/images/sprites'
 const DEX_SIZE = 1025
-const SIZE = 256
+const SIZES = [
+  { size: 256, dir: OUT_DIR },
+  { size: 475, dir: `${OUT_DIR}/large` },
+]
 const artworkUrl = (id: number) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
 
 const regions: Record<string, string> = { alolan: 'alola', galarian: 'galar', hisuian: 'hisui', paldean: 'paldea' }
@@ -80,10 +84,13 @@ for (const name of formNames) {
   }
 }
 
-fs.mkdirSync(OUT_DIR, { recursive: true })
+for (const { dir } of SIZES) {
+  fs.mkdirSync(dir, { recursive: true })
+}
 const failed: number[] = []
 for (const id of new Set(Object.values(mapping))) {
-  if (fs.existsSync(`${OUT_DIR}/${id}.webp`)) {
+  const missing = SIZES.filter(({ dir }) => !fs.existsSync(`${dir}/${id}.webp`))
+  if (missing.length === 0) {
     continue
   }
   const art = await fetch(artworkUrl(id))
@@ -91,10 +98,10 @@ for (const id of new Set(Object.values(mapping))) {
     failed.push(id)
     continue
   }
-  await sharp(Buffer.from(await art.arrayBuffer()))
-    .resize(SIZE, SIZE, { fit: 'inside' })
-    .webp({ quality: 80 })
-    .toFile(`${OUT_DIR}/${id}.webp`)
+  const png = Buffer.from(await art.arrayBuffer())
+  for (const { size, dir } of missing) {
+    await sharp(png).resize(size, size, { fit: 'inside', withoutEnlargement: true }).webp({ quality: 80 }).toFile(`${dir}/${id}.webp`)
+  }
 }
 // a form whose artwork failed to download falls back to the species artwork
 for (const [name, id] of Object.entries(mapping)) {

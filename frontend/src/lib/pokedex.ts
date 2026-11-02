@@ -37,8 +37,10 @@ export const generations: Generation[] = (
 /**
  * Official artwork by artwork id: a dex number (scripts/download-sprites.ts, every species including those with no card)
  * or a PokéAPI form id from 10001 up (scripts/download-form-sprites.ts). Shiny artwork exists for dex numbers only.
+ * 256px by default; `large` is the source's native 475px, for the species page's hero only.
  */
-export const spriteUrl = (artworkId: number, shiny = false) => `/images/sprites/${shiny ? 'shiny/' : ''}${artworkId}.webp`
+export const spriteUrl = (artworkId: number, shiny = false, large = false) =>
+  `/images/sprites/${large ? 'large/' : ''}${shiny ? 'shiny/' : ''}${artworkId}.webp`
 
 /** Artwork id for a form's card name (Alolan Vulpix, Mega Charizard X ex); the species' own when PokéAPI has none for the form. */
 export const formArtworkId = (species: Species, cardName: string) => (formSprites as Record<string, number>)[cardName.replace(/ ex$/, '')] ?? species.dexNr

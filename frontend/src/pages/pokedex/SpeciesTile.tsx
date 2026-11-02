@@ -63,11 +63,38 @@ export function ProgressBar({ value, max, color, className }: { value: number; m
   )
 }
 
-/** Official artwork; a faint silhouette until caught ("Who's that Pokémon?"). */
-export function Sprite({ artworkId, caught, shiny, alt, className }: { artworkId: number; caught: boolean; shiny?: boolean; alt: string; className?: string }) {
+/**
+ * Official artwork; a faint silhouette until caught ("Who's that Pokémon?").
+ * `large` loads the 475px artwork (the 256px reads blurry at the hero's size on a 2× screen), falling back to the 256px if it's missing.
+ */
+export function Sprite({
+  artworkId,
+  caught,
+  shiny,
+  large,
+  alt,
+  className,
+}: {
+  artworkId: number
+  caught: boolean
+  shiny?: boolean
+  large?: boolean
+  alt: string
+  className?: string
+}) {
+  const small = spriteUrl(artworkId, shiny)
   return (
     <img
-      src={spriteUrl(artworkId, shiny)}
+      src={large ? spriteUrl(artworkId, shiny, true) : small}
+      onError={
+        large
+          ? (e) => {
+              if (!e.currentTarget.src.endsWith(small)) {
+                e.currentTarget.src = small
+              }
+            }
+          : undefined
+      }
       alt={alt}
       loading="lazy"
       draggable={false}

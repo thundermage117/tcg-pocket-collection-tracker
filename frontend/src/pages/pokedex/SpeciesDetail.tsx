@@ -203,13 +203,14 @@ export default function SpeciesDetail() {
           >
             {shiny ? (
               <>
-                <Sprite artworkId={species.dexNr} caught={shinyOwned > 0} shiny alt={name} className={shinyOwned === 0 ? 'opacity-25' : undefined} />
+                <Sprite artworkId={species.dexNr} caught={shinyOwned > 0} shiny large alt={name} className={shinyOwned === 0 ? 'opacity-25' : undefined} />
                 {shinyOwned === 0 && <span className="absolute inset-x-0 bottom-3 text-center text-xs font-medium text-neutral-400">No shiny caught yet</span>}
               </>
             ) : (
               <>
                 <Sprite
                   artworkId={heroForm?.artworkId ?? species.dexNr}
+                  large
                   caught={heroOwned > 0}
                   alt={heroForm?.name ?? name}
                   className={heroOwned === 0 ? 'opacity-25' : undefined}
