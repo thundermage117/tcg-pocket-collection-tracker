@@ -1,7 +1,7 @@
 // Personal fork: one tile per species in National Dex order, owned when any printing (any form) is owned.
 // The forms view gives each form with artwork of its own (Alolan Vulpix, Mega Charizard X) a tile of its own, next to its species'.
 // Filters live in the URL (?dex=shiny&view=forms&art=card&q=…&gen=1&group=legendary&stage=stage2&has=mega&type=fire&show=missing&set=A1&sort=printings), so links, refresh and back keep the view.
-import { Check, ChevronDown, SlidersHorizontal, X } from 'lucide-react'
+import { ChevronDown, SlidersHorizontal, X } from 'lucide-react'
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigationType, useSearchParams } from 'react-router'
@@ -19,10 +19,10 @@ import {
   generations,
   loadReturn,
   ownedCount,
-  type SpeciesGroup,
   saveReturn,
   speciesGroupOptions,
   speciesName,
+  spriteUrl,
 } from '@/lib/pokedex'
 import { capitalize, cn } from '@/lib/utils'
 import { useCollection } from '@/services/collection/useCollection'
@@ -49,7 +49,7 @@ import {
   viewOptions,
 } from './dexFilters'
 import { EvolutionChain } from './EvolutionChain'
-import { FormTile, GroupIcon, groupLabels, ProgressBar, SpeciesTile, typeColors, typeGlow } from './SpeciesTile'
+import { FormTile, GroupIcon, groupLabels, ProgressBar, SpeciesTile, typeColors } from './SpeciesTile'
 
 export default function Pokedex() {
   const { t, i18n } = useTranslation('common/sets')
@@ -193,48 +193,47 @@ export default function Pokedex() {
         </p>
       </header>
 
-      <section className="mb-6 rounded-xl border-1 border-neutral-700 border-solid bg-gradient-to-br from-neutral-800 to-neutral-900 p-4 sm:p-5">
-        <div className="flex items-center gap-4 sm:gap-5">
-          <Ring value={speciesOwned} max={list.length} className="size-20 shrink-0 sm:size-24" />
-          <div className="min-w-0">
-            <h2 className="font-medium text-neutral-400 text-xs uppercase tracking-wider">{shiny ? 'Shiny species owned' : 'Species owned'}</h2>
-            <p className="tabular-nums leading-tight">
-              <span className="font-bold text-3xl sm:text-4xl">{speciesOwned}</span>
-              <span className="text-lg text-neutral-500"> / {list.length}</span>
-            </p>
-            <div className="mt-2 flex flex-wrap items-center gap-1.5 tabular-nums">
-              {/* legendary / mythical / starters caught, each a shortcut to its filter */}
-              {speciesGroupOptions.map((g) => {
-                const inGroup = list.filter((s) => s.group === g)
-                return (
-                  <button
-                    key={g}
-                    type="button"
-                    onClick={() => update({ group: group === g ? undefined : g })}
-                    title={groupLabels[g]}
-                    className={cn(pill, groupPills[g], group === g && 'ring-1 ring-current')}
-                  >
-                    <GroupIcon group={g} />
-                    {inGroup.filter((s) => ownedOf(s) > 0).length}/{inGroup.length}
-                  </button>
-                )
-              })}
-              {!shiny && (
-                <>
-                  {/* a shortcut to the forms view */}
-                  <button
-                    type="button"
-                    onClick={() => update({ view: view === 'forms' ? undefined : 'forms' })}
-                    className={cn(pill, 'border-neutral-600 bg-neutral-700/40 text-neutral-300 hover:text-white', view === 'forms' && 'ring-1 ring-current')}
-                  >
-                    {formsCaught}/{allForms.length} forms
-                  </button>
-                  <span className={cn(pill, 'cursor-default border-neutral-600 bg-neutral-700/40 text-neutral-300')}>
-                    {linesComplete}/{allLines.length} lines complete
-                  </span>
-                </>
-              )}
-            </div>
+      <section className="relative mb-6 overflow-hidden rounded-xl border-1 border-neutral-700 border-solid bg-neutral-800 p-4 sm:p-5">
+        <Pokeball className="pointer-events-none absolute -top-16 -right-16 size-56 text-neutral-700/50 sm:-top-20 sm:-right-12 sm:size-72" />
+        <div className="relative">
+          <h2 className="font-medium text-neutral-400 text-xs uppercase tracking-wider">{shiny ? 'Shiny species owned' : 'Species owned'}</h2>
+          <p className="tabular-nums leading-tight">
+            <span className="font-bold text-3xl sm:text-4xl">{speciesOwned}</span>
+            <span className="text-lg text-neutral-500"> / {list.length}</span>
+          </p>
+          <ProgressBar value={speciesOwned} max={list.length} className="mt-3 h-1.5 max-w-xl" />
+          <div className="mt-3 flex flex-wrap items-center gap-1.5 tabular-nums">
+            {/* legendary / mythical / starters caught, each a shortcut to its filter */}
+            {speciesGroupOptions.map((g) => {
+              const inGroup = list.filter((s) => s.group === g)
+              return (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => update({ group: group === g ? undefined : g })}
+                  title={groupLabels[g]}
+                  className={cn(pill, group === g && 'border-neutral-400 text-white')}
+                >
+                  <GroupIcon group={g} />
+                  {inGroup.filter((s) => ownedOf(s) > 0).length}/{inGroup.length}
+                </button>
+              )
+            })}
+            {!shiny && (
+              <>
+                {/* a shortcut to the forms view */}
+                <button
+                  type="button"
+                  onClick={() => update({ view: view === 'forms' ? undefined : 'forms' })}
+                  className={cn(pill, view === 'forms' && 'border-neutral-400 text-white')}
+                >
+                  {formsCaught}/{allForms.length} forms
+                </button>
+                <span className={cn(pill, 'cursor-default hover:border-neutral-700')}>
+                  {linesComplete}/{allLines.length} lines complete
+                </span>
+              </>
+            )}
           </div>
         </div>
         {/* on phones the generation and type bars fold away, so the grid starts on the first screen */}
@@ -242,18 +241,16 @@ export default function Pokedex() {
           type="button"
           onClick={() => setBreakdownOpen(!breakdownOpen)}
           aria-expanded={breakdownOpen}
-          className="mt-4 flex w-full cursor-pointer items-center justify-center gap-1 border-neutral-700 border-t pt-3 text-sm text-neutral-400 hover:text-white sm:hidden"
+          className="relative mt-4 flex w-full cursor-pointer items-center justify-center gap-1 border-neutral-700 border-t pt-3 text-sm text-neutral-400 hover:text-white sm:hidden"
         >
           By generation and type
           <ChevronDown className={cn('size-4 transition-transform', breakdownOpen && 'rotate-180')} />
         </button>
-        <div className={cn(breakdownOpen ? 'mt-3 block' : 'hidden', 'sm:mt-5 sm:block')}>
-          <h3 className={blockLabel}>Generations</h3>
+        <div className={cn(breakdownOpen ? 'mt-3 block' : 'hidden', 'relative sm:mt-5 sm:block')}>
           <ul className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-9">
             {generations.map((g) => {
               const inGen = list.filter((s) => generationOf(s.dexNr).nr === g.nr)
               const ownedInGen = inGen.filter((s) => ownedOf(s) > 0).length
-              const done = inGen.length > 0 && ownedInGen === inGen.length
               const active = gen === String(g.nr)
               return (
                 <li key={g.nr}>
@@ -261,30 +258,32 @@ export default function Pokedex() {
                     type="button"
                     onClick={() => update({ gen: active ? undefined : String(g.nr) })}
                     title={`Gen ${g.nr} · ${g.region}`}
-                    className={cn(cell, done && 'border-amber-300/40 bg-amber-300/5', active && 'border-blue-300 ring-1 ring-blue-300')}
+                    className={cn(cell, 'bg-neutral-900/50', active && 'border-blue-300')}
                   >
-                    <span className="flex items-center gap-1.5 text-xs">
-                      <span className={cn('rounded-full px-1.5 font-bold', done ? 'bg-amber-300 text-neutral-900' : 'bg-neutral-700 text-neutral-200')}>
-                        {g.nr}
-                      </span>
-                      <span className="truncate text-neutral-300">{g.region}</span>
-                    </span>
-                    <Fraction value={ownedInGen} max={inGen.length} done={done} />
-                    <ProgressBar value={ownedInGen} max={inGen.length} color={done ? doneColor : undefined} className="h-1" />
+                    {/* the region's mascot legendary, faded behind the card */}
+                    <img
+                      src={spriteUrl(regionMascots[g.nr - 1])}
+                      alt=""
+                      loading="lazy"
+                      draggable={false}
+                      className="pointer-events-none absolute -right-3 -bottom-3 -z-10 size-16 opacity-25 transition-opacity group-hover:opacity-50 sm:size-[4.5rem]"
+                    />
+                    <span className="text-[10px] text-neutral-500 uppercase tracking-wider">Gen {g.nr}</span>
+                    <span className="font-semibold text-sm leading-tight">{g.region}</span>
+                    <Fraction value={ownedInGen} max={inGen.length} />
+                    <ProgressBar value={ownedInGen} max={inGen.length} className="h-1" />
                   </button>
                 </li>
               )
             })}
           </ul>
           {/* a dual-type species counts under both types */}
-          <h3 className={cn(blockLabel, 'mt-4')}>Types</h3>
-          <ul className="grid grid-cols-5 gap-2 lg:grid-cols-10">
+          <ul className="mt-2 grid grid-cols-5 gap-2 lg:grid-cols-10">
             {typeOptions
               .filter((x) => x !== 'all')
               .map((x) => {
                 const ofType = list.filter((s) => s.types.includes(x))
                 const ownedOfType = ofType.filter((s) => ownedOf(s) > 0).length
-                const done = ofType.length > 0 && ownedOfType === ofType.length
                 const active = type === x
                 return (
                   <li key={x}>
@@ -292,12 +291,19 @@ export default function Pokedex() {
                       type="button"
                       onClick={() => update({ type: active ? undefined : x })}
                       title={capitalize(x)}
-                      className={cn(cell, done && 'border-amber-300/40', active && 'border-blue-300 ring-1 ring-blue-300')}
-                      style={{ backgroundImage: typeGlow([x], '26') }}
+                      className={cn(cell, active && 'border-blue-300')}
+                      style={{ backgroundImage: `linear-gradient(135deg, ${typeColors[x]}40, ${typeColors[x]}0a 70%)` }}
                     >
+                      {/* the energy symbol as a watermark */}
+                      <img
+                        src={`/images/energy/${x}.webp`}
+                        alt=""
+                        className="pointer-events-none absolute -right-2.5 -bottom-2.5 -z-10 size-9 opacity-10 transition-opacity group-hover:opacity-35 sm:size-12 sm:opacity-20"
+                      />
                       <img src={`/images/energy/${x}.webp`} alt={x} className="size-5" />
-                      <Fraction value={ownedOfType} max={ofType.length} done={done} />
-                      <ProgressBar value={ownedOfType} max={ofType.length} color={done ? doneColor : typeColors[x]} className="h-1" />
+                      <span className="hidden font-semibold text-sm leading-tight sm:block">{capitalize(x)}</span>
+                      <Fraction value={ownedOfType} max={ofType.length} />
+                      <ProgressBar value={ownedOfType} max={ofType.length} color={typeColors[x]} className="h-1" />
                     </button>
                   </li>
                 )
@@ -511,54 +517,31 @@ function Chip({ children, onRemove }: { children: React.ReactNode; onRemove: () 
   )
 }
 
-// summary panel pieces: pills for the counts, cards for the generation and type breakdown; finished ones go gold
-const pill = 'flex cursor-pointer items-center gap-1 rounded-full border-1 border-solid px-2.5 py-0.5 text-sm transition-colors'
-const groupPills: Record<SpeciesGroup, string> = {
-  legendary: 'border-amber-300/30 bg-amber-300/10 text-amber-100 hover:border-amber-300/60',
-  mythical: 'border-violet-300/30 bg-violet-300/10 text-violet-100 hover:border-violet-300/60',
-  starter: 'border-sky-300/30 bg-sky-300/10 text-sky-100 hover:border-sky-300/60',
-}
+// summary panel pieces: pills for the counts, cards for the generation and type breakdown
+const pill =
+  'flex cursor-pointer items-center gap-1 rounded-full border-1 border-neutral-700 border-solid bg-neutral-900/60 px-2.5 py-0.5 text-neutral-300 text-sm transition-colors hover:border-neutral-500'
 const cell =
-  'flex w-full cursor-pointer flex-col gap-1.5 rounded-lg border-1 border-neutral-700/70 border-solid bg-neutral-900/40 px-1.5 py-2 text-left sm:px-2.5 transition-colors hover:border-neutral-500'
-const blockLabel = 'mb-2 font-medium text-[10px] text-neutral-500 uppercase tracking-wider'
-const doneColor = '#fcd34d' // amber-300
+  'group relative isolate flex w-full cursor-pointer flex-col gap-1 overflow-hidden rounded-lg border-1 border-neutral-700/70 border-solid px-1.5 py-2 text-left transition-colors hover:border-neutral-500 sm:px-2.5'
+// version mascots: Mewtwo, Lugia, Rayquaza, Dialga, Reshiram, Xerneas, Solgaleo, Zacian, Koraidon
+const regionMascots = [150, 249, 384, 483, 643, 716, 791, 888, 1007]
 
-function Fraction({ value, max, done }: { value: number; max: number; done: boolean }) {
+function Fraction({ value, max }: { value: number; max: number }) {
   return (
-    <span className="flex items-center gap-0.5 text-xs tabular-nums leading-none sm:gap-1 sm:text-sm">
-      <span className={cn('font-semibold', done ? 'text-amber-200' : 'text-neutral-100')}>{value}</span>
+    <span className="text-xs tabular-nums leading-none sm:text-sm">
+      <span className="font-semibold text-neutral-100">{value}</span>
       <span className="text-[10px] text-neutral-500 sm:text-xs">/{max}</span>
-      {done && <Check className="ml-auto size-3.5 text-amber-300" strokeWidth={3} />}
     </span>
   )
 }
 
-/** Completion ring with the percentage inside; gold once complete. */
-function Ring({ value, max, className }: { value: number; max: number; className?: string }) {
-  const share = max === 0 ? 0 : value / max
-  const done = max > 0 && value === max
-  const r = 42
-  const length = 2 * Math.PI * r
+/** The Pokédex panel's backdrop: a Poké Ball in outline. */
+function Pokeball({ className }: { className?: string }) {
   return (
-    <span className={cn('relative block', className)}>
-      <svg viewBox="0 0 100 100" className="-rotate-90 size-full" aria-hidden>
-        <circle cx="50" cy="50" r={r} fill="none" strokeWidth="9" className="stroke-neutral-700" />
-        <circle
-          cx="50"
-          cy="50"
-          r={r}
-          fill="none"
-          strokeWidth="9"
-          strokeLinecap="round"
-          strokeDasharray={`${share * length} ${length}`}
-          stroke={done ? doneColor : '#93c5fd'}
-          className={cn(
-            'transition-[stroke-dasharray] duration-700',
-            done ? 'drop-shadow-[0_0_6px_rgba(252,211,77,0.5)]' : 'drop-shadow-[0_0_6px_rgba(147,197,253,0.45)]',
-          )}
-        />
-      </svg>
-      <span className="absolute inset-0 flex items-center justify-center font-semibold text-sm tabular-nums sm:text-base">{Math.floor(share * 100)}%</span>
-    </span>
+    <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="5" className={className} aria-hidden>
+      <circle cx="50" cy="50" r="45" />
+      <path d="M5 50h30M65 50h30" />
+      <circle cx="50" cy="50" r="15" />
+      <circle cx="50" cy="50" r="7" />
+    </svg>
   )
 }
