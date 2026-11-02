@@ -76,6 +76,46 @@ export default function Pokedex() {
     }
   }, [isLoading, returning, location.search])
 
+  // the generation chip for the section under the sticky bar lights up, and jumping lands a section just below it
+  const barRef = useRef<HTMLDivElement>(null)
+  const genNavRef = useRef<HTMLElement>(null)
+  const [currentGen, setCurrentGen] = useState<number>()
+  useEffect(() => {
+    let frame = 0
+    const onScroll = () => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => {
+        const barBottom = barRef.current?.getBoundingClientRect().bottom ?? 0
+        const headers = [...document.querySelectorAll<HTMLElement>('[data-gen]')]
+        const current = headers.findLast((h) => h.getBoundingClientRect().top <= barBottom + 24) ?? headers[0]
+        setCurrentGen(current ? Number(current.dataset.gen) : undefined)
+      })
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
+  }, [isLoading, location.search])
+  // keep the current chip in view on phones; scrolling only the chip row, so a smooth page scroll isn't interrupted
+  useEffect(() => {
+    const nav = genNavRef.current
+    const chip = nav?.querySelector<HTMLElement>(`[data-gen-chip="${currentGen}"]`)
+    if (nav && chip) {
+      nav.scrollTo({ left: chip.offsetLeft - nav.clientWidth / 2 + chip.offsetWidth / 2, behavior: 'smooth' })
+    }
+  }, [currentGen])
+  const jumpTo = (nr: number) => {
+    const header = document.querySelector(`[data-gen="${nr}"]`)
+    if (header) {
+      const barHeight = barRef.current?.offsetHeight ?? 0
+      window.scrollTo({ top: header.getBoundingClientRect().top + window.scrollY - barHeight - 8, behavior: 'smooth' })
+    }
+  }
+
   const update = (changes: Record<string, string | undefined>) => {
     setParams(
       (prev) => {
@@ -104,6 +144,12 @@ export default function Pokedex() {
   }
 
   const { list, ownedOf, matches, filtered } = dexMatcher(filters, collection)
+  // in dex order the grid splits by generation, so ~1000 tiles have landmarks; other sorts stay one list
+  const sections = (
+    view === 'dex' && sort === 'dex'
+      ? generations.map((g) => ({ g, species: filtered.filter((s) => generationOf(s.dexNr) === g) }))
+      : [{ g: undefined, species: filtered }]
+  ).filter((section) => section.species.length > 0)
   // a line shows when any member matches, and then shows whole
   const lines = allLines.filter((line) => line.species.some(matches))
 
@@ -230,20 +276,47 @@ export default function Pokedex() {
         </div>
       </section>
 
-      <div className="mb-3 flex flex-col gap-3 sm:flex-row">
-        <SearchInput value={search} setValue={(q) => update({ q: q.trim() || undefined })} className="sm:flex-1" />
-        <div className="flex items-center gap-3">
-          <TabsFilter options={showOptions} value={show} onChange={(x) => update({ show: x })} show={(x) => showLabels[x]} className="whitespace-nowrap" />
-          <Button variant="outline" onClick={() => setSheetOpen(true)} className="h-[38px] shrink-0 border-neutral-700 bg-neutral-800">
-            <SlidersHorizontal />
-            <span className="hidden sm:inline">Filters</span>
-            {sheetFilterCount > 0 && (
-              <span className="flex size-5 items-center justify-center rounded-full bg-blue-300 font-semibold text-neutral-900 text-xs tabular-nums">
-                {sheetFilterCount}
-              </span>
-            )}
-          </Button>
+      {/* search, filters and the generation jump stay on screen through ~1000 tiles */}
+      <div ref={barRef} className="sticky top-0 z-20 -mx-4 mb-3 flex flex-col gap-2 bg-[#181818]/90 px-4 py-2 backdrop-blur">
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+          <SearchInput value={search} setValue={(q) => update({ q: q.trim() || undefined })} className="sm:flex-1" />
+          <div className="flex items-center gap-3">
+            <TabsFilter options={showOptions} value={show} onChange={(x) => update({ show: x })} show={(x) => showLabels[x]} className="whitespace-nowrap" />
+            <Button variant="outline" onClick={() => setSheetOpen(true)} className="h-[38px] shrink-0 border-neutral-700 bg-neutral-800">
+              <SlidersHorizontal />
+              <span className="hidden sm:inline">Filters</span>
+              {sheetFilterCount > 0 && (
+                <span className="flex size-5 items-center justify-center rounded-full bg-blue-300 font-semibold text-neutral-900 text-xs tabular-nums">
+                  {sheetFilterCount}
+                </span>
+              )}
+            </Button>
+          </div>
         </div>
+        {sections.length > 1 && sections[0].g && (
+          <nav ref={genNavRef} aria-label="Jump to generation" className="-mx-4 flex gap-1.5 overflow-x-auto px-4">
+            {sections.map(({ g, species }) =>
+              g ? (
+                <button
+                  key={g.nr}
+                  type="button"
+                  data-gen-chip={g.nr}
+                  onClick={() => jumpTo(g.nr)}
+                  title={`${genLabel(g)} · ${species.length} shown`}
+                  className={cn(
+                    'flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-neutral-700 bg-neutral-900 py-0.5 pr-2.5 pl-0.5 text-xs text-neutral-400 transition-colors hover:border-neutral-500',
+                    currentGen === g.nr && 'border-blue-300 text-white',
+                  )}
+                >
+                  <span className={cn('rounded-full bg-neutral-700 px-1.5 font-bold text-neutral-200', currentGen === g.nr && 'bg-blue-300 text-neutral-900')}>
+                    {g.nr}
+                  </span>
+                  {g.region}
+                </button>
+              ) : null,
+            )}
+          </nav>
+        )}
       </div>
 
       {/* what the sheet and the generation bars have set, each removable on its own */}
@@ -344,29 +417,23 @@ export default function Pokedex() {
             <TabsFilter options={artOptions} value={art} onChange={(x) => update({ art: x })} show={(x) => artLabels[x]} className="ml-auto" />
           </div>
           {view === 'dex' ? (
-            // in dex order the grid splits by generation, so 993 tiles have landmarks; other sorts stay one list
-            (sort === 'dex'
-              ? generations.map((g) => ({ g, species: filtered.filter((s) => generationOf(s.dexNr) === g) }))
-              : [{ g: undefined, species: filtered }]
-            )
-              .filter((section) => section.species.length > 0)
-              .map(({ g, species }) => (
-                <Fragment key={g?.nr ?? 'all'}>
-                  {g && (
-                    <h2 className="sticky top-0 z-10 -mx-4 mb-3 flex items-baseline justify-between gap-3 bg-[#181818]/90 px-4 py-2 backdrop-blur">
-                      <span className="font-semibold">{genLabel(g)}</span>
-                      <span className="text-sm text-neutral-400 tabular-nums">{genCaught(g)}</span>
-                    </h2>
-                  )}
-                  <ul className="mb-6 grid grid-cols-3 gap-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
-                    {species.map((s) => (
-                      <li key={s.dexNr}>
-                        <SpeciesTile species={s} collection={collection} lang={i18n.language} art={art} shiny={shiny} fromDex />
-                      </li>
-                    ))}
-                  </ul>
-                </Fragment>
-              ))
+            sections.map(({ g, species }) => (
+              <Fragment key={g?.nr ?? 'all'}>
+                {g && (
+                  <h2 data-gen={g.nr} className="mb-3 flex items-baseline justify-between gap-3 border-neutral-800 border-b pb-2">
+                    <span className="font-semibold">{genLabel(g)}</span>
+                    <span className="text-sm text-neutral-400 tabular-nums">{genCaught(g)}</span>
+                  </h2>
+                )}
+                <ul className="mb-6 grid grid-cols-3 gap-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
+                  {species.map((s) => (
+                    <li key={s.dexNr}>
+                      <SpeciesTile species={s} collection={collection} lang={i18n.language} art={art} shiny={shiny} fromDex />
+                    </li>
+                  ))}
+                </ul>
+              </Fragment>
+            ))
           ) : (
             <ul className="grid gap-3 lg:grid-cols-2">
               {lines.map((line) => {
