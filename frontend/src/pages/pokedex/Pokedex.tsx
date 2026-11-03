@@ -47,7 +47,7 @@ import {
   viewLabels,
   viewOptions,
 } from './dexFilters'
-import { EvolutionChain } from './EvolutionChain'
+import { chainScroller, EvolutionChain } from './EvolutionChain'
 import { FormTile, GroupIcon, groupLabels, ProgressBar, SpeciesTile, type TileArt, typeColors } from './SpeciesTile'
 
 export default function Pokedex() {
@@ -508,15 +508,21 @@ export default function Pokedex() {
         <ul className="grid gap-3 lg:grid-cols-2">
           {lines.map((line) => {
             const ownedInLine = line.species.filter((s) => ownedOf(s) > 0).length
+            const complete = ownedInLine === line.species.length
             return (
-              <li key={line.root} className="rounded-lg border-1 border-neutral-700 border-solid bg-neutral-800/40 p-3">
-                <h2 className="mb-2 flex items-baseline justify-between gap-3">
-                  <span className="font-semibold">{speciesName(line.species[0], i18n.language)} line</span>
-                  <span className={cn('text-sm tabular-nums', ownedInLine === line.species.length ? 'text-green-500' : 'text-neutral-400')}>
+              // min-w-0: the chain is as wide as it is (w-max) and scrolls in here, rather than widening the card off a phone's screen
+              <li
+                key={line.root}
+                className={cn('min-w-0 rounded-lg border-1 border-solid bg-neutral-800/40 p-3', complete ? 'border-amber-300/60' : 'border-neutral-700')}
+              >
+                <h2 className="mb-2 flex items-center gap-3">
+                  <span className="shrink-0 font-semibold">{speciesName(line.species[0], i18n.language)} line</span>
+                  <ProgressBar value={ownedInLine} max={line.species.length} color={complete ? '#fcd34d' : undefined} className="h-1 grow" />
+                  <span className={cn('shrink-0 text-sm tabular-nums', complete ? 'text-amber-300' : 'text-neutral-400')}>
                     {ownedInLine}/{line.species.length} species
                   </span>
                 </h2>
-                <div className="overflow-x-auto">
+                <div className={chainScroller}>
                   <EvolutionChain line={line} collection={collection} lang={i18n.language} art={art} fromDex />
                 </div>
               </li>

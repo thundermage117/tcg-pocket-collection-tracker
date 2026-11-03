@@ -17,21 +17,64 @@ interface Props {
   fromDex?: boolean
 }
 
+/**
+ * Around a line wider than its card: it scrolls (without carrying the page along), snaps tile by tile, and fades at the
+ * right edge as a hint there's more; the padding lets the last tile clear the fade.
+ */
+export const chainScroller =
+  'overflow-x-auto overscroll-x-contain snap-x snap-proximity pr-6 pb-1 [mask-image:linear-gradient(to_right,black_calc(100%-1.5rem),transparent)] [&_a]:snap-start'
+
 const tileWidth = 'w-20 sm:w-24'
 // the middle of a column's first tile, where a branch line drops from (half of tileWidth)
 const tileMiddle = 'left-10 sm:left-12'
 const arrow = <ChevronRight className="size-4 shrink-0 text-neutral-500" />
 
-/** One stage's members; branches (Eevee, Oddish, Wurmple) wrap into a grid: one column up to 3, then 3 rows. Forms sit side by side. */
-function Stage<T>({ items, render, keyOf, row }: { items: T[]; render: (item: T) => ReactNode; keyOf: (item: T) => string | number; row?: boolean }) {
+/**
+ * One stage's members; branches (Eevee, Oddish, Wurmple) wrap into a grid: one column up to 3, then 3 rows. Forms sit side by side.
+ * A branching stage gets a bracket in the gap to its left, a tick into each row, which the arrow column's line runs into.
+ */
+function Stage<T>({
+  items,
+  render,
+  keyOf,
+  row,
+  branch,
+}: {
+  items: T[]
+  render: (item: T) => ReactNode
+  keyOf: (item: T) => string | number
+  row?: boolean
+  branch?: boolean
+}) {
+  const columns = row ? items.length : Math.ceil(items.length / 3)
+  const rows = Math.ceil(items.length / columns)
   return (
     <div
       className={cn('grid gap-1.5 sm:gap-2', row && items.length > 1 && 'rounded-lg bg-neutral-800/50 p-1 sm:p-1.5')}
-      style={{ gridTemplateColumns: `repeat(${row ? items.length : Math.ceil(items.length / 3)}, minmax(0, 1fr))` }}
+      style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
     >
-      {items.map((item) => (
-        <Fragment key={keyOf(item)}>{render(item)}</Fragment>
-      ))}
+      {items.map((item, i) => {
+        const r = Math.floor(i / columns)
+        return (
+          <div key={keyOf(item)} className="relative">
+            {branch && rows > 1 && i % columns === 0 && (
+              <>
+                {/* the bracket's share of this row: from the row above's gap (or its own middle) to the row below's */}
+                <span
+                  aria-hidden
+                  className={cn(
+                    'absolute right-[calc(100%+0.5rem)] border-neutral-600 border-l',
+                    r === 0 ? 'top-1/2' : '-top-1.5 sm:-top-2',
+                    r === rows - 1 ? 'bottom-1/2' : '-bottom-1.5 sm:-bottom-2',
+                  )}
+                />
+                <span aria-hidden className="absolute top-1/2 right-full w-2 border-neutral-600 border-t" />
+              </>
+            )}
+            {render(item)}
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -52,17 +95,24 @@ export function EvolutionChain({ line, collection, lang, art, current, fromDex }
     <div className="grid w-max items-center gap-y-3" style={{ gridTemplateColumns: `repeat(${2 * columns - 1}, auto)` }}>
       {line.stages.map((stage, i) => (
         <Fragment key={stage[0]}>
-          {i > 0 && (
-            <span className="px-1 sm:px-1.5" style={{ gridColumn: 2 * i, gridRow: 1 }}>
-              {arrow}
-            </span>
-          )}
+          {i > 0 &&
+            (stage.length > 1 ? (
+              // into a branching stage's bracket: a line, not an arrow
+              <span aria-hidden className="relative w-6 self-stretch sm:w-7" style={{ gridColumn: 2 * i, gridRow: 1 }}>
+                <span className="absolute top-1/2 right-2 left-1 border-neutral-600 border-t" />
+              </span>
+            ) : (
+              <span className="px-1 sm:px-1.5" style={{ gridColumn: 2 * i, gridRow: 1 }}>
+                {arrow}
+              </span>
+            ))}
           <div className="relative flex flex-col justify-center self-stretch" style={at(i, 1)}>
             {/* a branch line starts here, from behind the first tile down to the row's edge */}
             {rows.some((r) => r.fromColumn === i) && <span aria-hidden className={cn('absolute top-1/2 bottom-0 border-neutral-600 border-l', tileMiddle)} />}
             <Stage
               items={stage}
               keyOf={(dexNr) => dexNr}
+              branch={i > 0}
               render={(dexNr) => {
                 const species = getSpecies(dexNr)
                 return species ? (

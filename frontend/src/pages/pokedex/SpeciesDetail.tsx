@@ -27,8 +27,8 @@ import { oneIn } from '@/pages/packs/types'
 import { useCollection, useSelectedCard } from '@/services/collection/useCollection'
 import type { CardType, ExpansionId } from '@/types'
 import { dexMatcher, parseDexFilters } from './dexFilters'
-import { EvolutionChain } from './EvolutionChain'
-import { dexLabel, GroupIcon, groupLabels, ProgressBar, Sprite, typeColors, typeGlow } from './SpeciesTile'
+import { chainScroller, EvolutionChain } from './EvolutionChain'
+import { dexArtName, dexLabel, GroupIcon, groupLabels, ProgressBar, Sprite, typeColors, typeGlow } from './SpeciesTile'
 
 export default function SpeciesDetail() {
   const { t, i18n } = useTranslation(['common/sets', 'common/packs'])
@@ -51,7 +51,7 @@ export default function SpeciesDetail() {
   useLayoutEffect(() => {
     window.scrollTo(0, 0)
   }, [nr])
-  const stepTo = (to: { dexNr: number }) => navigate(`/pokedex/${to.dexNr}`, { replace: true, state: location.state })
+  const stepTo = (to: { dexNr: number }) => navigate(`/pokedex/${to.dexNr}`, { replace: true, state: location.state, viewTransition: true })
 
   // ← / → on desktop; ignored while typing or with a dialog (card detail) open
   useEffect(() => {
@@ -181,7 +181,7 @@ export default function SpeciesDetail() {
         </Link>
         <span className="flex items-center gap-4">
           {prev && (
-            <Link to={`/pokedex/${prev.dexNr}`} replace state={location.state} className="flex items-center hover:text-white">
+            <Link to={`/pokedex/${prev.dexNr}`} replace viewTransition state={location.state} className="flex items-center hover:text-white">
               <ChevronLeft className="size-4" />
               {speciesName(prev, i18n.language)}
             </Link>
@@ -192,7 +192,7 @@ export default function SpeciesDetail() {
             </span>
           )}
           {next && (
-            <Link to={`/pokedex/${next.dexNr}`} replace state={location.state} className="flex items-center hover:text-white">
+            <Link to={`/pokedex/${next.dexNr}`} replace viewTransition state={location.state} className="flex items-center hover:text-white">
               {speciesName(next, i18n.language)}
               <ChevronRight className="size-4" />
             </Link>
@@ -209,7 +209,15 @@ export default function SpeciesDetail() {
           >
             {shiny ? (
               <>
-                <Sprite artworkId={species.dexNr} caught={shinyOwned > 0} shiny large alt={name} className={shinyOwned === 0 ? 'opacity-25' : undefined} />
+                <Sprite
+                  artworkId={species.dexNr}
+                  caught={shinyOwned > 0}
+                  shiny
+                  large
+                  alt={name}
+                  className={shinyOwned === 0 ? 'opacity-25' : undefined}
+                  style={{ viewTransitionName: dexArtName(species.dexNr) }}
+                />
                 {shinyOwned === 0 && <span className="absolute inset-x-0 bottom-3 text-center text-xs font-medium text-neutral-400">No shiny caught yet</span>}
               </>
             ) : (
@@ -220,6 +228,8 @@ export default function SpeciesDetail() {
                   caught={heroOwned > 0}
                   alt={heroForm?.name ?? name}
                   className={heroOwned === 0 ? 'opacity-25' : undefined}
+                  // a tile's artwork morphs into this (SpeciesTile)
+                  style={{ viewTransitionName: dexArtName(species.dexNr) }}
                 />
                 {heroOwned === 0 && <span className="absolute inset-x-0 bottom-3 text-center text-xs font-medium text-neutral-400">Not caught yet</span>}
               </>
@@ -326,7 +336,7 @@ export default function SpeciesDetail() {
               {line.species.filter((s) => ownedCount(collection, s.cards) > 0).length}/{line.species.length} species
             </span>
           </h2>
-          <div className="overflow-x-auto pb-1">
+          <div className={chainScroller}>
             <EvolutionChain line={line} collection={collection} lang={i18n.language} current={species.dexNr} />
           </div>
         </section>

@@ -1,12 +1,17 @@
 // Personal fork: species tile and progress bar shared by the Pokédex grid, its lines view and the species page.
 import { Check, CircleDot, Crown, Sparkles } from 'lucide-react'
-import { Link } from 'react-router'
+import { useState } from 'react'
+import { Link, useViewTransitionState } from 'react-router'
 import { getLocalizedImagePath } from '@/lib/imageLocales'
 import { coverCard, dexName, type FormNode, ownedCount, type Species, type SpeciesGroup, speciesName, spriteUrl, typesOf } from '@/lib/pokedex'
 import { cn, getCardNameByLang } from '@/lib/utils'
 import type { CardType, Collection } from '@/types'
+import './pokedex.css'
 
 export type TileArt = 'sprite' | 'card'
+
+/** The view-transition name a species' artwork goes by, on its tile and as the species page's hero. */
+export const dexArtName = (dexNr: number) => `dex-art-${dexNr}`
 
 export const dexLabel = (dexNr: number) => `#${String(dexNr).padStart(4, '0')}`
 
@@ -74,6 +79,7 @@ export function Sprite({
   large,
   alt,
   className,
+  style,
 }: {
   artworkId: number
   caught: boolean
@@ -81,11 +87,17 @@ export function Sprite({
   large?: boolean
   alt: string
   className?: string
+  style?: React.CSSProperties
 }) {
   const small = spriteUrl(artworkId, shiny)
+  const src = large ? spriteUrl(artworkId, shiny, true) : small
+  // until the large artwork arrives, the small one (cached from the tile just clicked) stands in behind it, so the hero
+  // is never blank, nor the view transition into it
+  const [loaded, setLoaded] = useState<string>()
   return (
     <img
-      src={large ? spriteUrl(artworkId, shiny, true) : small}
+      src={src}
+      onLoad={large ? () => setLoaded(src) : undefined}
       onError={
         large
           ? (e) => {
@@ -96,11 +108,25 @@ export function Sprite({
           : undefined
       }
       alt={alt}
-      loading="lazy"
+      loading={large ? 'eager' : 'lazy'}
       draggable={false}
-      className={cn('aspect-square w-full object-contain', !caught && 'opacity-15 brightness-0 invert', className)}
+      className={cn('aspect-square w-full bg-contain bg-center bg-no-repeat object-contain', !caught && 'opacity-15 brightness-0 invert', className)}
+      style={{ ...style, ...(large && loaded !== src ? { backgroundImage: `url(${small})` } : {}) }}
     />
   )
+}
+
+// lifts on hover and gives on press, so a tap answers before the page does
+const tileClass =
+  'relative block overflow-hidden rounded-md border-1 border-neutral-700 border-solid bg-neutral-800 p-1.5 pt-2.5 transition-[border-color,transform] duration-150 hover:-translate-y-0.5 hover:border-neutral-400 active:translate-y-0 active:scale-95 motion-reduce:transform-none'
+
+/** Starts the species page's large artwork loading on hover or touch, so it's usually there when the page is. */
+const preloaded = new Set<string>()
+const preload = (url: string) => {
+  if (!preloaded.has(url)) {
+    preloaded.add(url)
+    new Image().src = url
+  }
 }
 
 interface Props {
@@ -119,16 +145,19 @@ export function SpeciesTile({ species, collection, lang, art = 'sprite', shiny, 
   const owned = ownedCount(collection, species.cards)
   const name = speciesName(species, lang)
   const complete = owned === species.cards.length
+  const to = `/pokedex/${species.dexNr}`
+  // while navigating to or from this species, its artwork morphs into (or out of) the species page's hero; not the
+  // current species' own tile, whose page already has the hero under that name
+  const morphing = useViewTransitionState(to) && !current
   return (
     <Link
-      to={`/pokedex/${species.dexNr}${shiny ? '?shiny' : ''}`}
+      to={`${to}${shiny ? '?shiny' : ''}`}
+      viewTransition
       state={fromDex ? { fromDex } : undefined}
       title={name}
-      className={cn(
-        'relative block overflow-hidden rounded-md border-1 border-neutral-700 border-solid bg-neutral-800 p-1.5 pt-2.5 transition-colors hover:border-neutral-400',
-        current && 'ring-2 ring-blue-300',
-        className,
-      )}
+      onPointerEnter={() => preload(spriteUrl(species.dexNr, shiny, true))}
+      onPointerDown={() => preload(spriteUrl(species.dexNr, shiny, true))}
+      className={cn(tileClass, current && 'ring-2 ring-blue-300', className)}
       style={tileGlow(species.types, owned > 0)}
     >
       <span className="absolute inset-x-0 top-0 h-1" style={{ background: typeStripe(species.types) }} />
@@ -136,7 +165,13 @@ export function SpeciesTile({ species, collection, lang, art = 'sprite', shiny, 
       {species.group && species.group !== 'starter' && <GroupIcon group={species.group} className="absolute top-2 left-2 drop-shadow" />}
       {shiny && owned > 0 && <span className="absolute top-2 right-2 text-pink-300 drop-shadow">✵</span>}
       {art === 'sprite' ? (
-        <Sprite artworkId={species.dexNr} caught={owned > 0} shiny={shiny} alt={name} />
+        <Sprite
+          artworkId={species.dexNr}
+          caught={owned > 0}
+          shiny={shiny}
+          alt={name}
+          style={morphing ? { viewTransitionName: dexArtName(species.dexNr) } : undefined}
+        />
       ) : (
         <img
           src={getLocalizedImagePath(coverCard(species.cards, collection), lang)}
@@ -195,12 +230,12 @@ export function FormTile({ form, collection, lang, art = 'sprite', showDex, from
     <Link
       // opens the species page on this form when it has artwork of its own
       to={`/pokedex/${form.species.dexNr}${form.artworkId === form.species.dexNr ? '' : `?form=${form.artworkId}`}`}
+      viewTransition
       state={fromDex ? { fromDex } : undefined}
       title={name}
-      className={cn(
-        'relative block overflow-hidden rounded-md border-1 border-neutral-700 border-solid bg-neutral-800 p-1.5 pt-2.5 transition-colors hover:border-neutral-400',
-        className,
-      )}
+      onPointerEnter={() => preload(spriteUrl(form.artworkId, false, true))}
+      onPointerDown={() => preload(spriteUrl(form.artworkId, false, true))}
+      className={cn(tileClass, className)}
       style={tileGlow(types, owned > 0)}
     >
       {/* the form's own types: Alolan Vulpix is Water, Vulpix Fire */}

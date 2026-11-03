@@ -1,5 +1,6 @@
 // Browser checks for the Pokédex flows: sticky bar, generation jump, phone breakdown, filters, the species page's
-// filtered ←/→ and back link (scroll restore, no extra history), and form sections. Logged out, against the dev server.
+// filtered ←/→ and back link (scroll restore, no extra history), form sections, the phone lines view staying on screen and
+// the tile-to-hero view transition. Logged out, against the dev server.
 // Run after Pokédex changes (sandbox disabled, dev server on PORT or 5173): node .claude/skills/screenshot/checks/pokedex.mjs
 // Prints ✓/✗ per check and exits 1 if any failed.
 import { launch, wait } from '../browser.mjs'
@@ -109,7 +110,8 @@ check('species page: filtered ←/→ and a back link that restores the scroll',
   const [n, total] = (await page.evaluate('__t.position()')).split('/').map(Number)
 
   await page.evaluate(`document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))`)
-  await page.waitFor(`location.hash !== '${href}'`)
+  // with a view transition the URL changes a frame before the new page renders, so wait on the page, not the URL
+  await page.waitFor(`location.hash !== '${href}' && __t.position() !== '${n}/${total}'`)
   const position = await page.evaluate('__t.position()')
   assert(position === `${n + 1}/${total}`, `after → the position is ${position}, expected ${n + 1}/${total}`)
 
@@ -134,6 +136,40 @@ check('species page: form sections fold and show form sizes', async () => {
   assert(mega.includes('110.5 kg'), `Mega Charizard X section reads "${mega}"`)
   await page.evaluate(`document.querySelector('main details > summary').click()`)
   assert((await page.evaluate(`document.querySelector('main details').open`)) === false, 'clicking a summary did not fold its section')
+})
+
+check('phone: the lines view stays within the screen, wide lines scroll in their card', async () => {
+  const page = await open('/pokedex?view=lines', { width: 390, height: 844 })
+  await page.waitFor('__t.tiles().length > 10')
+  const overflow = await page.evaluate('document.documentElement.scrollWidth - innerWidth')
+  assert(overflow <= 0, `the page is ${overflow}px wider than the screen`)
+})
+
+check('species page: a line tile morphs into the hero, with no transition name twice', async () => {
+  const page = await open('/pokedex/4', { width: 1280, height: 900 })
+  await page.waitFor(`__t.tiles().some((a) => a.getAttribute('href') === '#/pokedex/6')`)
+  // records the named artwork on both sides of the transition, and how it ended (a duplicate name aborts it)
+  await page.evaluate(`{
+    const start = document.startViewTransition.bind(document)
+    const names = () => [...document.querySelectorAll('img')].map((i) => i.style.viewTransitionName).filter(Boolean)
+    document.startViewTransition = (update) => {
+      const run = (window.__vt = {})
+      const t = start(async () => {
+        await (typeof update === 'function' ? update() : update.update())
+        run.after = names()
+      })
+      run.before = names()
+      t.finished.then(() => (run.done = true), (e) => (run.error = String(e)))
+      return t
+    }
+  }`)
+  await page.evaluate(`__t.tiles().find((a) => a.getAttribute('href') === '#/pokedex/6').click()`)
+  const run = JSON.parse(await page.waitFor(`(window.__vt?.done || window.__vt?.error) && JSON.stringify(window.__vt)`))
+  assert(!run.error, `the transition failed: ${run.error}`)
+  for (const side of ['before', 'after']) {
+    assert(new Set(run[side]).size === run[side].length, `a transition name is used twice ${side}: ${run[side]}`)
+    assert(run[side].includes('dex-art-6'), `Charizard's artwork isn't named ${side} the transition: ${run[side]}`)
+  }
 })
 
 browser = await launch()
