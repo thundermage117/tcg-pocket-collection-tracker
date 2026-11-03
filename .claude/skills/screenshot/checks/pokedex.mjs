@@ -118,6 +118,12 @@ check('species page: filtered ←/→ and a back link that restores the scroll',
   const historyLength = await page.evaluate('history.length')
   const back = await page.evaluate(`__t.backLink()?.getAttribute('href')`)
   assert(back === '#/pokedex?type=fire', `back link points to ${back}`)
+  // a real pointer would reach it: nothing (the hero's glow, say) lies on top of it, once the → transition's overlay is gone
+  await wait(500)
+  const covered = await page.evaluate(
+    `(() => { const a = __t.backLink(), r = a.getBoundingClientRect(), el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return a.contains(el) ? '' : el.outerHTML.slice(0, 80) })()`,
+  )
+  assert(!covered, `the back link is covered by ${covered}`)
   await page.evaluate('__t.backLink().click()')
   await page.waitFor(`location.hash === '#/pokedex?type=fire' && __t.tiles().length`)
   await wait(500)

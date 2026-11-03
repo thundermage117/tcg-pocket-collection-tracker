@@ -218,18 +218,19 @@ export default function SpeciesDetail() {
       <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-8">
         <div className="mx-auto flex w-56 shrink-0 flex-col gap-2 sm:mx-0 sm:w-72 lg:w-80">
           {/*
+            (its decoration ignores the pointer: the glow reaches up over the back link)
             no frame: the artwork floats on the shown form's type glow (Alolan Vulpix in Water) over its dex number, with a shadow
             on the floor beneath it; uncaught species stay a silhouette
           */}
           <div className="relative isolate">
-            <span aria-hidden className="absolute -inset-[15%] -z-20" style={{ backgroundImage: heroGlow(heroTypes) }} />
+            <span aria-hidden className="pointer-events-none absolute -inset-[15%] -z-20" style={{ backgroundImage: heroGlow(heroTypes) }} />
             <span
               aria-hidden
               className="pointer-events-none absolute inset-x-0 -top-4 -z-10 select-none text-center font-black text-[7.5rem] text-white/[0.06] leading-none tracking-tighter tabular-nums sm:-top-6 sm:text-[9.5rem] lg:text-[10.5rem]"
             >
               {String(species.dexNr).padStart(3, '0')}
             </span>
-            <span aria-hidden className="absolute inset-x-[20%] bottom-[3%] -z-10 h-[7%] rounded-[50%] bg-black/60 blur-lg" />
+            <span aria-hidden className="pointer-events-none absolute inset-x-[20%] bottom-[3%] -z-10 h-[7%] rounded-[50%] bg-black/60 blur-lg" />
             {shiny ? (
               <>
                 <Sprite
