@@ -181,16 +181,37 @@ export default function Pokedex() {
 
   return (
     <main className="mx-auto max-w-7xl px-4 pb-12">
-      <header className="mb-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="dex-display text-2xl font-semibold sm:text-3xl">{shiny ? 'Shiny Pokédex' : 'Pokédex'}</h1>
+      {/* the page's entrance: the title large beside a strip of artwork (shiny on the Shiny Pokédex) that fades out towards it;
+          on phones the strip runs along the top */}
+      <header className={cn('relative isolate mb-5 overflow-hidden rounded-2xl', surface)}>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 flex h-24 items-end justify-center [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)] sm:inset-y-0 sm:left-auto sm:h-auto sm:justify-end sm:[mask-image:linear-gradient(to_right,transparent,black_40%)]"
+        >
+          {headerArt.map((nr, i) => (
+            <img
+              key={nr}
+              src={spriteUrl(nr, shiny)}
+              alt=""
+              draggable={false}
+              className={cn(
+                '-mx-3 shrink-0 drop-shadow-[0_8px_10px_rgb(0_0_0/0.5)] sm:-mx-5',
+                i % 2 ? 'size-18 translate-y-2 sm:size-32 sm:translate-y-6' : 'size-22 translate-y-1 sm:size-36 sm:translate-y-3',
+              )}
+            />
+          ))}
+        </div>
+        <div className="flex flex-col items-start gap-3 p-4 pt-26 sm:min-h-44 sm:justify-end sm:p-6">
+          <div>
+            <h1 className="dex-display font-bold text-4xl leading-none tracking-tight sm:text-5xl">{shiny ? 'Shiny Pokédex' : 'Pokédex'}</h1>
+            <p className="mt-2 max-w-md text-neutral-300 text-sm">
+              {shiny
+                ? 'Every species with a shiny (✵ or ✵✵) card. It counts as owned with any of its shiny cards.'
+                : 'Every species in TCG Pocket. A species counts as owned with any card of it, in any form.'}
+            </p>
+          </div>
           <TabsFilter options={dexOptions} value={dex} onChange={(x) => update({ dex: x })} show={(x) => dexLabels[x]} />
         </div>
-        <p className="mt-1 text-sm text-neutral-400">
-          {shiny
-            ? 'Every species with a shiny (✵ or ✵✵) card. It counts as owned with any of its shiny cards.'
-            : 'Every species in TCG Pocket. A species counts as owned with any card of it, in any form.'}
-        </p>
       </header>
 
       <section className={cn('relative mb-6 overflow-hidden rounded-2xl p-4 sm:p-5', surface)}>
@@ -625,6 +646,8 @@ const cell =
   'group relative isolate flex w-full cursor-pointer flex-col gap-1 overflow-hidden rounded-lg border-1 border-white/[0.06] border-solid px-1.5 py-2 text-left shadow-[inset_0_1px_0_0_rgb(255_255_255/0.05)] transition-colors hover:border-white/20 sm:px-2.5'
 // version mascots: Mewtwo, Lugia, Rayquaza, Dialga, Reshiram, Xerneas, Solgaleo, Zacian, Koraidon
 const regionMascots = [150, 249, 384, 483, 643, 716, 791, 888, 1007]
+// the header's lineup, one or two per generation: Charizard, Gengar, Pikachu, Lucario, Greninja, Garchomp, Sylveon, Dragonite
+const headerArt = [6, 94, 25, 448, 658, 445, 700, 149]
 
 function Fraction({ value, max }: { value: number; max: number }) {
   return (
