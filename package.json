@@ -17,9 +17,9 @@
     "schema:dump": "pg_dump --host=db.vcwloujmsjuacqpwthee.supabase.co --username=postgres --dbname=postgres --port=5432 --schema-only --no-owner --no-privileges --schema=public --file=scripts/sql/schema.sql"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.14",
-    "lefthook": "^2.1.12",
-    "tsx": "^4.23.13"
+    "@biomejs/biome": "2.6.4",
+    "lefthook": "^2.2.2",
+    "tsx": "^4.23.15"
   },
   "type": "module",
   "packageManager": "pnpm@12.4.1+sha512.2e81e399d73fe8390dab25e06aa788ab7a5908248d2f5a370f82b481147a6a7a367bf8048f9a6fdb6460f21a66f0542dedb8b94ca2c8723596741920b1656d4c",
@@ -28,9 +28,9 @@
   },
   "dependencies": {
     "cheerio": "^1.1.2",
-    "fs-extra": "^11.4.0",
+    "fs-extra": "^11.4.1",
     "glob": "^13.0.0",
     "node-fetch": "^3.3.2",
-    "sharp": "0.35.4"
+    "sharp": "0.35.5"
   }
 }
