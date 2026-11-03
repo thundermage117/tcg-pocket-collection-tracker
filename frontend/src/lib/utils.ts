@@ -12,9 +12,9 @@ import {
   type TradeRow,
   tradableRarities,
 } from '@/types'
-import pokemonTranslationsUrl from '../../assets/pokemon_translations.json?url'
-import toolTranslationsUrl from '../../assets/tools_translations.json?url'
-import trainerTranslationsUrl from '../../assets/trainers_translations.json?url'
+import pokemonTranslationsUrl from '../../assets/pokemon_translations.json?url&no-inline'
+import toolTranslationsUrl from '../../assets/tools_translations.json?url&no-inline'
+import trainerTranslationsUrl from '../../assets/trainers_translations.json?url&no-inline'
 import { allCards, getCardByInternalId, tradableExpansions } from './CardsDB'
 import { fetchJsonAsset } from './fetchJsonAsset'
 
