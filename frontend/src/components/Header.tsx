@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { ChevronDown, Heart, LogOut, UserRoundPen } from 'lucide-react'
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import GitHubButton from 'react-github-btn'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router'
-import { Login } from '@/components/Login.tsx'
 import { isActivePath, navItems } from '@/components/navItems'
 import { Button } from '@/components/ui/button.tsx'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog.tsx'
@@ -22,7 +21,11 @@ import { useUnreadChangelogCount } from '@/lib/useChangelog'
 import { cn } from '@/lib/utils'
 import { useProfileDialog } from '@/services/account/useAccount'
 import { useLoginDialog, useLogout, userQuery } from '@/services/auth/useAuth'
+import { Spinner } from './Spinner'
 import { Badge } from './ui/badge'
+
+// Personal fork: lazy so zod, react-hook-form and input-otp stay out of the entry chunk
+const Login = lazy(() => import('@/components/Login.tsx').then((m) => ({ default: m.Login })))
 
 export function Header() {
   const location = useLocation()
@@ -129,7 +132,9 @@ export function Header() {
                 <DialogHeader>
                   <DialogTitle>{t('signUp')}</DialogTitle>
                 </DialogHeader>
-                <Login />
+                <Suspense fallback={<Spinner />}>
+                  <Login />
+                </Suspense>
               </DialogContent>
             </Dialog>
           )}

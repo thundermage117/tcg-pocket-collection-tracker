@@ -1,5 +1,6 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { createContext, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+import type { SelectCardRequest } from '@/context/SelectCardContext'
 import { searchPredicate } from '@/lib/filters'
 import type { Card } from '@/types'
 import { CardLine } from './CardLine'
@@ -7,20 +8,8 @@ import SearchInput from './filters/SearchInput'
 import { Button } from './ui/button'
 import { Dialog, DialogContent, DialogTitle } from './ui/dialog'
 
-export interface SelectCardRequest {
-  cards: Card[]
-  callback: (internal_id: number) => void | Promise<void>
-}
-
-export interface ISelectCardContext {
-  selectCard: (request: SelectCardRequest) => void
-}
-
-export const SelectCardContext = createContext<ISelectCardContext>({
-  selectCard: () => {
-    throw new Error("Can't open SelectCardDialog: not in SelectCardContext")
-  },
-})
+// Personal fork: the context lives in context/SelectCardContext.ts so App can lazy-load this dialog
+export { type ISelectCardContext, SelectCardContext, type SelectCardRequest } from '@/context/SelectCardContext'
 
 export interface Props {
   request: SelectCardRequest | undefined

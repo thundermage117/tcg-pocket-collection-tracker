@@ -9,10 +9,10 @@ import { useToast } from '@/hooks/use-toast.ts'
 import { useAuthSSO, userQuery } from '@/services/auth/useAuth'
 import ErrorAlert from './components/ErrorAlert.tsx'
 import { Header } from './components/Header.tsx'
-import { SelectCardContext, SelectCardDialog, type SelectCardRequest } from './components/SelectCard.tsx'
 import { Spinner } from './components/Spinner.tsx'
 import { Toaster } from './components/ui/toaster.tsx'
 import { DialogContext } from './context/DialogContext.ts'
+import { SelectCardContext, type SelectCardRequest } from './context/SelectCardContext.ts'
 import { accountQuery, useUpdateLastActive } from './services/account/useAccount.ts'
 
 // Lazy import for chunking
@@ -32,6 +32,7 @@ const SpeciesDetail = lazy(() => import('./pages/pokedex/SpeciesDetail.tsx'))
 const Scan = lazy(() => import('./pages/scan/Scan.tsx'))
 const EditProfile = lazy(() => import('./components/EditProfile.tsx'))
 const CardDetail = lazy(() => import('./pages/collection/CardDetail.tsx'))
+const SelectCardDialog = lazy(() => import('./components/SelectCard.tsx').then((m) => ({ default: m.SelectCardDialog })))
 const FriendIdQrCodeDialog = lazy(() => import('./components/FriendIdQrCode.tsx'))
 const Import = lazy(() => import('./pages/import/Import.tsx'))
 const Changelog = lazy(() => import('./pages/changelog/Changelog.tsx'))
@@ -115,7 +116,11 @@ function App() {
               <FriendIdQrCodeDialog friendId={friendIdQrCode} onOpenChange={(open) => open || setFriendIdQrCode(undefined)} />
             </Suspense>
           )}
-          <SelectCardDialog request={selectCardRequest} onClose={() => setSelectedCardRequest(undefined)} />
+          {selectCardRequest && (
+            <Suspense fallback={null}>
+              <SelectCardDialog request={selectCardRequest} onClose={() => setSelectedCardRequest(undefined)} />
+            </Suspense>
+          )}
           <Suspense fallback={null}>
             <EditProfile />
           </Suspense>
