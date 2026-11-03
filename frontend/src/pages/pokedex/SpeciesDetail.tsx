@@ -25,7 +25,7 @@ import { cn, getCardNameByLang } from '@/lib/utils'
 import { getPackChances, type PackChance } from '@/pages/overview/packChances'
 import { oneIn } from '@/pages/packs/types'
 import { useCollection, useSelectedCard } from '@/services/collection/useCollection'
-import type { ExpansionId } from '@/types'
+import type { CardType, ExpansionId } from '@/types'
 import { dexMatcher, parseDexFilters } from './dexFilters'
 import { EvolutionChain } from './EvolutionChain'
 import { dexLabel, GroupIcon, groupLabels, ProgressBar, Sprite, typeColors, typeGlow } from './SpeciesTile'
@@ -157,7 +157,13 @@ export default function SpeciesDetail() {
     .reduce<(PackChance & { expansionId: ExpansionId }) | undefined>((a, b) => (!a || b.pct > a.pct ? b : a), undefined)
 
   return (
-    <main className="mx-auto max-w-6xl px-4 pb-12" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+    <main className="relative isolate mx-auto max-w-6xl px-4 pb-12" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      {/* the shown form's types wash over the top of the page, faintly until caught; masked so it fades out before the page's sides */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[36rem] [mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)]"
+        style={{ backgroundImage: pageGlow(heroTypes, heroOwned > 0) }}
+      />
       <nav className="mb-4 flex items-center justify-between text-sm text-neutral-400">
         <Link
           to={`/pokedex${loadReturn()?.search ?? ''}`}
@@ -375,6 +381,13 @@ export default function SpeciesDetail() {
       })}
     </main>
   )
+}
+
+/** Wide soft ellipses from the top corners, the first type on the left and the second (or the same) on the right. */
+const pageGlow = (types: CardType[], caught: boolean) => {
+  const alpha = caught ? '38' : '1c'
+  const [left, right = left] = types.map((t) => typeColors[t])
+  return `radial-gradient(ellipse 65% 100% at 15% 0%, ${left}${alpha}, transparent), radial-gradient(ellipse 55% 85% at 90% 0%, ${right}${alpha}, transparent)`
 }
 
 function Stat({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {

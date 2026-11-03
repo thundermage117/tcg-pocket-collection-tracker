@@ -170,10 +170,10 @@ export default function Pokedex() {
   const genCaught = (g: Generation) => {
     if (view === 'forms') {
       const inGen = allForms.filter((form) => generationOf(form.species.dexNr) === g)
-      return `${inGen.filter((form) => ownedCount(collection, form.cards) > 0).length}/${inGen.length} forms caught`
+      return { owned: inGen.filter((form) => ownedCount(collection, form.cards) > 0).length, total: inGen.length, unit: 'forms caught' }
     }
     const inGen = list.filter((s) => generationOf(s.dexNr) === g)
-    return `${inGen.filter((s) => ownedOf(s) > 0).length}/${inGen.length} caught`
+    return { owned: inGen.filter((s) => ownedOf(s) > 0).length, total: inGen.length, unit: 'caught' }
   }
   const formsCaught = allForms.filter((form) => ownedCount(collection, form.cards) > 0).length
   const linesComplete = allLines.filter((line) => line.species.every((s) => ownedOf(s) > 0)).length
@@ -355,7 +355,7 @@ export default function Pokedex() {
               ref={genNavRef}
               aria-label="Jump to generation"
               // fades out at the right where it scrolls on; the padding lets the last chip clear the fade
-              className="-ml-4 flex min-w-0 grow gap-1.5 overflow-x-auto pr-8 pl-4 [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)]"
+              className="-ml-4 flex min-w-0 grow gap-1.5 overflow-x-auto pr-12 pl-4 [mask-image:linear-gradient(to_right,black_calc(100%-3rem),transparent)]"
             >
               {sections.map(({ g, tiles }) =>
                 g ? (
@@ -381,7 +381,13 @@ export default function Pokedex() {
               )}
             </nav>
           )}
-          <span className="ml-auto flex shrink-0 items-center gap-2 text-neutral-500 text-xs tabular-nums">
+          {/* a divider, so the count doesn't read as a chip cut off by the fade */}
+          <span
+            className={cn(
+              'ml-auto flex shrink-0 items-center gap-2 text-neutral-500 text-xs tabular-nums',
+              sections.length > 1 && sections[0].g && 'border-neutral-700 border-l pl-3',
+            )}
+          >
             {view === 'dex' ? `${filtered.length} species` : view === 'forms' ? `${forms.length} forms` : `${lines.length} lines`}
             {filtering && (
               <Link to={clearUrl} className="text-neutral-400 underline hover:text-white">
@@ -481,13 +487,9 @@ export default function Pokedex() {
       ) : view !== 'lines' ? (
         sections.map(({ g, tiles }) => (
           <Fragment key={g?.nr ?? 'all'}>
-            {g && (
-              <h2 data-gen={g.nr} className="mb-3 flex items-baseline justify-between gap-3 border-neutral-800 border-b pb-2">
-                <span className="font-semibold">{genLabel(g)}</span>
-                <span className="text-sm text-neutral-400 tabular-nums">{genCaught(g)}</span>
-              </h2>
-            )}
-            <ul className="mb-6 grid grid-cols-3 gap-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
+            {g && <GenBanner g={g} {...genCaught(g)} />}
+            {/* four across on phones, so a screen shows a dozen species rather than six */}
+            <ul className="mb-6 grid grid-cols-4 gap-2 sm:grid-cols-5 sm:gap-3 md:grid-cols-6 lg:grid-cols-8">
               {view === 'forms'
                 ? (tiles as typeof forms).map((x) => (
                     <li key={`${x.dexNr} ${x.form.name}`}>
@@ -527,6 +529,39 @@ export default function Pokedex() {
 }
 
 const genLabel = (g: Generation) => `Gen ${g.nr} · ${g.region}`
+
+/** A generation's section header: its region, mascot and progress, gold once every one is caught. */
+function GenBanner({ g, owned, total, unit }: { g: Generation; owned: number; total: number; unit: string }) {
+  const complete = owned === total
+  return (
+    <h2
+      data-gen={g.nr}
+      className={cn(
+        'relative isolate mb-3 flex items-center gap-3 overflow-hidden rounded-lg border-1 border-solid bg-neutral-800/60 py-2 pr-20 pl-3 sm:gap-5 sm:pr-28',
+        complete ? 'border-amber-300/60' : 'border-neutral-700/70',
+      )}
+    >
+      <img
+        src={spriteUrl(regionMascots[g.nr - 1])}
+        alt=""
+        loading="lazy"
+        draggable={false}
+        className="pointer-events-none absolute -right-2 -bottom-7 -z-10 size-24 opacity-30 sm:right-2 sm:size-28"
+      />
+      <span className="flex shrink-0 flex-col leading-tight">
+        <span className="font-normal text-[10px] text-neutral-500 uppercase tracking-wider">Gen {g.nr}</span>
+        <span className="font-semibold">{g.region}</span>
+      </span>
+      <ProgressBar value={owned} max={total} color={complete ? '#fcd34d' : undefined} className="h-1.5 grow" />
+      <span className="shrink-0 font-normal text-sm tabular-nums">
+        <span className={complete ? 'text-amber-300' : 'text-neutral-200'}>{owned}</span>
+        <span className="text-neutral-500">
+          /{total} {unit}
+        </span>
+      </span>
+    </h2>
+  )
+}
 
 function Chip({ children, onRemove }: { children: React.ReactNode; onRemove: () => void }) {
   return (

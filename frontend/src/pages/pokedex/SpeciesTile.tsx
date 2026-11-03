@@ -152,7 +152,7 @@ export function SpeciesTile({ species, collection, lang, art = 'sprite', shiny, 
           {owned}/{species.cards.length}
         </span>
       </div>
-      <p className={cn('truncate text-sm', owned === 0 && 'text-neutral-500')}>{name}</p>
+      <p className={cn('truncate text-xs sm:text-sm', owned === 0 && 'text-neutral-500')}>{name}</p>
     </Link>
   )
 }
