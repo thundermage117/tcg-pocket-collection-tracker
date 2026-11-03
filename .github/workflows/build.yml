@@ -1,14 +1,7 @@
 name: Build
-on:
-  push:
-    branches:
-      - personal
-  pull_request:
+on: pull_request
 permissions:
   contents: read
-concurrency:
-  group: build-${{ github.ref }}
-  cancel-in-progress: true
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -27,8 +20,7 @@ jobs:
       - name: Setup PNPM
         uses: pnpm/action-setup@v4
 
-      - name: Install, Lint and Build 🔧
+      - name: Install and Build 🔧
         run: |
-          pnpm install --frozen-lockfile
-          pnpm lint
+          pnpm install
           pnpm run build

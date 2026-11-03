@@ -49,3 +49,11 @@ guidance goes here or in FORK.md. Where the two disagree, this file wins.
   but the file is `scripts/scraper.ts`.
 - **Tooling:** pnpm isn't global on the dev machine (`npx pnpm@12.4.1`). The lefthook git hooks need a `pnpm` shim
   on PATH.
+  - The root `package.json` pin (`pnpm@12.4.1`) is the one that counts. `frontend/package.json`'s `pnpm@10.2.1` is
+    upstream's and ignored in a workspace sub-package; leave it, since upstream edits that file most weeks.
+- **CI and Dependabot:** the fork's CI is `.github/workflows/ci.yml` (lint + build on `personal`). Upstream's
+  `build.yml`, `deploy.yml` and `verify-*.yml` stay as upstream wrote them, disabled in the Actions tab. Fork
+  Dependabot is off via `open-pull-requests-limit: 0`: dependency bumps come from upstream through the sync. Don't
+  bump upstream's dependencies on `personal`; diverging versions conflict in `pnpm-lock.yaml`.
+- **lefthook's pre-push build** only runs when JS/JSON files changed, so for YAML/Markdown-only commits run
+  `pnpm build` yourself if anything it reads changed.

@@ -1,0 +1,45 @@
+name: CI
+
+# The fork's own CI. Upstream's build.yml and verify-*.yml stay disabled (FORK.md, setup step 6), so lint and
+# build on personal run here. A separate file so upstream edits to build.yml never conflict with it.
+on:
+  push:
+    branches:
+      - personal
+  pull_request:
+    branches:
+      - personal
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LEFTHOOK: 0
+
+jobs:
+  lint-and-build:
+    runs-on: ubuntu-latest
+    if: github.repository != 'marcelpanse/tcg-pocket-collection-tracker'
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build
+        run: pnpm build

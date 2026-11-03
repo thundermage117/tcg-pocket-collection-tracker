@@ -42,6 +42,8 @@ Removed from navigation, with the files left in place so upstream merges stay cl
    - Scheduled workflows only run from the default branch, so the fork's default branch is `personal`.
    - Forks start with Actions off: enable them once in the Actions tab, then test with `gh workflow run supabase-keepalive.yml`.
 6. **Upstream workflows**: disable `deploy.yml`, `build.yml`, `verify-*.yml` in the fork's Actions tab. They target upstream's domain and secrets.
+   - The fork's own `.github/workflows/ci.yml` lints and builds every push and PR to `personal` instead. It's a separate file so upstream's edits to `build.yml` never conflict.
+   - Dependabot is off (`open-pull-requests-limit: 0` in `.github/dependabot.yml`): upstream's Dependabot bumps arrive through the sync, and ours would conflict with them in `pnpm-lock.yaml`.
 7. **Value refresh**: `.github/workflows/value-refresh.yml` runs `pnpm value:refresh` on the 1st and 15th and commits `values.json` to `personal`. No secrets needed. Run it by hand with `gh workflow run value-refresh.yml`.
    - A failed run usually means a new set's PackId is missing from `scripts/value/packs.py`.
    - The packs, rankings and trade pages show the data's age and turn amber after 21 days, which means the refresh has stopped.
