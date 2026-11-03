@@ -45,6 +45,15 @@ export const spriteUrl = (artworkId: number, shiny = false, large = false) =>
 /** Artwork id for a form's card name (Alolan Vulpix, Mega Charizard X ex); the species' own when PokéAPI has none for the form. */
 export const formArtworkId = (species: Species, cardName: string) => (formSprites as Record<string, number>)[cardName.replace(/ ex$/, '')] ?? species.dexNr
 
+/**
+ * The species' own types, without its forms': Vulpix is Fire, though Alolan Vulpix makes the species Fire and Water. For colouring
+ * its tile and page; filters and counts go by `types`. A species with only form cards (a Galarian-only one) keeps `types`.
+ */
+export const plainTypes = (species: Species): CardType[] => {
+  const plain = species.cards.filter((c) => formArtworkId(species, c.name) === species.dexNr)
+  return plain.length > 0 ? typesOf(plain) : species.types
+}
+
 export const generationOf = (dexNr: number) => generations.find((g) => dexNr <= g.last) as Generation
 
 /**

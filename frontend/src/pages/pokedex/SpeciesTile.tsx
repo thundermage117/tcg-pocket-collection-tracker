@@ -3,7 +3,7 @@ import { Check, CircleDot, Crown, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useViewTransitionState } from 'react-router'
 import { getLocalizedImagePath } from '@/lib/imageLocales'
-import { coverCard, dexName, type FormNode, ownedCount, type Species, type SpeciesGroup, speciesName, spriteUrl, typesOf } from '@/lib/pokedex'
+import { coverCard, dexName, type FormNode, ownedCount, plainTypes, type Species, type SpeciesGroup, speciesName, spriteUrl, typesOf } from '@/lib/pokedex'
 import { cn, getCardNameByLang } from '@/lib/utils'
 import type { CardType, Collection } from '@/types'
 import './pokedex.css'
@@ -145,6 +145,8 @@ export function SpeciesTile({ species, collection, lang, art = 'sprite', shiny, 
   const owned = ownedCount(collection, species.cards)
   const name = speciesName(species, lang)
   const complete = owned === species.cards.length
+  // its own types, not its forms': Alolan Vulpix has a tile of its own (forms view, evolution lines) in Water
+  const types = plainTypes(species)
   const to = `/pokedex/${species.dexNr}`
   // while navigating to or from this species, its artwork morphs into (or out of) the species page's hero; not the
   // current species' own tile, whose page already has the hero under that name
@@ -158,9 +160,9 @@ export function SpeciesTile({ species, collection, lang, art = 'sprite', shiny, 
       onPointerEnter={() => preload(spriteUrl(species.dexNr, shiny, true))}
       onPointerDown={() => preload(spriteUrl(species.dexNr, shiny, true))}
       className={cn(tileClass, current && 'ring-2 ring-blue-300', className)}
-      style={tileGlow(species.types, owned > 0)}
+      style={tileGlow(types, owned > 0)}
     >
-      <span className="absolute inset-x-0 top-0 h-1" style={{ background: typeStripe(species.types) }} />
+      <span className="absolute inset-x-0 top-0 h-1" style={{ background: typeStripe(types) }} />
       {/* starters are a quarter of the early generations, so on tiles only legendary and mythical get a mark */}
       {species.group && species.group !== 'starter' && <GroupIcon group={species.group} className="absolute top-2 left-2 drop-shadow" />}
       {shiny && owned > 0 && <span className="absolute top-2 right-2 text-pink-300 drop-shadow">✵</span>}
