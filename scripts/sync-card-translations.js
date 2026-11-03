@@ -3,7 +3,7 @@ import path from 'node:path'
 
 const CARD_DATA_DIR = 'frontend/assets'
 const TRANSLATIONS_DIR = 'frontend/assets'
-const SUPPORTED_LANGUAGES = ['en-US', 'fr-FR', 'es-ES', 'pt-BR', 'it-IT', 'de-DE']
+const SUPPORTED_LANGUAGES = ['en-US'] // English only
 
 function loadJsonFile(filePath) {
   try {

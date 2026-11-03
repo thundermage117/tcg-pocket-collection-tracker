@@ -1,706 +1,266 @@
 {
   "erika": {
-    "en-US": "Erika",
-    "fr-FR": "Erika",
-    "es-ES": "Erika",
-    "pt-BR": "Érica",
-    "it-IT": "Erika",
-    "de-DE": "Erika"
+    "en-US": "Erika"
   },
   "misty": {
-    "en-US": "Misty",
-    "fr-FR": "Ondine",
-    "es-ES": "Misty",
-    "pt-BR": "Misty",
-    "it-IT": "Misty",
-    "de-DE": "Misty"
+    "en-US": "Misty"
   },
   "blaine": {
-    "en-US": "Blaine",
-    "fr-FR": "Auguste",
-    "es-ES": "Blaine",
-    "pt-BR": "Blaine",
-    "it-IT": "Blaine",
-    "de-DE": "Pyro"
+    "en-US": "Blaine"
   },
   "koga": {
-    "en-US": "Koga",
-    "fr-FR": "Koga",
-    "es-ES": "Koga",
-    "pt-BR": "Koga",
-    "it-IT": "Koga",
-    "de-DE": "Koga"
+    "en-US": "Koga"
   },
   "giovanni": {
-    "en-US": "Giovanni",
-    "fr-FR": "Giovanni",
-    "es-ES": "Giovanni",
-    "pt-BR": "Giovanni",
-    "it-IT": "Giovanni",
-    "de-DE": "Giovanni"
+    "en-US": "Giovanni"
   },
   "brock": {
-    "en-US": "Brock",
-    "fr-FR": "Pierre",
-    "es-ES": "Brock",
-    "pt-BR": "Brock",
-    "it-IT": "Brock",
-    "de-DE": "Rocko"
+    "en-US": "Brock"
   },
   "sabrina": {
-    "en-US": "Sabrina",
-    "fr-FR": "Morgane",
-    "es-ES": "Sabrina",
-    "pt-BR": "Sabrina",
-    "it-IT": "Sabrina",
-    "de-DE": "Sabrina"
+    "en-US": "Sabrina"
   },
   "lt. surge": {
-    "en-US": "Lt. Surge",
-    "fr-FR": "Major Bob",
-    "es-ES": "Teniente Surge",
-    "pt-BR": "Ten. Surge",
-    "it-IT": "Lt. Surge",
-    "de-DE": "Major Bob"
+    "en-US": "Lt. Surge"
   },
   "budding expeditioner": {
-    "en-US": "Budding Expeditioner",
-    "fr-FR": "Jeune Explorateur",
-    "es-ES": "Explorador Novel",
-    "pt-BR": "Expedicionário Principiante",
-    "it-IT": "Esploratore in Erba",
-    "de-DE": "Abenteurer-Neuling"
+    "en-US": "Budding Expeditioner"
   },
   "blue": {
-    "en-US": "Blue",
-    "fr-FR": "Blue",
-    "es-ES": "Azul",
-    "pt-BR": "Blue",
-    "it-IT": "Blu",
-    "de-DE": "Blau"
+    "en-US": "Blue"
   },
   "leaf": {
-    "en-US": "Leaf",
-    "fr-FR": "Leaf",
-    "es-ES": "Hoja",
-    "pt-BR": "Leaf",
-    "it-IT": "Leaf",
-    "de-DE": "Leaf"
+    "en-US": "Leaf"
   },
   "cyrus": {
-    "en-US": "Cyrus",
-    "fr-FR": "Hélio",
-    "es-ES": "Helio",
-    "pt-BR": "Cyrus",
-    "it-IT": "Cyrus",
-    "de-DE": "Zyrus"
+    "en-US": "Cyrus"
   },
   "team galactic grunt": {
-    "en-US": "Team Galactic Grunt",
-    "fr-FR": "Sbire de la Team Galaxie",
-    "es-ES": "Recluta del Equipo Galaxia",
-    "pt-BR": "Recruta da Equipe Galáctica",
-    "it-IT": "Recluta del Team Galassia",
-    "de-DE": "Rüpel von Team Galaktik"
+    "en-US": "Team Galactic Grunt"
   },
   "cynthia": {
-    "en-US": "Cynthia",
-    "fr-FR": "Cynthia",
-    "es-ES": "Cintia",
-    "pt-BR": "Cintia",
-    "it-IT": "Camilla",
-    "de-DE": "Cynthia"
+    "en-US": "Cynthia"
   },
   "volkner": {
-    "en-US": "Volkner",
-    "fr-FR": "Tanguy",
-    "es-ES": "Lectro",
-    "pt-BR": "Volkner",
-    "it-IT": "Corrado",
-    "de-DE": "Volkner"
+    "en-US": "Volkner"
   },
   "dawn": {
-    "en-US": "Dawn",
-    "fr-FR": "Aurore",
-    "es-ES": "Maya",
-    "pt-BR": "Dawn",
-    "it-IT": "Lucinda",
-    "de-DE": "Lucia"
+    "en-US": "Dawn"
   },
   "mars": {
-    "en-US": "Mars",
-    "fr-FR": "Mars",
-    "es-ES": "Venus",
-    "pt-BR": "Marte",
-    "it-IT": "Martes",
-    "de-DE": "Mars"
+    "en-US": "Mars"
   },
   "irida": {
-    "en-US": "Irida",
-    "fr-FR": "Nacchara",
-    "es-ES": "Nákara",
-    "pt-BR": "Irida",
-    "it-IT": "Perula",
-    "de-DE": "Perla"
+    "en-US": "Irida"
   },
   "celestic town elder": {
-    "en-US": "Celestic Town Elder",
-    "fr-FR": "Doyenne de Célestia",
-    "es-ES": "Anciana de Pueblo Caelestis",
-    "pt-BR": "Anciã da Cidade Celestic",
-    "it-IT": "Anziana di Memoride",
-    "de-DE": "Älteste von Elyses"
+    "en-US": "Celestic Town Elder"
   },
   "barry": {
-    "en-US": "Barry",
-    "fr-FR": "René",
-    "es-ES": "Israel",
-    "pt-BR": "Barry",
-    "it-IT": "Barry",
-    "de-DE": "Barry"
+    "en-US": "Barry"
   },
   "adaman": {
-    "en-US": "Adaman",
-    "fr-FR": "Adamantin",
-    "es-ES": "Adamas",
-    "pt-BR": "Ádamo",
-    "it-IT": "Damon",
-    "de-DE": "Diam"
+    "en-US": "Adaman"
   },
   "iono": {
-    "en-US": "Iono",
-    "fr-FR": "Mashynn",
-    "es-ES": "e-Nigma",
-    "pt-BR": "Kissera",
-    "it-IT": "Kissara",
-    "de-DE": "Enigmara"
+    "en-US": "Iono"
   },
   "pokémon center lady": {
-    "en-US": "Pokémon Center Lady",
-    "fr-FR": "Dame du Centre Pokémon",
-    "es-ES": "Chica del Centro Pokémon",
-    "pt-BR": "Dama do Centro Pokémon",
-    "it-IT": "Addetta del Centro Pokémon",
-    "de-DE": "Pokémon-Center-Dame"
+    "en-US": "Pokémon Center Lady"
   },
   "red": {
-    "en-US": "Red",
-    "fr-FR": "Red",
-    "es-ES": "Rojo",
-    "pt-BR": "Red",
-    "it-IT": "Rosso",
-    "de-DE": "Rot"
+    "en-US": "Red"
   },
   "team rocket grunt": {
-    "en-US": "Team Rocket Grunt",
-    "fr-FR": "Sbire de la Team Rocket",
-    "es-ES": "Recluta del Team Rocket",
-    "pt-BR": "Recruta da Equipe Rocket",
-    "it-IT": "Recluta del Team Rocket",
-    "de-DE": "Rüpel von Team Rocket"
+    "en-US": "Team Rocket Grunt"
   },
   "acerola": {
-    "en-US": "Acerola",
-    "fr-FR": "Margie",
-    "es-ES": "Zarala",
-    "pt-BR": "Acerola",
-    "it-IT": "Malpi",
-    "de-DE": "Lola"
+    "en-US": "Acerola"
   },
   "ilima": {
-    "en-US": "Ilima",
-    "fr-FR": "Althéo",
-    "es-ES": "Liam",
-    "pt-BR": "Luan",
-    "it-IT": "Liam",
-    "de-DE": "Elima"
+    "en-US": "Ilima"
   },
   "kiawe": {
-    "en-US": "Kiawe",
-    "fr-FR": "Kiawe",
-    "es-ES": "Kiawe",
-    "pt-BR": "Kiawe",
-    "it-IT": "Kawe",
-    "de-DE": "Kiawe"
+    "en-US": "Kiawe"
   },
   "guzma": {
-    "en-US": "Guzma",
-    "fr-FR": "Guzma",
-    "es-ES": "Guzmán",
-    "pt-BR": "Guzma",
-    "it-IT": "Guzman",
-    "de-DE": "Bromley"
+    "en-US": "Guzma"
   },
   "lana": {
-    "en-US": "Lana",
-    "fr-FR": "Néphie",
-    "es-ES": "Capitana Nereida",
-    "pt-BR": "Vitória",
-    "it-IT": "Suiren",
-    "de-DE": "Tracy"
+    "en-US": "Lana"
   },
   "sophocles": {
-    "en-US": "Sophocles",
-    "fr-FR": "Chrys",
-    "es-ES": "Chris",
-    "pt-BR": "Chris",
-    "it-IT": "Chrys",
-    "de-DE": "Chrys"
+    "en-US": "Sophocles"
   },
   "mallow": {
-    "en-US": "Mallow",
-    "fr-FR": "Barbara",
-    "es-ES": "Lulú",
-    "pt-BR": "Lulú",
-    "it-IT": "Ibis",
-    "de-DE": "Maho"
+    "en-US": "Mallow"
   },
   "lillie": {
-    "en-US": "Lillie",
-    "fr-FR": "Lilie",
-    "es-ES": "Lylia",
-    "pt-BR": "Lílian",
-    "it-IT": "Lylia",
-    "de-DE": "Lilly"
+    "en-US": "Lillie"
   },
   "gladion": {
-    "en-US": "Gladion",
-    "fr-FR": "Gladio",
-    "es-ES": "Gladio",
-    "pt-BR": "Gladio",
-    "it-IT": "Iridio",
-    "de-DE": "Gladio"
+    "en-US": "Gladion"
   },
   "looker": {
-    "en-US": "Looker",
-    "fr-FR": "Beladonis",
-    "es-ES": "Handsome",
-    "pt-BR": "Looker",
-    "it-IT": "Bellocchio",
-    "de-DE": "LeBelle"
+    "en-US": "Looker"
   },
   "lusamine": {
-    "en-US": "Lusamine",
-    "fr-FR": "Elsa-Mina",
-    "es-ES": "Samina",
-    "pt-BR": "Samina",
-    "it-IT": "Samina",
-    "de-DE": "Samantha"
+    "en-US": "Lusamine"
   },
   "hau": {
-    "en-US": "Hau",
-    "fr-FR": "Tili",
-    "es-ES": "Tilo",
-    "pt-BR": "Hibi",
-    "it-IT": "Hau",
-    "de-DE": "Tali"
+    "en-US": "Hau"
   },
   "penny": {
-    "en-US": "Penny",
-    "fr-FR": "Pania",
-    "es-ES": "Noa",
-    "pt-BR": "Penélope",
-    "it-IT": "Penny",
-    "de-DE": "Cosima"
+    "en-US": "Penny"
   },
   "will": {
-    "en-US": "Will",
-    "fr-FR": "Clément",
-    "es-ES": "Mento",
-    "pt-BR": "Will",
-    "it-IT": "Pino",
-    "de-DE": "Willi"
+    "en-US": "Will"
   },
   "lyra": {
-    "en-US": "Lyra",
-    "fr-FR": "Célesta",
-    "es-ES": "Lira",
-    "pt-BR": "Lyra",
-    "it-IT": "Cetra",
-    "de-DE": "Lyra"
+    "en-US": "Lyra"
   },
   "silver": {
-    "en-US": "Silver",
-    "fr-FR": "Silver",
-    "es-ES": "Plata",
-    "pt-BR": "Silver",
-    "it-IT": "Argento",
-    "de-DE": "Silber"
+    "en-US": "Silver"
   },
   "fisher": {
-    "en-US": "Fisher",
-    "fr-FR": "Pêcheur",
-    "es-ES": "Pescador",
-    "pt-BR": "Pescador",
-    "it-IT": "Pescatore",
-    "de-DE": "Angler"
+    "en-US": "Fisher"
   },
   "jasmine": {
-    "en-US": "Jasmine",
-    "fr-FR": "Jasmine",
-    "es-ES": "Yasmina",
-    "pt-BR": "Jasmine",
-    "it-IT": "Jasmine",
-    "de-DE": "Jasmin"
+    "en-US": "Jasmine"
   },
   "hiker": {
-    "en-US": "Hiker",
-    "fr-FR": "Montagnard",
-    "es-ES": "Montañero",
-    "pt-BR": "Montanhista",
-    "it-IT": "Montanaro",
-    "de-DE": "Wanderer"
+    "en-US": "Hiker"
   },
   "professor's research": {
-    "en-US": "Professor's Research",
-    "fr-FR": "Recherches Professorales",
-    "es-ES": "Investigación de Profesores",
-    "pt-BR": "Pesquisa de Professores",
-    "it-IT": "Ricerca Accademica",
-    "de-DE": "Forschung des Professors"
+    "en-US": "Professor's Research"
   },
   "whitney": {
-    "en-US": "Whitney",
-    "fr-FR": "Blanche",
-    "es-ES": "Blanca",
-    "pt-BR": "Whitney",
-    "it-IT": "Chiara",
-    "de-DE": "Bianka"
+    "en-US": "Whitney"
   },
   "traveling merchant": {
-    "en-US": "Traveling Merchant",
-    "fr-FR": "Marchande Ambulante",
-    "es-ES": "Mercader Ambulante",
-    "pt-BR": "Mercadora Viajante",
-    "it-IT": "Venditrice Itinerante",
-    "de-DE": "Reisende Händlerin"
+    "en-US": "Traveling Merchant"
   },
   "morty": {
-    "en-US": "Morty",
-    "fr-FR": "Mortimer",
-    "es-ES": "Morti",
-    "pt-BR": "Morty",
-    "it-IT": "Angelo",
-    "de-DE": "Jens"
+    "en-US": "Morty"
   },
   "marlon": {
-    "en-US": "Marlon",
-    "fr-FR": "Amana",
-    "es-ES": "Ciprián",
-    "pt-BR": "Marlon",
-    "it-IT": "Ciprian",
-    "de-DE": "Benson"
+    "en-US": "Marlon"
   },
   "hala": {
-    "en-US": "Hala",
-    "fr-FR": "Pectorius",
-    "es-ES": "Kaudan",
-    "pt-BR": "Pandam",
-    "it-IT": "Hala",
-    "de-DE": "Hala"
+    "en-US": "Hala"
   },
   "may": {
-    "en-US": "May",
-    "fr-FR": "Flora",
-    "es-ES": "Aura",
-    "pt-BR": "May",
-    "it-IT": "Vera",
-    "de-DE": "Maike"
+    "en-US": "May"
   },
   "fantina": {
-    "en-US": "Fantina",
-    "fr-FR": "Kiméra",
-    "es-ES": "Fantina",
-    "pt-BR": "Fantina",
-    "it-IT": "Fannie",
-    "de-DE": "Lamina"
+    "en-US": "Fantina"
   },
   "copycat": {
-    "en-US": "Copycat",
-    "fr-FR": "Copieuse",
-    "es-ES": "Copiona",
-    "pt-BR": "Imitadora",
-    "it-IT": "Copiona",
-    "de-DE": "Nachahmerin"
+    "en-US": "Copycat"
   },
   "lisia": {
-    "en-US": "Lisia",
-    "fr-FR": "Atalante",
-    "es-ES": "Ariana",
-    "pt-BR": "Elisia",
-    "it-IT": "Orthilla",
-    "de-DE": "Xenia"
+    "en-US": "Lisia"
   },
   "clemont": {
-    "en-US": "Clemont",
-    "fr-FR": "Lem",
-    "es-ES": "Lem",
-    "pt-BR": "Clemont",
-    "it-IT": null,
-    "de-DE": "Citro"
+    "en-US": "Clemont"
   },
   "serena": {
-    "en-US": "Serena",
-    "fr-FR": "Serena",
-    "es-ES": "Serena",
-    "pt-BR": "Serena",
-    "it-IT": null,
-    "de-DE": "Serena"
+    "en-US": "Serena"
   },
   "diantha": {
-    "en-US": "Diantha",
-    "fr-FR": "Dianthéa",
-    "es-ES": "Dianta",
-    "pt-BR": "Diantha",
-    "it-IT": null,
-    "de-DE": "Diantha"
+    "en-US": "Diantha"
   },
   "sightseer": {
-    "en-US": "Sightseer",
-    "fr-FR": "Vacancière",
-    "es-ES": "Veraneante",
-    "pt-BR": "Excursionista",
-    "it-IT": null,
-    "de-DE": "Urlauberin"
+    "en-US": "Sightseer"
   },
   "juggler": {
-    "en-US": "Juggler",
-    "fr-FR": "Jongleur",
-    "es-ES": "Malabarista",
-    "pt-BR": "Malabarista",
-    "it-IT": null,
-    "de-DE": "Jongleur"
+    "en-US": "Juggler"
   },
   "piers": {
-    "en-US": "Piers",
-    "fr-FR": "Peterson",
-    "es-ES": "Nerio",
-    "pt-BR": "Pietro",
-    "it-IT": null,
-    "de-DE": "Nezz"
+    "en-US": "Piers"
   },
   "team star grunt": {
-    "en-US": "Team Star Grunt",
-    "fr-FR": "Sbire de la Team Star",
-    "es-ES": "Recluta del Team Star",
-    "pt-BR": "Recruta da Equipe Star",
-    "it-IT": null,
-    "de-DE": "Rüpel von Team Star"
+    "en-US": "Team Star Grunt"
   },
   "nemona": {
-    "en-US": "Nemona",
-    "fr-FR": "Menzi",
-    "es-ES": "Mencía",
-    "pt-BR": "Noêmia",
-    "it-IT": null,
-    "de-DE": "Nemila"
+    "en-US": "Nemona"
   },
   "arven": {
-    "en-US": "Arven",
-    "fr-FR": "Pepper",
-    "es-ES": "Damián",
-    "pt-BR": "Arven",
-    "it-IT": null,
-    "de-DE": "Pepper"
+    "en-US": "Arven"
   },
   "iris": {
-    "en-US": "Iris",
-    "fr-FR": "Iris",
-    "es-ES": "Iris",
-    "pt-BR": "Iris",
-    "it-IT": null,
-    "de-DE": "Iris"
+    "en-US": "Iris"
   },
   "calem": {
-    "en-US": "Calem",
-    "fr-FR": "Kalem",
-    "es-ES": "Kalm",
-    "pt-BR": "Calem",
-    "it-IT": null,
-    "de-DE": "Calem"
+    "en-US": "Calem"
   },
   "korrina": {
-    "en-US": "Korrina",
-    "fr-FR": "Cornélia",
-    "es-ES": "Corelia",
-    "pt-BR": "Korrina",
-    "it-IT": null,
-    "de-DE": "Connie"
+    "en-US": "Korrina"
   },
   "cabbie": {
-    "en-US": "Cabbie",
-    "fr-FR": "Chauffeur de Taxi",
-    "es-ES": "Aerotaxista",
-    "pt-BR": "Taxista",
-    "it-IT": null,
-    "de-DE": "Taxipilot"
+    "en-US": "Cabbie"
   },
   "cheren": {
-    "en-US": "Cheren",
-    "fr-FR": "Tcheren",
-    "es-ES": "Cheren",
-    "pt-BR": "Cheren",
-    "it-IT": null,
-    "de-DE": "Cheren"
+    "en-US": "Cheren"
   },
   "parasol lady": {
-    "en-US": "Parasol Lady",
-    "fr-FR": "Fille au Parapluie",
-    "es-ES": "Dama Parasol",
-    "pt-BR": "Dama de Sombrinha",
-    "it-IT": null,
-    "de-DE": "Schirmdame"
+    "en-US": "Parasol Lady"
   },
   "juliana": {
-    "en-US": "Juliana",
-    "fr-FR": "Juliana",
-    "es-ES": "Juliana",
-    "pt-BR": "Juliana",
-    "it-IT": null,
-    "de-DE": "Juliana"
+    "en-US": "Juliana"
   },
   "professor sada": {
-    "en-US": "Professor Sada",
-    "fr-FR": "Professeure Olim",
-    "es-ES": "Profesora Albora",
-    "pt-BR": "Professora Arka",
-    "it-IT": null,
-    "de-DE": "Professor Antiqua"
+    "en-US": "Professor Sada"
   },
   "professor turo": {
-    "en-US": "Professor Turo",
-    "fr-FR": "Professeur Turum",
-    "es-ES": "Profesor Turo",
-    "pt-BR": "Professor Turo",
-    "it-IT": null,
-    "de-DE": "Professor Futurus"
+    "en-US": "Professor Turo"
   },
   "elesa": {
-    "en-US": "Elesa",
-    "fr-FR": "Inezia",
-    "es-ES": "Camila",
-    "pt-BR": null,
-    "it-IT": "Elesa",
-    "de-DE": "Elesa"
+    "en-US": "Elesa"
   },
   "wallace": {
-    "en-US": "Wallace",
-    "fr-FR": "Marc",
-    "es-ES": "Plubio",
-    "pt-BR": "Wallace",
-    "it-IT": "Wallace",
-    "de-DE": "Wassili"
+    "en-US": "Wallace"
   },
   "drayden": {
-    "en-US": "Drayden",
-    "fr-FR": "Watson",
-    "es-ES": "Lirio",
-    "pt-BR": "Drayden",
-    "it-IT": "Aristide",
-    "de-DE": "Lysander"
+    "en-US": "Drayden"
   },
   "skyla": {
-    "en-US": "Skyla",
-    "fr-FR": "Carolina",
-    "es-ES": "Gerania",
-    "pt-BR": "Skyla",
-    "it-IT": "Anemone",
-    "de-DE": "Géraldine"
+    "en-US": "Skyla"
   },
   "wally": {
-    "en-US": "Wally",
-    "fr-FR": "Timmy",
-    "es-ES": "Blasco",
-    "pt-BR": "Wally",
-    "it-IT": "Lino",
-    "de-DE": "Heiko"
+    "en-US": "Wally"
   },
   "psychic": {
-    "en-US": "Psychic",
-    "fr-FR": "Kinésiste",
-    "es-ES": "Médium",
-    "pt-BR": "Psíquico",
-    "it-IT": "Sensitivo",
-    "de-DE": "Seher"
+    "en-US": "Psychic"
   },
   "puppy-loving girl": {
-    "en-US": "Puppy-Loving Girl",
-    "fr-FR": "Fan de Chiots",
-    "es-ES": "Fan de los Perritos",
-    "pt-BR": "Fã de Filhotes",
-    "it-IT": "Amante dei Cuccioli",
-    "de-DE": "Welpenliebhaberin"
+    "en-US": "Puppy-Loving Girl"
   },
   "team rocket's boss": {
-    "en-US": "Team Rocket's Boss",
-    "fr-FR": "Boss de la Team Rocket",
-    "es-ES": "Jefe del Team Rocket",
-    "pt-BR": "Chefe da Equipe Rocket",
-    "it-IT": "Capo Team Rocket",
-    "de-DE": "Boss von Team Rocket"
+    "en-US": "Team Rocket's Boss"
   },
   "team rocket's master plan": {
-    "en-US": "Team Rocket's Master Plan",
-    "fr-FR": "Plan Machiavélique de la Team Rocket",
-    "es-ES": "Plan Maestro del Team Rocket",
-    "pt-BR": "Plano Mestre da Equipe Rocket",
-    "it-IT": "Grande Piano del Team Rocket",
-    "de-DE": "Team Rockets Großer Plan"
+    "en-US": "Team Rocket's Master Plan"
   },
   "team rocket's researcher": {
-    "en-US": "Team Rocket's Researcher",
-    "fr-FR": "Chercheuse de la Team Rocket",
-    "es-ES": "Investigación del Team Rocket",
-    "pt-BR": "Pesquisador da Equipe Rocket",
-    "it-IT": "Ricercatrice del Team Rocket",
-    "de-DE": "Forscherin von Team Rocket"
+    "en-US": "Team Rocket's Researcher"
   },
   "lorelei": {
-    "en-US": "Lorelei",
-    "fr-FR": "Olga",
-    "es-ES": "Lorelei",
-    "pt-BR": "Lorelei",
-    "it-IT": "Lorelei",
-    "de-DE": "Lorelei"
+    "en-US": "Lorelei"
   },
   "blue's provocation": {
-    "en-US": "Blue's Provocation",
-    "fr-FR": "Provocation de Blue",
-    "es-ES": "Provocación de Azul",
-    "pt-BR": "Provocação do Blue",
-    "it-IT": "Provocazione di Blu",
-    "de-DE": "Blaus Provokation"
+    "en-US": "Blue's Provocation"
   },
   "serena's choice": {
-    "en-US": "Serena's Choice",
-    "fr-FR": "Choix de Serena",
-    "es-ES": "Elección de Serena",
-    "pt-BR": "Escolha da Serena",
-    "it-IT": "Scelta di Serena",
-    "de-DE": "Serenas Wahl"
+    "en-US": "Serena's Choice"
   },
   "rika": {
-    "en-US": "Rika",
-    "fr-FR": "Cayenn",
-    "es-ES": "Cayena",
-    "pt-BR": "Kaya",
-    "it-IT": "Capsi",
-    "de-DE": "Cay"
+    "en-US": "Rika"
   },
   "poké mart guy": {
-    "en-US": "Poké Mart Guy",
-    "fr-FR": "Jeune Homme de la Boutique Pokémon",
-    "es-ES": "Chico de la Tienda Pokémon",
-    "pt-BR": "Funcionário do Poké Mart",
-    "it-IT": "Commesso del Pokémon-Market",
-    "de-DE": "Pokémon-Supermarkt-Händler"
+    "en-US": "Poké Mart Guy"
   },
   "rising star": {
-    "en-US": "Rising Star",
-    "fr-FR": "Dresseur et Dresseuse en Herbe",
-    "es-ES": "Entrenadores Promesa",
-    "pt-BR": "Estrela em Ascensão",
-    "it-IT": "Giovane speranza",
-    "de-DE": "Trainerhoffnung"
+    "en-US": "Rising Star"
   }
 }
