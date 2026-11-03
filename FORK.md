@@ -17,7 +17,7 @@ Work happens on the `personal` branch, which Vercel deploys. `main` mirrors upst
 
 Removed from navigation, with the files left in place so upstream merges stay clean: friends, chat, trade offers/matching, community/blog links, analytics, donation widget.
 
-**English only.** Unlike the removals above, the other five languages' files are deleted: UI locales, card images, set logos, scan hashes and Pokédex entries, about 755 MB. The name-translation JSONs keep only `en-US`, and the language picker is gone. Upstream keeps adding and editing those paths with new sets, so until `upstream-sync.yml` re-deletes them after merging, expect sync conflicts there. Resolve them by deleting the non-English files again.
+**English only.** Unlike the removals above, the other five languages' files are deleted: UI locales, card images, set logos, scan hashes and Pokédex entries, about 755 MB. The name-translation JSONs keep only `en-US`, and the language picker is gone. Upstream keeps adding and editing those paths with new sets. `scripts/merge-upstream.sh`, which the sync uses, resolves those conflicts by deleting the files again (`scripts/strip-locales.sh`) and takes upstream's new names into the trimmed JSONs. Any other conflict still stops the sync.
 
 ## Setup (once)
 
@@ -53,7 +53,7 @@ Removed from navigation, with the files left in place so upstream merges stay cl
 
 It fails without pushing anything, and GitHub emails you, when:
 
-- **The merge conflicts.** Merge by hand (below).
+- **The merge conflicts** anywhere except the non-English files, which `scripts/merge-upstream.sh` deletes again. Merge by hand (below).
 - **Upstream changes the database** (`scripts/sql/schema.sql` or a new `scripts/sql/migrations/*.sql`). Run whatever our tables need in our Supabase SQL editor (`personal-schema.sql` lists what we have), then `gh workflow run upstream-sync.yml -f force=true`.
 - **Lint or build fails** on the merged code.
 
@@ -63,7 +63,7 @@ By hand:
 
 ```sh
 git fetch upstream && git switch main && git merge --ff-only upstream/main
-git switch personal && git merge main      # new cards, images, scan hashes, model
+git switch personal && bash scripts/merge-upstream.sh main   # new cards, images, scan hashes, model; drops non-English files
 # run any new scripts/sql/migrations/*.sql in our Supabase SQL editor
 pnpm value:refresh                          # stops and names the new PackId if packs.py needs a line
 git commit -am "Refresh value data for <set>" && git push && git push origin main

@@ -41,8 +41,10 @@ guidance goes here or in FORK.md. Where the two disagree, this file wins.
 - **English only (2026-11-03).** The non-English UI locales, card images, set logos, scan hashes and Pokédex
   entries are deleted, and the name-translation JSONs keep only `en-US`. `i18n.ts` pins `lng: 'en-US'`, and
   `getLocalizedImagePath` always returns `/images/en-US/...`.
-  **Known gap:** upstream still adds and edits those paths with most new sets, so the sync will conflict on them
-  until `upstream-sync.yml` learns to re-delete them after merging.
+  Upstream still adds and edits those paths with most new sets. `scripts/merge-upstream.sh` (used by
+  `upstream-sync.yml`) re-deletes them via `scripts/strip-locales.sh`, resolving conflicts only on those paths.
+  Merge upstream by hand with that script, never a bare `git merge`. If you change what the fork deletes or trims,
+  update both scripts: `strippable` in `merge-upstream.sh` must match the paths in `strip-locales.sh`.
 - **Stale upstream docs/scripts:** `pnpm sync-locales` no longer exists. `pnpm scraper` calls `scripts/scraper.js`,
   but the file is `scripts/scraper.ts`.
 - **Tooling:** pnpm isn't global on the dev machine (`npx pnpm@12.4.1`). The lefthook git hooks need a `pnpm` shim

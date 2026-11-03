@@ -3,7 +3,8 @@ name: Sync upstream
 # Merges marcelpanse/tcg-pocket-collection-tracker into personal (and mirrors it to main) when it merges
 # cleanly: every Monday, or any day upstream is 10+ commits ahead. Vercel deploys the push.
 # It stops without pushing, and the run fails so GitHub emails you, when:
-#   - the merge conflicts: merge by hand (FORK.md, "Staying up to date")
+#   - the merge conflicts outside the English-only paths scripts/merge-upstream.sh resolves: merge by hand
+#     (FORK.md, "Staying up to date")
 #   - upstream changes the database (scripts/sql/schema.sql or a new migration): run the SQL in our
 #     Supabase project, then re-run with "force" ticked
 #   - lint or build fails on the merged code
@@ -69,9 +70,9 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          if ! git merge --no-edit upstream/main; then
-            echo "::error::Merge conflicts in: $(git diff --name-only --diff-filter=U | tr '\n' ' '). Merge by hand."
-            git merge --abort
+          # Re-deletes the non-English files we drop (resolving conflicts on them); aborts on any other conflict
+          if ! bash scripts/merge-upstream.sh upstream/main; then
+            echo "::error::Merge conflicts outside the English-only paths (see log). Merge by hand."
             exit 1
           fi
 
