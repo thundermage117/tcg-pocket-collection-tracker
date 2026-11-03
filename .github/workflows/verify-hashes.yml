@@ -4,7 +4,7 @@ permissions:
 on:
   push:
     branches:
-      - main
+      - personal
     paths:
       - 'frontend/public/images/**'
       - 'frontend/public/hashes/**'
