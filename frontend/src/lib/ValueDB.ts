@@ -62,11 +62,8 @@ export const DEMAND_K = 200
 
 let meanRatio: number | undefined
 
-/** demandRatio shrunk toward the average by DEMAND_K; every page ranks and compares demand by this. 0 without wishlists. */
-export function demandScore(value: CardValue | undefined): number {
-  if (value?.wish === undefined || value.offers === undefined || demandRatio(value) === 0) {
-    return demandRatio(value)
-  }
+/** Average wishlists per offer over every eleet card (reprints counted once): where demandScore shrinks toward. */
+export function averageDemandRatio(): number {
   if (meanRatio === undefined) {
     const eleet = Object.values(values.cards).filter((v) => v.wish !== undefined && v.offers !== undefined && !v.same_as)
     meanRatio =
@@ -76,7 +73,15 @@ export function demandScore(value: CardValue | undefined): number {
         1,
       )
   }
-  return (value.wish + DEMAND_K * meanRatio) / (value.offers + DEMAND_K)
+  return meanRatio
+}
+
+/** demandRatio shrunk toward the average by DEMAND_K; every page ranks and compares demand by this. 0 without wishlists. */
+export function demandScore(value: CardValue | undefined): number {
+  if (value?.wish === undefined || value.offers === undefined || demandRatio(value) === 0) {
+    return demandRatio(value)
+  }
+  return (value.wish + DEMAND_K * averageDemandRatio()) / (value.offers + DEMAND_K)
 }
 
 /** Single sort key for "most valuable first": ☆☆ adjusted Elo when available, else adjusted demand. */

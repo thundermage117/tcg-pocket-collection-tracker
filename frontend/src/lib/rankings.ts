@@ -116,6 +116,29 @@ export function getMostWanted(includeFoils = false): RankedCard[] {
   return rank(entries, byShare)
 }
 
+export interface DemandPoint {
+  card: Card
+  value: CardValue
+  wish: number
+  offers: number
+  score: number // demandScore
+}
+
+/**
+ * Every card with eleet wishlist and trade-list counts, for the demand map: unwanted cards included, unlike Most wanted,
+ * but not cards nobody lists at all (0 / 0, mostly unreleased or untradable ones), which would only stack on the origin. Reprints plot once, as their original; foils only with `includeFoils`, like getMostWanted.
+ */
+export function getDemandMap(includeFoils = false): DemandPoint[] {
+  const points: DemandPoint[] = []
+  for (const card of allCards) {
+    const value = getCardValue(card.card_id)
+    if (value?.wish !== undefined && value.offers !== undefined && value.wish + value.offers > 0 && !value.same_as && (includeFoils || !card.foil)) {
+      points.push({ card, value, wish: value.wish, offers: value.offers, score: demandScore(value) })
+    }
+  }
+  return points
+}
+
 let twoStarPositions: Map<string, number> | undefined
 
 /** Position in the ☆☆ Elo ranking (1 = best). Ordered by adj, unlike the source's raw `rank`, so every page agrees. */
