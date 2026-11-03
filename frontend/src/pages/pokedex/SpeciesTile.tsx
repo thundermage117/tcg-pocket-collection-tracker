@@ -1,6 +1,6 @@
 // Personal fork: species tile and progress bar shared by the Pokédex grid, its lines view and the species page.
 import { Check, CircleDot, Crown, Sparkles } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useViewTransitionState } from 'react-router'
 import { getLocalizedImagePath } from '@/lib/imageLocales'
 import { coverCard, dexName, type FormNode, ownedCount, plainTypes, type Species, type SpeciesGroup, speciesName, spriteUrl, typesOf } from '@/lib/pokedex'
@@ -12,6 +12,21 @@ export type TileArt = 'sprite' | 'card'
 
 /** The view-transition name a species' artwork goes by, on its tile and as the species page's hero. */
 export const dexArtName = (dexNr: number) => `dex-art-${dexNr}`
+
+/**
+ * Turns off the browser's scroll restore while the Pokédex or a species page is open; both restore their own. Left on, going
+ * back would scroll the species page to the list's position before the view transition snapshots it, so the hero would morph
+ * back into its tile from off-screen. The mode belongs to the history entry, so both pages set it, and leaving puts it back.
+ */
+export function useOwnScrollRestore() {
+  useEffect(() => {
+    const before = history.scrollRestoration
+    history.scrollRestoration = 'manual'
+    return () => {
+      history.scrollRestoration = before
+    }
+  }, [])
+}
 
 export const dexLabel = (dexNr: number) => `#${String(dexNr).padStart(4, '0')}`
 

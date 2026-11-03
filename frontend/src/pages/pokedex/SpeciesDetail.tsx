@@ -28,7 +28,7 @@ import { useCollection, useSelectedCard } from '@/services/collection/useCollect
 import { type CardType, type ExpansionId, rarities } from '@/types'
 import { dexMatcher, parseDexFilters } from './dexFilters'
 import { chainScroller, EvolutionChain } from './EvolutionChain'
-import { dexArtName, dexLabel, GroupIcon, groupLabels, ProgressBar, Sprite, surface, typeColors } from './SpeciesTile'
+import { dexArtName, dexLabel, GroupIcon, groupLabels, ProgressBar, Sprite, surface, typeColors, useOwnScrollRestore } from './SpeciesTile'
 
 export default function SpeciesDetail() {
   const { t, i18n } = useTranslation(['common/sets', 'common/packs'])
@@ -51,6 +51,7 @@ export default function SpeciesDetail() {
   useLayoutEffect(() => {
     window.scrollTo(0, 0)
   }, [nr])
+  useOwnScrollRestore()
   const stepTo = (to: { dexNr: number }) => navigate(`/pokedex/${to.dexNr}`, { replace: true, state: location.state, viewTransition: true })
 
   // ← / → on desktop; ignored while typing or with a dialog (card detail) open
@@ -183,6 +184,8 @@ export default function SpeciesDetail() {
         <Link
           to={`/pokedex${loadReturn()?.search ?? ''}`}
           state={{ returning: true }}
+          // the hero morphs back into its tile, as it does going back (React Router replays a transition in reverse on back)
+          viewTransition
           onClick={(e) => {
             // came from the Pokédex (←/→ replace entries, so it's one back): go back rather than stack another entry
             if (location.state?.fromDex) {

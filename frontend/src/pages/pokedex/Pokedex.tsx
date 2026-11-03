@@ -48,7 +48,7 @@ import {
   viewOptions,
 } from './dexFilters'
 import { chainScroller, EvolutionChain } from './EvolutionChain'
-import { FormTile, GroupIcon, groupLabels, ProgressBar, SpeciesTile, surface, type TileArt, typeColors } from './SpeciesTile'
+import { FormTile, GroupIcon, groupLabels, ProgressBar, SpeciesTile, surface, type TileArt, typeColors, useOwnScrollRestore } from './SpeciesTile'
 
 export default function Pokedex() {
   const { t, i18n } = useTranslation(['common/sets', 'search-input'])
@@ -88,6 +88,7 @@ export default function Pokedex() {
       window.scrollTo(0, saved.y)
     }
   }, [isLoading, returning, location.search])
+  useOwnScrollRestore()
 
   // the generation chip for the section under the sticky bar lights up, and jumping lands a section just below it
   const barRef = useRef<HTMLDivElement>(null)
