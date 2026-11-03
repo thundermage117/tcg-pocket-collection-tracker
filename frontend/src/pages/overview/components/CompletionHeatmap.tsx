@@ -116,6 +116,9 @@ const rarityFamily = (r: Rarity) => ['◊', '☆', '✵'].find((f) => r.startsWi
 
 const rarityLabel = (r: Rarity | 'all') => (r === 'all' ? 'all rarities' : r)
 
+// The treemap view is built but hidden: flip this to bring back its Map toggle
+const mapEnabled = false
+
 export function CompletionHeatmap({ availableCards, collectedCards, chances, cellMode, setCellMode, sortByValue }: Props) {
   const { t } = useTranslation(['common/sets', 'common/packs'])
   const navigate = useNavigate()
@@ -402,7 +405,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
             <ToggleGroupItem value="left" className="h-7 px-2 text-xs">
               Cards left
             </ToggleGroupItem>
-            {!isMobile && (
+            {mapEnabled && !isMobile && (
               <ToggleGroupItem value="map" className="h-7 px-2 text-xs" aria-label="Map: tile size is the number of cards">
                 Map
               </ToggleGroupItem>
