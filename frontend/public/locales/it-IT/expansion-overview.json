@@ -1,6 +1,0 @@
-{
-  "probabilityNewCard": "Probabilità di ottenere nuove carte",
-  "totalCards": "Carte totali",
-  "percentage": "percentage",
-  "youHave": "Hai {{nCardsOwned}} carte su {{nTotalCards}}"
-}

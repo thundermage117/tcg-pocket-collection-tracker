@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { ChevronDown, Globe, Heart, LogOut, UserRoundPen } from 'lucide-react'
+import { ChevronDown, Heart, LogOut, UserRoundPen } from 'lucide-react'
 import { useState } from 'react'
 import GitHubButton from 'react-github-btn'
 import { useTranslation } from 'react-i18next'
@@ -27,7 +27,7 @@ import { Badge } from './ui/badge'
 export function Header() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { t, i18n } = useTranslation('header')
+  const { t } = useTranslation('header')
   const { data: user } = useQuery(userQuery)
   const unreadChangelog = useUnreadChangelogCount()
   const logoutMutation = useLogout()
@@ -36,17 +36,6 @@ export function Header() {
   const { setIsProfileDialogOpen } = useProfileDialog()
 
   const [isAboutUsDialogOpen, setIsAboutUsDialogOpen] = useState<boolean>(false)
-
-  const changeLanguage = (lng: string) => i18n.changeLanguage(lng)
-
-  const languages = [
-    { code: 'de-DE', name: 'Deutsch' },
-    { code: 'en-US', name: 'English' },
-    { code: 'es-ES', name: 'Español' },
-    { code: 'fr-FR', name: 'Français' },
-    { code: 'it-IT', name: 'Italiano' },
-    { code: 'pt-BR', name: 'Português' },
-  ] // alphabetical language order in their native form for UX accessibility
 
   const secondaryActive = navItems.some((item) => item.secondary && isActivePath(location.pathname, item.href))
 
@@ -97,24 +86,6 @@ export function Header() {
         </div>
         <div className="grow" />
         <div className="flex shrink-0 items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="px-2 sm:px-4" variant="ghost" size="icon">
-                <Globe />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-              <DropdownMenuLabel>{t('selectLanguage')}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-
-              {languages.map((lang) => (
-                <DropdownMenuItem key={lang.code} selected={i18n.language === lang.code} onClick={() => changeLanguage(lang.code)}>
-                  {lang.name}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
           {user ? (
             <div className="hidden sm:block">
               <DropdownMenu>
