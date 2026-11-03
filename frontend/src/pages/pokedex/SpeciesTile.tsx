@@ -159,8 +159,9 @@ export function SpeciesTile({ species, collection, lang, art = 'sprite', shiny, 
       title={name}
       onPointerEnter={() => preload(spriteUrl(species.dexNr, shiny, true))}
       onPointerDown={() => preload(spriteUrl(species.dexNr, shiny, true))}
-      className={cn(tileClass, current && 'ring-2 ring-blue-300', className)}
-      style={tileGlow(types, owned > 0)}
+      // the species whose page this is: a border in its type colour (a ring outside the tile was clipped by the line's scroller)
+      className={cn(tileClass, current && 'border-2', className)}
+      style={{ ...tileGlow(types, owned > 0), ...(current ? { borderColor: typeColors[types[0]] } : {}) }}
     >
       <span className="absolute inset-x-0 top-0 h-1" style={{ background: typeStripe(types) }} />
       {/* starters are a quarter of the early generations, so on tiles only legendary and mythical get a mark */}
