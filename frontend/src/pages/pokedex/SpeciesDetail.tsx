@@ -25,7 +25,7 @@ import { cn, getCardNameByLang } from '@/lib/utils'
 import { getPackChances, type PackChance } from '@/pages/overview/packChances'
 import { oneIn } from '@/pages/packs/types'
 import { useCollection, useSelectedCard } from '@/services/collection/useCollection'
-import type { CardType, ExpansionId } from '@/types'
+import { type CardType, type ExpansionId, rarities } from '@/types'
 import { dexMatcher, parseDexFilters } from './dexFilters'
 import { chainScroller, EvolutionChain } from './EvolutionChain'
 import { dexArtName, dexLabel, GroupIcon, groupLabels, ProgressBar, Sprite, typeColors, typeGlow } from './SpeciesTile'
@@ -152,9 +152,24 @@ export default function SpeciesDetail() {
 
   // the overview's pick, limited to this species' missing printings
   const missing = species.cards.filter((c) => !owns(c.internal_id))
-  const best = [...getPackChances(species.cards, [], missing, false)]
+  const best = [
+    ...getPackChances(
+      species.cards,
+      species.cards.filter((c) => owns(c.internal_id)),
+      missing,
+      false,
+    ),
+  ]
     .flatMap(([expansionId, chances]) => chances.map((chance) => ({ expansionId, ...chance })))
     .reduce<(PackChance & { expansionId: ExpansionId }) | undefined>((a, b) => (!a || b.pct > a.pct ? b : a), undefined)
+  const bestPack = best && best.pct > 0 && <BestPack best={best} name={name} />
+  const hasLine = line.stages.length > 1
+  const byRarity = rarities
+    .map((rarity) => {
+      const cards = species.cards.filter((c) => c.rarity === rarity)
+      return { rarity, owned: cards.filter((c) => owns(c.internal_id)).length, total: cards.length }
+    })
+    .filter((r) => r.total > 0)
 
   return (
     <main className="relative isolate mx-auto max-w-6xl px-4 pb-12" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
@@ -313,32 +328,48 @@ export default function SpeciesDetail() {
                 </span>
                 <ProgressBar value={owned} max={species.cards.length} color={typeColors[species.types[0]]} className="h-2 grow" />
               </span>
+              {/* owned by rarity, so it's clear where the missing ones are */}
+              <span className="mt-2 flex flex-wrap gap-1.5">
+                {byRarity.map(({ rarity, owned, total }) => (
+                  <span
+                    key={rarity}
+                    className={cn(
+                      'flex items-center gap-1 rounded-full border-1 border-solid px-2 py-0.5 text-xs tabular-nums',
+                      owned === total ? 'border-amber-300/50 bg-amber-300/10 text-amber-200' : 'border-neutral-700 bg-neutral-900/50 text-neutral-300',
+                    )}
+                  >
+                    <span className="text-neutral-200">{formatRarity(rarity)}</span>
+                    {owned}/{total}
+                  </span>
+                ))}
+              </span>
             </Stat>
             <Stat label="Forms">{species.forms.length}</Stat>
             <Stat label="Illustrators">{artists.size}</Stat>
             <Stat label="First appeared" className="col-span-full sm:col-span-1">
               {firstSet} · {t(getExpansionById(firstSet).name)}
             </Stat>
-            {best && best.pct > 0 && (
-              <Stat label="Best pack for a missing one" className="col-span-full">
-                {t(best.pack.name, { ns: 'common/packs' })} ({best.expansionId}) · {oneIn(best.pct / 100)} packs
-              </Stat>
-            )}
+            {/* beside the evolution line when there is one, where it has room */}
+            {!hasLine && bestPack && <div className="col-span-full">{bestPack}</div>}
           </dl>
         </div>
       </header>
 
-      {line.stages.length > 1 && (
-        <section className="mb-8">
-          <h2 className="mb-3 flex items-baseline gap-3 font-semibold text-lg">
-            Evolution line
-            <span className="text-sm text-neutral-400 tabular-nums">
-              {line.species.filter((s) => ownedCount(collection, s.cards) > 0).length}/{line.species.length} species
-            </span>
-          </h2>
-          <div className={chainScroller}>
-            <EvolutionChain line={line} collection={collection} lang={i18n.language} current={species.dexNr} />
+      {hasLine && (
+        // the best pack fills the room the line leaves on wide screens, and follows it on phones
+        <section className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-8">
+          <div className="min-w-0 grow">
+            <h2 className="mb-3 flex items-baseline gap-3 font-semibold text-lg">
+              Evolution line
+              <span className="text-sm text-neutral-400 tabular-nums">
+                {line.species.filter((s) => ownedCount(collection, s.cards) > 0).length}/{line.species.length} species
+              </span>
+            </h2>
+            <div className={chainScroller}>
+              <EvolutionChain line={line} collection={collection} lang={i18n.language} current={species.dexNr} />
+            </div>
           </div>
+          {bestPack && <div className="shrink-0 lg:mt-10 lg:w-80">{bestPack}</div>}
         </section>
       )}
 
@@ -398,6 +429,34 @@ const pageGlow = (types: CardType[], caught: boolean) => {
   const alpha = caught ? '38' : '1c'
   const [left, right = left] = types.map((t) => typeColors[t])
   return `radial-gradient(ellipse 65% 100% at 15% 0%, ${left}${alpha}, transparent), radial-gradient(ellipse 55% 85% at 90% 0%, ${right}${alpha}, transparent)`
+}
+
+/** The pack most likely to give a missing printing: its set's logo on the pack's colour, the odds, and how much of this species it holds. */
+function BestPack({ best, name }: { best: PackChance & { expansionId: ExpansionId }; name: string }) {
+  const { t } = useTranslation(['common/sets', 'common/packs'])
+  return (
+    <div
+      className="relative overflow-hidden rounded-lg border-1 border-neutral-700 border-solid bg-neutral-800/60 p-3"
+      style={{ backgroundImage: `linear-gradient(120deg, ${best.pack.color}33, transparent 65%)` }}
+    >
+      <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500">Best pack for a missing one</p>
+      <div className="mt-2 flex items-center gap-3">
+        <img src={`/images/sets/en-US/${best.expansionId}.webp`} alt="" className="h-10 w-20 shrink-0 object-contain" />
+        <div className="min-w-0">
+          <p className="truncate font-semibold">
+            {t(best.pack.name, { ns: 'common/packs' })} <span className="font-normal text-neutral-400 text-sm">{best.expansionId}</span>
+          </p>
+          <p className="text-neutral-300 text-sm">
+            <span className="font-semibold tabular-nums">{oneIn(best.pct / 100)}</span> packs gives a missing {name}
+          </p>
+        </div>
+      </div>
+      <p className="mt-2 text-neutral-400 text-xs tabular-nums">
+        {best.collected}/{best.available} of its {name} cards owned
+      </p>
+      <ProgressBar value={best.collected} max={best.available} color={best.pack.color} className="mt-1 h-1" />
+    </div>
+  )
 }
 
 function Stat({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
