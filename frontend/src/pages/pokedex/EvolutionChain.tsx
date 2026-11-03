@@ -50,7 +50,7 @@ function Stage<T>({
   const rows = Math.ceil(items.length / columns)
   return (
     <div
-      className={cn('grid gap-1.5 sm:gap-2', row && items.length > 1 && 'rounded-lg bg-neutral-800/50 p-1 sm:p-1.5')}
+      className={cn('grid gap-1.5 sm:gap-2', row && items.length > 1 && 'rounded-xl bg-white/[0.03] p-1 ring-1 ring-white/[0.04] ring-inset sm:p-1.5')}
       style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
     >
       {items.map((item, i) => {

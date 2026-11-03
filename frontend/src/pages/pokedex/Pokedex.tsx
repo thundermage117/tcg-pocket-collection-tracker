@@ -48,7 +48,7 @@ import {
   viewOptions,
 } from './dexFilters'
 import { chainScroller, EvolutionChain } from './EvolutionChain'
-import { FormTile, GroupIcon, groupLabels, ProgressBar, SpeciesTile, type TileArt, typeColors } from './SpeciesTile'
+import { FormTile, GroupIcon, groupLabels, ProgressBar, SpeciesTile, surface, type TileArt, typeColors } from './SpeciesTile'
 
 export default function Pokedex() {
   const { t, i18n } = useTranslation(['common/sets', 'search-input'])
@@ -192,7 +192,7 @@ export default function Pokedex() {
         </p>
       </header>
 
-      <section className="relative mb-6 overflow-hidden rounded-xl border-1 border-neutral-700 border-solid bg-neutral-800 p-4 sm:p-5">
+      <section className={cn('relative mb-6 overflow-hidden rounded-2xl p-4 sm:p-5', surface)}>
         <Pokeball className="pointer-events-none absolute -top-16 -right-16 size-56 text-neutral-700/50 sm:-top-20 sm:-right-12 sm:size-72" />
         <div className="relative">
           <h2 className="font-medium text-neutral-400 text-xs uppercase tracking-wider">{shiny ? 'Shiny species owned' : 'Species owned'}</h2>
@@ -228,7 +228,7 @@ export default function Pokedex() {
                 >
                   {formsCaught}/{allForms.length} forms
                 </button>
-                <span className={cn(pill, 'cursor-default hover:border-neutral-700')}>
+                <span className={cn(pill, 'cursor-default hover:border-white/[0.06]')}>
                   {linesComplete}/{allLines.length} lines complete
                 </span>
               </>
@@ -240,7 +240,7 @@ export default function Pokedex() {
           type="button"
           onClick={() => setBreakdownOpen(!breakdownOpen)}
           aria-expanded={breakdownOpen}
-          className="relative mt-4 flex w-full cursor-pointer items-center justify-center gap-1 border-neutral-700 border-t pt-3 text-sm text-neutral-400 hover:text-white sm:hidden"
+          className="relative mt-4 flex w-full cursor-pointer items-center justify-center gap-1 border-white/[0.06] border-t pt-3 text-sm text-neutral-400 hover:text-white sm:hidden"
         >
           By generation and type
           <ChevronDown className={cn('size-4 transition-transform', breakdownOpen && 'rotate-180')} />
@@ -366,7 +366,7 @@ export default function Pokedex() {
                     onClick={() => jumpTo(g.nr)}
                     title={`${genLabel(g)} · ${tiles.length} shown`}
                     className={cn(
-                      'flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-neutral-700 bg-neutral-900 py-0.5 pr-2.5 pl-0.5 text-xs text-neutral-400 transition-colors hover:border-neutral-500',
+                      'flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.04] py-0.5 pr-2.5 pl-0.5 text-xs text-neutral-400 transition-colors hover:border-white/20',
                       currentGen === g.nr && 'border-blue-300 text-white',
                     )}
                   >
@@ -385,7 +385,7 @@ export default function Pokedex() {
           <span
             className={cn(
               'ml-auto flex shrink-0 items-center gap-2 text-neutral-500 text-xs tabular-nums',
-              sections.length > 1 && sections[0].g && 'border-neutral-700 border-l pl-3',
+              sections.length > 1 && sections[0].g && 'border-white/10 border-l pl-3',
             )}
           >
             {view === 'dex' ? `${filtered.length} species` : view === 'forms' ? `${forms.length} forms` : `${lines.length} lines`}
@@ -480,7 +480,7 @@ export default function Pokedex() {
       {(view === 'lines' ? lines : tiles).length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-12 text-neutral-400">
           No {view === 'forms' ? 'forms' : 'species'} match these filters.
-          <Link to={clearUrl} className="rounded-md border-1 border-neutral-700 border-solid px-3 py-1.5 text-sm text-white hover:border-neutral-500">
+          <Link to={clearUrl} className="rounded-md border-1 border-white/10 border-solid px-3 py-1.5 text-sm text-white hover:border-white/25">
             Clear filters
           </Link>
         </div>
@@ -511,10 +511,7 @@ export default function Pokedex() {
             const complete = ownedInLine === line.species.length
             return (
               // min-w-0: the chain is as wide as it is (w-max) and scrolls in here, rather than widening the card off a phone's screen
-              <li
-                key={line.root}
-                className={cn('min-w-0 rounded-lg border-1 border-solid bg-neutral-800/40 p-3', complete ? 'border-amber-300/60' : 'border-neutral-700')}
-              >
+              <li key={line.root} className={cn('min-w-0 rounded-xl p-3', surface, complete && 'border-amber-300/60')}>
                 <h2 className="mb-2 flex items-center gap-3">
                   <span className="shrink-0 font-semibold">{speciesName(line.species[0], i18n.language)} line</span>
                   <ProgressBar value={ownedInLine} max={line.species.length} color={complete ? '#fcd34d' : undefined} className="h-1 grow" />
@@ -543,8 +540,9 @@ function GenBanner({ g, owned, total, unit }: { g: Generation; owned: number; to
     <h2
       data-gen={g.nr}
       className={cn(
-        'relative isolate mb-3 flex items-center gap-3 overflow-hidden rounded-lg border-1 border-solid bg-neutral-800/60 py-2 pr-20 pl-3 sm:gap-5 sm:pr-28',
-        complete ? 'border-amber-300/60' : 'border-neutral-700/70',
+        'relative isolate mb-3 flex items-center gap-3 overflow-hidden rounded-xl py-2 pr-20 pl-3 sm:gap-5 sm:pr-28',
+        surface,
+        complete && 'border-amber-300/60',
       )}
     >
       <img
@@ -574,7 +572,7 @@ function Chip({ children, onRemove }: { children: React.ReactNode; onRemove: () 
     <button
       type="button"
       onClick={onRemove}
-      className="flex cursor-pointer items-center gap-1 rounded-full border-1 border-neutral-700 border-solid bg-neutral-800 py-1 pr-2 pl-3 text-sm transition-colors hover:border-neutral-500"
+      className="flex cursor-pointer items-center gap-1 rounded-full border-1 border-white/[0.06] border-solid bg-white/[0.05] py-1 pr-2 pl-3 text-sm transition-colors hover:border-white/20"
     >
       {children}
       <X className="size-3.5 text-neutral-400" />
@@ -583,13 +581,13 @@ function Chip({ children, onRemove }: { children: React.ReactNode; onRemove: () 
 }
 
 // the sticky bar's controls share a height, border and radius
-const control = 'h-10 rounded-lg border-1 border-neutral-700 border-solid bg-neutral-800 text-sm transition-colors hover:border-neutral-500'
+const control = 'h-10 rounded-lg border-1 border-white/[0.08] border-solid bg-neutral-800/70 text-sm transition-colors hover:border-white/20'
 
 /** Tile art as two icons: the Pokémon's artwork or its card. */
 function ArtToggle({ value, onChange, className }: { value: TileArt; onChange: (x: TileArt) => void; className?: string }) {
   const icons = { sprite: PawPrint, card: RectangleVertical }
   return (
-    <fieldset aria-label="Tile art" className={cn(control, 'm-0 flex shrink-0 items-center gap-0.5 p-1 hover:border-neutral-700', className)}>
+    <fieldset aria-label="Tile art" className={cn(control, 'm-0 flex shrink-0 items-center gap-0.5 p-1 hover:border-white/[0.08]', className)}>
       {artOptions.map((x) => {
         const Icon = icons[x]
         return (
@@ -615,9 +613,9 @@ function ArtToggle({ value, onChange, className }: { value: TileArt; onChange: (
 
 // summary panel pieces: pills for the counts, cards for the generation and type breakdown
 const pill =
-  'flex cursor-pointer items-center gap-1 rounded-full border-1 border-neutral-700 border-solid bg-neutral-900/60 px-2.5 py-0.5 text-neutral-300 text-sm transition-colors hover:border-neutral-500'
+  'flex cursor-pointer items-center gap-1 rounded-full border-1 border-white/[0.06] border-solid bg-white/[0.04] px-2.5 py-0.5 text-neutral-300 text-sm transition-colors hover:border-white/20'
 const cell =
-  'group relative isolate flex w-full cursor-pointer flex-col gap-1 overflow-hidden rounded-lg border-1 border-neutral-700/70 border-solid px-1.5 py-2 text-left transition-colors hover:border-neutral-500 sm:px-2.5'
+  'group relative isolate flex w-full cursor-pointer flex-col gap-1 overflow-hidden rounded-lg border-1 border-white/[0.06] border-solid px-1.5 py-2 text-left shadow-[inset_0_1px_0_0_rgb(255_255_255/0.05)] transition-colors hover:border-white/20 sm:px-2.5'
 // version mascots: Mewtwo, Lugia, Rayquaza, Dialga, Reshiram, Xerneas, Solgaleo, Zacian, Koraidon
 const regionMascots = [150, 249, 384, 483, 643, 716, 791, 888, 1007]
 

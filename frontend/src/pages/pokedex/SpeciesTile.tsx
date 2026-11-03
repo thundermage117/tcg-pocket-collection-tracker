@@ -116,9 +116,16 @@ export function Sprite({
   )
 }
 
-// lifts on hover and gives on press, so a tap answers before the page does
+/**
+ * The Pokédex's one surface: a panel lit from above (a hairline highlight along its top edge, a faint top-down sheen) and
+ * lifted by a soft shadow, rather than outlined in grey. Completion (gold) and selection colour its border.
+ */
+export const surface =
+  'border-1 border-solid border-white/[0.06] bg-neutral-800/70 bg-linear-to-b from-white/[0.035] to-transparent shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06),0_12px_28px_-14px_rgb(0_0_0/0.8)]'
+
+// the same light on tiles, a tighter shadow; lifts on hover and gives on press, so a tap answers before the page does
 const tileClass =
-  'relative block overflow-hidden rounded-md border-1 border-neutral-700 border-solid bg-neutral-800 p-1.5 pt-2.5 transition-[border-color,transform] duration-150 hover:-translate-y-0.5 hover:border-neutral-400 active:translate-y-0 active:scale-95 motion-reduce:transform-none'
+  'relative block overflow-hidden rounded-lg border-1 border-solid border-white/[0.06] bg-neutral-800 p-1.5 pt-2.5 shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06),0_6px_16px_-8px_rgb(0_0_0/0.7)] transition-[border-color,transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:border-white/25 hover:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.08),0_14px_24px_-10px_rgb(0_0_0/0.8)] active:translate-y-0 active:scale-95 motion-reduce:transform-none'
 
 /** Starts the species page's large artwork loading on hover or touch, so it's usually there when the page is. */
 const preloaded = new Set<string>()

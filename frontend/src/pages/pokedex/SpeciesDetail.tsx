@@ -28,7 +28,7 @@ import { useCollection, useSelectedCard } from '@/services/collection/useCollect
 import { type CardType, type ExpansionId, rarities } from '@/types'
 import { dexMatcher, parseDexFilters } from './dexFilters'
 import { chainScroller, EvolutionChain } from './EvolutionChain'
-import { dexArtName, dexLabel, GroupIcon, groupLabels, ProgressBar, Sprite, typeColors } from './SpeciesTile'
+import { dexArtName, dexLabel, GroupIcon, groupLabels, ProgressBar, Sprite, surface, typeColors } from './SpeciesTile'
 
 export default function SpeciesDetail() {
   const { t, i18n } = useTranslation(['common/sets', 'common/packs'])
@@ -286,7 +286,7 @@ export default function SpeciesDetail() {
                         pickForm(f.artworkId === species.dexNr ? undefined : f.artworkId)
                         setShowShiny(false)
                       }}
-                      className={`cursor-pointer rounded-lg border-1 border-solid p-0.5 transition-colors ${selected ? 'border-blue-300 bg-neutral-800' : 'border-neutral-700 hover:border-neutral-500'}`}
+                      className={`cursor-pointer rounded-lg border-1 border-solid p-0.5 transition-colors ${selected ? 'border-blue-300 bg-neutral-800' : 'border-white/[0.06] hover:border-white/20'}`}
                     >
                       <Sprite artworkId={f.artworkId} caught={f.caught} alt={f.name} className="size-11" />
                     </button>
@@ -343,7 +343,7 @@ export default function SpeciesDetail() {
                     key={rarity}
                     className={cn(
                       'flex items-center gap-1 rounded-full border-1 border-solid px-2 py-0.5 text-xs tabular-nums',
-                      owned === total ? 'border-amber-300/50 bg-amber-300/10 text-amber-200' : 'border-neutral-700 bg-neutral-900/50 text-neutral-300',
+                      owned === total ? 'border-amber-300/50 bg-amber-300/10 text-amber-200' : 'border-white/[0.06] bg-white/[0.04] text-neutral-300',
                     )}
                   >
                     <span className="text-neutral-200">{formatRarity(rarity)}</span>
@@ -453,7 +453,7 @@ function BestPack({ best, name }: { best: PackChance & { expansionId: ExpansionI
   const { t } = useTranslation(['common/sets', 'common/packs'])
   return (
     <div
-      className="relative overflow-hidden rounded-lg border-1 border-neutral-700 border-solid bg-neutral-800/60 p-3"
+      className={cn('relative overflow-hidden rounded-xl p-3', surface)}
       style={{ backgroundImage: `linear-gradient(120deg, ${best.pack.color}33, transparent 65%)` }}
     >
       <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500">Best pack for a missing one</p>
@@ -478,7 +478,7 @@ function BestPack({ best, name }: { best: PackChance & { expansionId: ExpansionI
 
 function Stat({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('rounded-lg border-1 border-neutral-700 border-solid bg-neutral-800/60 px-3 py-2', className)}>
+    <div className={cn('rounded-xl px-3 py-2', surface, className)}>
       <dt className="text-[10px] font-medium uppercase tracking-wider text-neutral-500">{label}</dt>
       <dd className="text-neutral-200">{children}</dd>
     </div>
