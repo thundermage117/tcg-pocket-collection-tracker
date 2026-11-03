@@ -245,7 +245,8 @@ export default function Pokedex() {
           By generation and type
           <ChevronDown className={cn('size-4 transition-transform', breakdownOpen && 'rotate-180')} />
         </button>
-        <div className={cn(breakdownOpen ? 'mt-3 block' : 'hidden', 'relative sm:mt-5 sm:block')}>
+        {/* lg:mt-9: room for the mascots that rise out of the region cards */}
+        <div className={cn(breakdownOpen ? 'mt-3 block' : 'hidden', 'relative sm:mt-5 sm:block lg:mt-9')}>
           <ul className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-9">
             {generations.map((g) => {
               const inGen = list.filter((s) => generationOf(s.dexNr).nr === g.nr)
@@ -257,15 +258,20 @@ export default function Pokedex() {
                     type="button"
                     onClick={() => update({ gen: active ? undefined : String(g.nr) })}
                     title={`Gen ${g.nr} · ${g.region}`}
-                    className={cn(cell, 'bg-neutral-900/50', active && 'border-blue-300')}
+                    // on one row (lg) the mascot rises out of the card; wrapped into rows it would cover the row above, so it stays in
+                    className={cn(cell, 'bg-neutral-900/50 lg:overflow-visible', active && 'border-blue-300')}
                   >
-                    {/* the region's mascot legendary, faded behind the card */}
+                    {/* the region's mascot legendary, large and in colour behind the card's text, with a scrim so the text stays legible */}
                     <img
                       src={spriteUrl(regionMascots[g.nr - 1])}
                       alt=""
                       loading="lazy"
                       draggable={false}
-                      className="pointer-events-none absolute -right-3 -bottom-3 -z-10 size-16 opacity-25 transition-opacity group-hover:opacity-50 sm:size-[4.5rem]"
+                      className="pointer-events-none absolute -right-3 -bottom-3 -z-20 size-20 origin-bottom-right drop-shadow-[0_6px_10px_rgb(0_0_0/0.55)] transition-transform duration-300 group-hover:scale-110 motion-reduce:transition-none sm:size-24 lg:-right-3 lg:bottom-0 lg:size-24"
+                    />
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 -z-10 rounded-lg bg-linear-to-r from-neutral-900/90 via-neutral-900/55 to-transparent"
                     />
                     <span className="text-[10px] text-neutral-500 uppercase tracking-wider">Gen {g.nr}</span>
                     <span className="font-semibold text-sm leading-tight">{g.region}</span>
