@@ -17,6 +17,8 @@ Work happens on the `personal` branch, which Vercel deploys. `main` mirrors upst
 
 Removed from navigation, with the files left in place so upstream merges stay clean: friends, chat, trade offers/matching, community/blog links, analytics, donation widget.
 
+**English only.** Unlike the removals above, the other five languages' files are deleted: UI locales, card images, set logos, scan hashes and Pokédex entries, about 755 MB. The name-translation JSONs keep only `en-US`, and the language picker is gone. Upstream keeps adding and editing those paths with new sets, so until `upstream-sync.yml` re-deletes them after merging, expect sync conflicts there. Resolve them by deleting the non-English files again.
+
 ## Setup (once)
 
 1. **Supabase**: create a free project, then run `scripts/sql/personal-schema.sql` in its SQL editor.

@@ -9,6 +9,7 @@ pnpm build
 
 # Data scripts
 pnpm scraper       # Run all scrapers (packs, missions, decks)
+pnpm sync-locales  # Sync i18n locale files
 ```
 
 No test framework is configured — there are no unit or integration tests.
