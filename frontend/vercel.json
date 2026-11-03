@@ -1,5 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npx pnpm@12.4.1 exec tsc -b && npx pnpm@12.4.1 exec vite build",
+  "git": {
+    "deploymentEnabled": { "*": false, "personal": true }
+  },
   "headers": [
     {
       "source": "/assets/(.*)",

@@ -33,7 +33,8 @@ Removed from navigation, with the files left in place so upstream merges stay cl
 4. **Hosting**: Vercel (Hobby, personal use) importing this repo, production branch `personal`.
    - Root directory `frontend`. Framework preset: Vite.
    - Install command `npx pnpm@12.4.1 install --frozen-lockfile`, build command `npx pnpm@12.4.1 build`, output `dist` (relative to the root directory).
-   - `frontend/.gitignore` ignores `.vercel`; without it the build's Biome check fails on Vercel's generated `package-manifest.json`.
+   - `frontend/vercel.json` overrides the build command to `tsc -b && vite build`, skipping Biome: `vercel build` rewrites `vercel.json` on one line, which fails the format check. CI still lints. `frontend/.gitignore` ignores `.vercel` for the same reason (Vercel's generated `package-manifest.json`).
+   - `frontend/vercel.json` also limits git deployments to `personal`. Each deployment stores the full ~340 MB build (mostly `public/images`) against the Hobby plan's 10 GB deployment storage, so keep Deployment Retention short in the project settings.
    - Env vars `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
    - It serves from `/`, so upstream's absolute asset paths work. Not GitHub Pages: a `/repo/` subpath breaks them.
    - No SPA rewrites needed (hash router).
