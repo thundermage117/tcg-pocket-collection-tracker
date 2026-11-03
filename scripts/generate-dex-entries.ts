@@ -16,7 +16,7 @@ const CRAWL_DELAY = 2000 // pokemondb's robots.txt
 const formHeadings: Record<string, string> = { 'Hisuian Basculin': 'White-Striped Form', 'Paldean Tauros': 'Combat Breed' } // Tauros: the artwork (10250) is the Combat Breed
 const DEX_SIZE = 1025
 const BATCH = 150
-const locales: Record<string, string | undefined> = { 'en-US': 'en', 'es-ES': 'es', 'pt-BR': undefined, 'fr-FR': 'fr', 'it-IT': 'it', 'de-DE': 'de' }
+const locales: Record<string, string | undefined> = { 'en-US': 'en' } // English only
 const apiLanguages = Object.values(locales).filter((l) => l !== undefined)
 
 interface SpeciesRow {

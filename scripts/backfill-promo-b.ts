@@ -279,7 +279,7 @@ async function main() {
 
   if (missing.length === 0) {
     if (brokenNumbers.length > 0 && !dryRun) {
-      console.log(`\nRefreshed ${brokenNumbers.length} broken images. Regenerate manifest with "tsx scripts/generate-image-locales.ts".`)
+      console.log(`\nRefreshed ${brokenNumbers.length} broken images. Regenerate scan hashes with "pnpm hashes".`)
     } else {
       console.log('Nothing to do.')
     }
@@ -363,9 +363,7 @@ async function main() {
   })
   fs.writeFileSync(CARDS_JSON, JSON.stringify(merged, null, 2))
   console.log(`\nWrote ${newRecords.length} new cards to ${CARDS_JSON}`)
-  console.log(
-    'Next: run "pnpm biome check --write --files-max-size=4000000 frontend/assets/cards.json" and then "tsx scripts/generate-image-locales.ts && pnpm hashes"',
-  )
+  console.log('Next: run "pnpm biome check --write --files-max-size=4000000 frontend/assets/cards.json" and then "pnpm hashes"')
 }
 
 await main()
