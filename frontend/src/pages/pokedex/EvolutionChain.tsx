@@ -19,10 +19,11 @@ interface Props {
 
 /**
  * Around a line wider than its card: it scrolls (without carrying the page along), snaps tile by tile, and fades at the
- * right edge as a hint there's more; the padding lets the last tile clear the fade.
+ * right edge as a hint there's more; the padding lets the last tile clear the fade. Scrolling sideways clips vertically too,
+ * so it has headroom (pt-4, taken back by -mt-4) for artwork rising out of a tile on hover.
  */
 export const chainScroller =
-  'overflow-x-auto overscroll-x-contain snap-x snap-proximity pr-6 pb-1 [mask-image:linear-gradient(to_right,black_calc(100%-1.5rem),transparent)] [&_a]:snap-start'
+  '-mt-4 overflow-x-auto overscroll-x-contain snap-x snap-proximity pt-4 pr-6 pb-1 [mask-image:linear-gradient(to_right,black_calc(100%-1.5rem),transparent)] [&_a]:snap-start'
 
 const tileWidth = 'w-20 sm:w-24'
 // the middle of a column's first tile, where a branch line drops from (half of tileWidth)

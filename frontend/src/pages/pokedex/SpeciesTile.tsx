@@ -123,9 +123,16 @@ export function Sprite({
 export const surface =
   'border-1 border-solid border-white/[0.06] bg-neutral-800/70 bg-linear-to-b from-white/[0.035] to-transparent shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06),0_12px_28px_-14px_rgb(0_0_0/0.8)]'
 
-// the same light on tiles, a tighter shadow; lifts on hover and gives on press, so a tap answers before the page does
+// the same light on tiles, a tighter shadow; lifts on hover and gives on press, so a tap answers before the page does.
+// Not clipped, so the artwork can rise out of it on hover (above its neighbours)
 const tileClass =
-  'relative block overflow-hidden rounded-lg border-1 border-solid border-white/[0.06] bg-neutral-800 p-1.5 pt-2.5 shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06),0_6px_16px_-8px_rgb(0_0_0/0.7)] transition-[border-color,transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:border-white/25 hover:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.08),0_14px_24px_-10px_rgb(0_0_0/0.8)] active:translate-y-0 active:scale-95 motion-reduce:transform-none'
+  'group relative block rounded-lg hover:z-10 border-1 border-solid border-white/[0.06] bg-neutral-800 p-1.5 pt-2.5 shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06),0_6px_16px_-8px_rgb(0_0_0/0.7)] transition-[border-color,transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:border-white/25 hover:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.08),0_14px_24px_-10px_rgb(0_0_0/0.8)] active:translate-y-0 active:scale-95 motion-reduce:transform-none'
+
+// the tile isn't clipped, so the stripe rounds its own corners (the tile's radius inside its 1px border)
+const stripeClass = 'absolute inset-x-0 top-0 h-1 rounded-t-[7px]'
+// on hover the artwork grows and rises out of the tile's top edge, casting a shadow on it
+const spritePop =
+  'relative transition-[transform,filter] duration-200 ease-out group-hover:-translate-y-3 group-hover:scale-[1.12] group-hover:drop-shadow-[0_10px_8px_rgb(0_0_0/0.45)] motion-reduce:transition-none motion-reduce:group-hover:transform-none'
 
 /** Starts the species page's large artwork loading on hover or touch, so it's usually there when the page is. */
 const preloaded = new Set<string>()
@@ -170,7 +177,7 @@ export function SpeciesTile({ species, collection, lang, art = 'sprite', shiny, 
       className={cn(tileClass, current && 'border-2', className)}
       style={{ ...tileGlow(types, owned > 0), ...(current ? { borderColor: typeColors[types[0]] } : {}) }}
     >
-      <span className="absolute inset-x-0 top-0 h-1" style={{ background: typeStripe(types) }} />
+      <span className={stripeClass} style={{ background: typeStripe(types) }} />
       {/* starters are a quarter of the early generations, so on tiles only legendary and mythical get a mark */}
       {species.group && species.group !== 'starter' && <GroupIcon group={species.group} className="absolute top-2 left-2 drop-shadow" />}
       {shiny && owned > 0 && <span className="absolute top-2 right-2 text-pink-300 drop-shadow">✵</span>}
@@ -180,6 +187,7 @@ export function SpeciesTile({ species, collection, lang, art = 'sprite', shiny, 
           caught={owned > 0}
           shiny={shiny}
           alt={name}
+          className={spritePop}
           style={morphing ? { viewTransitionName: dexArtName(species.dexNr) } : undefined}
         />
       ) : (
@@ -249,9 +257,9 @@ export function FormTile({ form, collection, lang, art = 'sprite', showDex, from
       style={tileGlow(types, owned > 0)}
     >
       {/* the form's own types: Alolan Vulpix is Water, Vulpix Fire */}
-      <span className="absolute inset-x-0 top-0 h-1" style={{ background: typeStripe(types) }} />
+      <span className={stripeClass} style={{ background: typeStripe(types) }} />
       {art === 'sprite' ? (
-        <Sprite artworkId={form.artworkId} caught={owned > 0} alt={name} />
+        <Sprite artworkId={form.artworkId} caught={owned > 0} alt={name} className={spritePop} />
       ) : (
         <img
           src={getLocalizedImagePath(coverCard(form.cards, collection), lang)}
