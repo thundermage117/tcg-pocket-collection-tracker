@@ -92,6 +92,8 @@ export async function launch() {
     }
     return {
       evaluate,
+      /** A raw DevTools call in this page's session (Input.dispatchMouseEvent for a real hover, say). */
+      cdp,
       /** Polls until the expression is truthy and returns its value (true for a DOM node, which can't be returned); throws after `timeout` ms. */
       async waitFor(expression, timeout = 5000) {
         const end = Date.now() + timeout
