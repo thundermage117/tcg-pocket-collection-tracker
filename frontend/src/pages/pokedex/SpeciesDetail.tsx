@@ -226,7 +226,7 @@ export default function SpeciesDetail() {
             <span aria-hidden className="pointer-events-none absolute -inset-[15%] -z-20" style={{ backgroundImage: heroGlow(heroTypes) }} />
             <span
               aria-hidden
-              className="pointer-events-none absolute inset-x-0 -top-4 -z-10 select-none text-center font-black text-[7.5rem] text-white/[0.06] leading-none tracking-tighter tabular-nums sm:-top-6 sm:text-[9.5rem] lg:text-[10.5rem]"
+              className="dex-display pointer-events-none absolute inset-x-0 -top-4 -z-10 select-none text-center font-black text-[7.5rem] text-white/[0.06] leading-none tracking-tighter tabular-nums sm:-top-6 sm:text-[9.5rem] lg:text-[10.5rem]"
             >
               {String(species.dexNr).padStart(3, '0')}
             </span>
@@ -302,8 +302,8 @@ export default function SpeciesDetail() {
           <p className="text-neutral-500 tabular-nums">
             {dexLabel(species.dexNr)} · Gen {generationOf(species.dexNr).nr} · {generationOf(species.dexNr).region}
           </p>
-          <h1 className="flex items-center gap-3 text-2xl font-semibold sm:text-3xl">
-            {name}
+          <h1 className="flex items-center gap-3 text-3xl font-semibold sm:text-4xl">
+            <span className="dex-display tracking-tight">{name}</span>
             <span className="flex gap-1">
               {species.types.map((type) => (
                 <img key={type} src={`/images/energy/${type}.webp`} alt={type} className="size-6" />
@@ -331,7 +331,7 @@ export default function SpeciesDetail() {
           <dl className="mt-5 grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
             <Stat label="Printings" className="col-span-full">
               <span className="flex items-center gap-3">
-                <span className="font-semibold text-lg tabular-nums">
+                <span className="dex-display font-semibold text-xl tabular-nums">
                   {owned}
                   <span className="font-normal text-neutral-400 text-sm">/{species.cards.length}</span>
                 </span>
@@ -368,7 +368,7 @@ export default function SpeciesDetail() {
         // the best pack fills the room the line leaves on wide screens, and follows it on phones
         <section className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-8">
           <div className="min-w-0 grow">
-            <h2 className="mb-3 flex items-baseline gap-3 font-semibold text-lg">
+            <h2 className="dex-display mb-3 flex items-baseline gap-3 font-semibold text-xl">
               Evolution line
               <span className="text-sm text-neutral-400 tabular-nums">
                 {line.species.filter((s) => ownedCount(collection, s.cards) > 0).length}/{line.species.length} species
@@ -391,7 +391,7 @@ export default function SpeciesDetail() {
         return (
           // long sections (Pikachu has dozens of printings) fold away; open by default
           <details key={form} open className="group mb-8">
-            <summary className="mb-3 flex cursor-pointer list-none items-center gap-3 font-semibold text-lg [&::-webkit-details-marker]:hidden">
+            <summary className="mb-3 flex cursor-pointer list-none items-center gap-3 font-semibold text-lg dex-display [&::-webkit-details-marker]:hidden">
               <Sprite artworkId={artworkId} caught={formOwned} alt="" className="size-10 shrink-0" />
               <span className="min-w-0">
                 {getCardNameByLang(cards[0], i18n.language)}
@@ -461,7 +461,7 @@ function BestPack({ best, name }: { best: PackChance & { expansionId: ExpansionI
       <div className="mt-2 flex items-center gap-3">
         <img src={`/images/sets/en-US/${best.expansionId}.webp`} alt="" className="h-10 w-20 shrink-0 object-contain" />
         <div className="min-w-0">
-          <p className="truncate font-semibold">
+          <p className="dex-display truncate font-semibold text-[1.05rem]">
             {t(best.pack.name, { ns: 'common/packs' })} <span className="font-normal text-neutral-400 text-sm">{best.expansionId}</span>
           </p>
           <p className="text-neutral-300 text-sm">

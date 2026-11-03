@@ -182,7 +182,7 @@ export default function Pokedex() {
     <main className="mx-auto max-w-7xl px-4 pb-12">
       <header className="mb-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold sm:text-3xl">{shiny ? 'Shiny Pokédex' : 'Pokédex'}</h1>
+          <h1 className="dex-display text-2xl font-semibold sm:text-3xl">{shiny ? 'Shiny Pokédex' : 'Pokédex'}</h1>
           <TabsFilter options={dexOptions} value={dex} onChange={(x) => update({ dex: x })} show={(x) => dexLabels[x]} />
         </div>
         <p className="mt-1 text-sm text-neutral-400">
@@ -197,7 +197,7 @@ export default function Pokedex() {
         <div className="relative">
           <h2 className="font-medium text-neutral-400 text-xs uppercase tracking-wider">{shiny ? 'Shiny species owned' : 'Species owned'}</h2>
           <p className="tabular-nums leading-tight">
-            <span className="font-bold text-3xl sm:text-4xl">{speciesOwned}</span>
+            <span className="dex-display font-bold text-3xl sm:text-4xl">{speciesOwned}</span>
             <span className="text-lg text-neutral-500"> / {list.length}</span>
           </p>
           <ProgressBar value={speciesOwned} max={list.length} className="mt-3 h-1.5 max-w-xl" />
@@ -274,7 +274,7 @@ export default function Pokedex() {
                       className="pointer-events-none absolute inset-0 -z-10 rounded-lg bg-linear-to-r from-neutral-900/90 via-neutral-900/55 to-transparent"
                     />
                     <span className="text-[10px] text-neutral-500 uppercase tracking-wider">Gen {g.nr}</span>
-                    <span className="font-semibold text-sm leading-tight">{g.region}</span>
+                    <span className="dex-display font-semibold text-sm leading-tight sm:text-[0.95rem]">{g.region}</span>
                     <Fraction value={ownedInGen} max={inGen.length} />
                     <ProgressBar value={ownedInGen} max={inGen.length} className="h-1" />
                   </button>
@@ -306,7 +306,7 @@ export default function Pokedex() {
                         className="pointer-events-none absolute -right-2.5 -bottom-2.5 -z-10 size-9 opacity-10 transition-opacity group-hover:opacity-35 sm:size-12 sm:opacity-20"
                       />
                       <img src={`/images/energy/${x}.webp`} alt={x} className="size-5" />
-                      <span className="hidden font-semibold text-sm leading-tight sm:block">{capitalize(x)}</span>
+                      <span className="dex-display hidden font-semibold text-sm leading-tight sm:block sm:text-[0.95rem]">{capitalize(x)}</span>
                       <Fraction value={ownedOfType} max={ofType.length} />
                       <ProgressBar value={ownedOfType} max={ofType.length} color={typeColors[x]} className="h-1" />
                     </button>
@@ -519,7 +519,7 @@ export default function Pokedex() {
               // min-w-0: the chain is as wide as it is (w-max) and scrolls in here, rather than widening the card off a phone's screen
               <li key={line.root} className={cn('min-w-0 rounded-xl p-3', surface, complete && 'border-amber-300/60')}>
                 <h2 className="mb-2 flex items-center gap-3">
-                  <span className="shrink-0 font-semibold">{speciesName(line.species[0], i18n.language)} line</span>
+                  <span className="dex-display shrink-0 font-semibold">{speciesName(line.species[0], i18n.language)} line</span>
                   <ProgressBar value={ownedInLine} max={line.species.length} color={complete ? '#fcd34d' : undefined} className="h-1 grow" />
                   <span className={cn('shrink-0 text-sm tabular-nums', complete ? 'text-amber-300' : 'text-neutral-400')}>
                     {ownedInLine}/{line.species.length} species
@@ -560,7 +560,7 @@ function GenBanner({ g, owned, total, unit }: { g: Generation; owned: number; to
       />
       <span className="flex shrink-0 flex-col leading-tight">
         <span className="font-normal text-[10px] text-neutral-500 uppercase tracking-wider">Gen {g.nr}</span>
-        <span className="font-semibold">{g.region}</span>
+        <span className="dex-display font-semibold text-[1.05rem]">{g.region}</span>
       </span>
       <ProgressBar value={owned} max={total} color={complete ? '#fcd34d' : undefined} className="h-1.5 grow" />
       <span className="shrink-0 font-normal text-sm tabular-nums">
