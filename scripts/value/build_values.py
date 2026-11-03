@@ -1,5 +1,5 @@
-"""Join the ranking + eleet snapshots onto frontend/assets/cards.json and write
-frontend/assets/values.json, which the app bundles via lib/ValueDB.ts.
+"""Join the newest ranking + eleet snapshot (data/snapshots/<date>/) onto frontend/assets/cards.json
+and write frontend/assets/values.json, which the app bundles via lib/ValueDB.ts.
 
 Per card (keyed by card_id, e.g. "A1-266"):
   demand, supply  trade-board want/offer counts (pokemontcglivetrade, all rarities)
@@ -18,6 +18,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import snapshots
 from packs import LEVELS, PACKS, TWO_STAR_LEVEL
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -31,10 +32,10 @@ OUT = ROOT / 'frontend' / 'assets' / 'values.json'
 SHRINK_K = 200
 
 
-def load_rankings():
+def load_rankings(snapshot):
     levels = {}
     for level in LEVELS:
-        levels[level] = json.loads((HERE / 'data' / 'rankings' / f'lv{level}.json').read_text())['items']
+        levels[level] = json.loads((snapshot / 'rankings' / f'lv{level}.json').read_text())['items']
     unknown = collections.Counter(i['PackId'] for items in levels.values() for i in items if i['PackId'] not in PACKS)
     if unknown:
         sys.exit(f'Unknown PackIds (add them to scripts/value/packs.py): {dict(unknown)} '
@@ -70,8 +71,10 @@ def pooled_reprints(cards):
 def main():
     cards = json.loads(CARDS.read_text())
     cards_by_id = {c['card_id']: c for c in cards}
-    levels = load_rankings()
-    eleet = json.loads((HERE / 'data' / 'eleet.json').read_text())
+    snapshot = snapshots.latest()
+    print(f'snapshot: {snapshot.name}')
+    levels = load_rankings(snapshot)
+    eleet = json.loads((snapshot / 'eleet.json').read_text())
 
     values = collections.defaultdict(dict)
     mismatched = []

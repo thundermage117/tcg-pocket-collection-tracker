@@ -1,4 +1,5 @@
-"""Snapshot pokemontcglivetrade.org's card ranking for every CardLevel into data/rankings/lv{N}.json.
+"""Snapshot pokemontcglivetrade.org's card ranking for every CardLevel into
+data/snapshots/<date>/rankings/lv{N}.json.
 
 The site (https://pokemontcglivetrade.org/en/card-ranking) is client-rendered; its data
 comes from the public API below, found in the site's JS bundle. Only CardLevel 6 (☆☆)
@@ -6,10 +7,13 @@ has community Elo votes; every level has trade-board demand/supply counts.
 """
 import json
 import pathlib
+import sys
 import urllib.request
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import snapshots
+
 API = 'https://pokemonvmdns.eastasia.cloudapp.azure.com/api/card-value/rankings'
-OUT = pathlib.Path(__file__).resolve().parent / 'data' / 'rankings'
 
 
 def fetch(level):
@@ -21,11 +25,12 @@ def fetch(level):
         return json.load(r)
 
 
-def main():
-    OUT.mkdir(parents=True, exist_ok=True)
+def main(out_dir=None):
+    out = (out_dir or snapshots.today()) / 'rankings'
+    out.mkdir(parents=True, exist_ok=True)
     for level in range(1, 11):
         data = fetch(level)
-        (OUT / f'lv{level}.json').write_text(json.dumps(data, ensure_ascii=False))
+        (out / f'lv{level}.json').write_text(json.dumps(data, ensure_ascii=False))
         print(f"rankings level {level}: {len(data['items'])} cards, {data['totalVoteCount']} votes")
 
 

@@ -110,6 +110,7 @@ jobs:
           else
             echo "::warning::Value refresh failed (new PackId? see scripts/value/packs.py); merged without it."
             git checkout -- frontend/assets/values.json scripts/value/data
+            git clean -fdq scripts/value/data
           fi
 
       - name: Push
