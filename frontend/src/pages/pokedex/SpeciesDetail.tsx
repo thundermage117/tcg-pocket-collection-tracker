@@ -28,7 +28,7 @@ import { useCollection, useSelectedCard } from '@/services/collection/useCollect
 import { type CardType, type ExpansionId, rarities } from '@/types'
 import { dexMatcher, parseDexFilters } from './dexFilters'
 import { chainScroller, EvolutionChain } from './EvolutionChain'
-import { dexArtName, dexLabel, GroupIcon, groupLabels, ProgressBar, Sprite, typeColors, typeGlow } from './SpeciesTile'
+import { dexArtName, dexLabel, GroupIcon, groupLabels, ProgressBar, Sprite, typeColors } from './SpeciesTile'
 
 export default function SpeciesDetail() {
   const { t, i18n } = useTranslation(['common/sets', 'common/packs'])
@@ -217,11 +217,19 @@ export default function SpeciesDetail() {
 
       <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-8">
         <div className="mx-auto flex w-56 shrink-0 flex-col gap-2 sm:mx-0 sm:w-72 lg:w-80">
-          {/* the shown form's types glow behind its artwork (Alolan Vulpix in Water); uncaught species stay a silhouette */}
-          <div
-            className="relative rounded-2xl border-1 border-neutral-700 border-solid bg-neutral-800/60 p-4"
-            style={{ backgroundImage: typeGlow(heroTypes, '70') }}
-          >
+          {/*
+            no frame: the artwork floats on the shown form's type glow (Alolan Vulpix in Water) over its dex number, with a shadow
+            on the floor beneath it; uncaught species stay a silhouette
+          */}
+          <div className="relative isolate">
+            <span aria-hidden className="absolute -inset-[15%] -z-20" style={{ backgroundImage: heroGlow(heroTypes) }} />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 -top-4 -z-10 select-none text-center font-black text-[7.5rem] text-white/[0.06] leading-none tracking-tighter tabular-nums sm:-top-6 sm:text-[9.5rem] lg:text-[10.5rem]"
+            >
+              {String(species.dexNr).padStart(3, '0')}
+            </span>
+            <span aria-hidden className="absolute inset-x-[20%] bottom-[3%] -z-10 h-[7%] rounded-[50%] bg-black/60 blur-lg" />
             {shiny ? (
               <>
                 <Sprite
@@ -230,10 +238,10 @@ export default function SpeciesDetail() {
                   shiny
                   large
                   alt={name}
-                  className={shinyOwned === 0 ? 'opacity-25' : undefined}
+                  className={cn(heroShadow, shinyOwned === 0 && 'opacity-25')}
                   style={{ viewTransitionName: dexArtName(species.dexNr) }}
                 />
-                {shinyOwned === 0 && <span className="absolute inset-x-0 bottom-3 text-center text-xs font-medium text-neutral-400">No shiny caught yet</span>}
+                {shinyOwned === 0 && <span className="absolute inset-x-0 -bottom-1 text-center text-xs font-medium text-neutral-400">No shiny caught yet</span>}
               </>
             ) : (
               <>
@@ -242,11 +250,11 @@ export default function SpeciesDetail() {
                   large
                   caught={heroOwned > 0}
                   alt={heroForm?.name ?? name}
-                  className={heroOwned === 0 ? 'opacity-25' : undefined}
+                  className={cn(heroShadow, heroOwned === 0 && 'opacity-25')}
                   // a tile's artwork morphs into this (SpeciesTile)
                   style={{ viewTransitionName: dexArtName(species.dexNr) }}
                 />
-                {heroOwned === 0 && <span className="absolute inset-x-0 bottom-3 text-center text-xs font-medium text-neutral-400">Not caught yet</span>}
+                {heroOwned === 0 && <span className="absolute inset-x-0 -bottom-1 text-center text-xs font-medium text-neutral-400">Not caught yet</span>}
               </>
             )}
             {shinyCards.length > 0 && (
@@ -257,7 +265,7 @@ export default function SpeciesDetail() {
                   pickForm(undefined)
                 }}
                 title={shiny ? 'Show regular artwork' : `Show shiny artwork (${shinyOwned}/${shinyCards.length} shiny cards)`}
-                className={`absolute top-2 right-2 cursor-pointer rounded-full border-1 border-solid px-2 py-0.5 text-xs transition-colors ${shiny ? 'border-pink-300 bg-pink-300/20 text-pink-200' : 'border-neutral-600 bg-neutral-900/60 text-neutral-300 hover:border-pink-300'}`}
+                className={`absolute top-0 right-0 cursor-pointer rounded-full border-1 border-solid px-2 py-0.5 text-xs transition-colors ${shiny ? 'border-pink-300 bg-pink-300/20 text-pink-200' : 'border-neutral-600 bg-neutral-900/60 text-neutral-300 hover:border-pink-300'}`}
               >
                 ✵ {shinyOwned}/{shinyCards.length}
               </button>
@@ -423,6 +431,15 @@ export default function SpeciesDetail() {
     </main>
   )
 }
+
+/** The hero's glow: soft-edged (closest-side, so it's gone before the box's edge); dual types side by side. */
+const heroGlow = (types: CardType[]) =>
+  types.length === 1
+    ? `radial-gradient(closest-side at 50% 45%, ${typeColors[types[0]]}66, transparent)`
+    : `radial-gradient(closest-side at 38% 40%, ${typeColors[types[0]]}55, transparent), radial-gradient(closest-side at 62% 55%, ${typeColors[types[1]]}55, transparent)`
+
+// lifts the frameless hero artwork off the page
+const heroShadow = 'drop-shadow-[0_20px_22px_rgba(0,0,0,0.5)]'
 
 /** Wide soft ellipses from the top corners, the first type on the left and the second (or the same) on the right. */
 const pageGlow = (types: CardType[], caught: boolean) => {
