@@ -218,6 +218,21 @@ check('going back, the hero morphs back into its tile (link and browser back, th
   }
 })
 
+check('species page: the compact bar slides in past the hero; the hero depth is off on phones', async () => {
+  const page = await open('/pokedex/25', { width: 390, height: 844 })
+  await page.waitFor(`document.querySelector('main header')`)
+  const bar = `document.querySelector('main > .fixed')`
+  assert(await page.evaluate(`${bar}.inert`), 'the bar is live at the top of the page')
+  await page.evaluate('scrollTo(0, 1600)')
+  await page.waitFor(`!${bar}.inert`)
+  await wait(400)
+  const top = await page.evaluate(`${bar}.getBoundingClientRect().top`)
+  assert(Math.abs(top) <= 1, `past the hero the bar's top is at ${top}px`)
+  // no pointer-driven variables on touch screens
+  const depth = await page.evaluate(`document.querySelector('main header img[style*=dex-art]').parentElement.style.getPropertyValue('--px')`)
+  assert(depth === '', `the hero has --px ${depth} on a phone`)
+})
+
 browser = await launch()
 let failed = 0
 try {

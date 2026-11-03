@@ -1,7 +1,7 @@
 // Personal fork: a species' Pokédex entry and every printing of it, grouped by form, with what's owned and the best pack for a missing one.
 import { useQuery } from '@tanstack/react-query'
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { CardThumb } from '@/components/CardThumb'
@@ -95,6 +95,21 @@ export default function SpeciesDetail() {
   // shiny artwork exists for species only, not forms
   const shiny = showShiny && shinyCards.length > 0 && !formParam
 
+  // once the hero is scrolled past, a slim bar slides in with the species and ←/→, so long card grids keep their context
+  const headerRef = useRef<HTMLElement>(null)
+  const [compact, setCompact] = useState(false)
+  useEffect(() => {
+    const header = headerRef.current
+    if (!header) {
+      return
+    }
+    const observer = new IntersectionObserver(([e]) => setCompact(!e.isIntersecting && e.boundingClientRect.top < 0))
+    observer.observe(header)
+    return () => observer.disconnect()
+  }, [isLoading, species])
+  const heroRef = useRef<HTMLDivElement>(null)
+  useHeroDepth(heroRef, [isLoading, species])
+
   const touchStart = useRef<{ x: number; y: number } | undefined>(undefined)
   const onTouchStart = (e: React.TouchEvent) => {
     // not on the evolution line, which scrolls sideways itself
@@ -172,8 +187,54 @@ export default function SpeciesDetail() {
     })
     .filter((r) => r.total > 0)
 
+  // the artwork the hero shows, for the compact bar
+  const shown = shiny ? { artworkId: species.dexNr, caught: shinyOwned > 0 } : { artworkId: heroForm?.artworkId ?? species.dexNr, caught: heroOwned > 0 }
+
   return (
     <main className="relative isolate mx-auto max-w-6xl px-4 pb-12" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      <div
+        inert={!compact}
+        className={cn(
+          'fixed inset-x-0 top-0 z-30 border-white/[0.06] border-b border-solid bg-[#181818]/90 shadow-[0_8px_20px_-12px_rgb(0_0_0/0.8)] backdrop-blur transition-[translate] duration-200 ease-out motion-reduce:transition-none',
+          compact ? 'translate-y-0' : '-translate-y-full',
+        )}
+      >
+        <div className="mx-auto flex h-12 max-w-6xl items-center gap-3 px-4">
+          <button
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            title="Back to the top"
+            className="flex min-w-0 cursor-pointer items-center gap-2"
+          >
+            <Sprite artworkId={shown.artworkId} caught={shown.caught} shiny={shiny} alt="" className="size-9 shrink-0" />
+            <span className="dex-display truncate font-semibold text-lg tracking-tight">{heroForm?.name ?? name}</span>
+            <span className="hidden text-neutral-500 text-sm tabular-nums sm:inline">{dexLabel(species.dexNr)}</span>
+            <span className="flex shrink-0 gap-0.5">
+              {species.types.map((type) => (
+                <img key={type} src={`/images/energy/${type}.webp`} alt={type} className="size-4" />
+              ))}
+            </span>
+          </button>
+          <span className="ml-auto flex shrink-0 items-center gap-1 text-neutral-400 text-sm">
+            {[
+              { to: prev, Icon: ChevronLeft, label: 'Previous' },
+              { to: next, Icon: ChevronRight, label: 'Next' },
+            ].map(({ to, Icon, label }) => (
+              <button
+                key={label}
+                type="button"
+                disabled={!to}
+                onClick={() => to && stepTo(to)}
+                title={to ? speciesName(to, i18n.language) : undefined}
+                aria-label={to ? `${label}: ${speciesName(to, i18n.language)}` : label}
+                className="flex size-9 cursor-pointer items-center justify-center rounded-md transition-colors hover:bg-white/10 hover:text-white disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent"
+              >
+                <Icon className="size-5" />
+              </button>
+            ))}
+          </span>
+        </div>
+      </div>
       {/* the shown form's types wash over the top of the page, faintly until caught; masked so it fades out before the page's sides */}
       <div
         aria-hidden
@@ -218,18 +279,19 @@ export default function SpeciesDetail() {
         </span>
       </nav>
 
-      <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-8">
+      <header ref={headerRef} className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-8">
         <div className="mx-auto flex w-56 shrink-0 flex-col gap-2 sm:mx-0 sm:w-72 lg:w-80">
           {/*
             (its decoration ignores the pointer: the glow reaches up over the back link)
             no frame: the artwork floats on the shown form's type glow (Alolan Vulpix in Water) over its dex number, with a shadow
             on the floor beneath it; uncaught species stay a silhouette
           */}
-          <div className="relative isolate">
+          {/* on desktop the artwork leans towards the pointer and the dex number away from it (useHeroDepth) */}
+          <div ref={heroRef} className="relative isolate">
             <span aria-hidden className="pointer-events-none absolute -inset-[15%] -z-20" style={{ backgroundImage: heroGlow(heroTypes) }} />
             <span
               aria-hidden
-              className="dex-display pointer-events-none absolute inset-x-0 -top-4 -z-10 select-none text-center font-black text-[7.5rem] text-white/[0.06] leading-none tracking-tighter tabular-nums sm:-top-6 sm:text-[9.5rem] lg:text-[10.5rem]"
+              className="dex-display pointer-events-none absolute inset-x-0 -top-4 -z-10 select-none text-center transition-[translate] duration-500 ease-out [translate:calc(var(--px,0)*-8px)_calc(var(--py,0)*-5px)] font-black text-[7.5rem] text-white/[0.06] leading-none tracking-tighter tabular-nums sm:-top-6 sm:text-[9.5rem] lg:text-[10.5rem]"
             >
               {String(species.dexNr).padStart(3, '0')}
             </span>
@@ -242,7 +304,7 @@ export default function SpeciesDetail() {
                   shiny
                   large
                   alt={name}
-                  className={cn(heroShadow, shinyOwned === 0 && 'opacity-25')}
+                  className={cn(heroShadow, heroDepth, shinyOwned === 0 && 'opacity-25')}
                   style={{ viewTransitionName: dexArtName(species.dexNr) }}
                 />
                 {shinyOwned === 0 && <span className="absolute inset-x-0 -bottom-1 text-center text-xs font-medium text-neutral-400">No shiny caught yet</span>}
@@ -254,7 +316,7 @@ export default function SpeciesDetail() {
                   large
                   caught={heroOwned > 0}
                   alt={heroForm?.name ?? name}
-                  className={cn(heroShadow, heroOwned === 0 && 'opacity-25')}
+                  className={cn(heroShadow, heroDepth, heroOwned === 0 && 'opacity-25')}
                   // a tile's artwork morphs into this (SpeciesTile)
                   style={{ viewTransitionName: dexArtName(species.dexNr) }}
                 />
@@ -444,6 +506,51 @@ const heroGlow = (types: CardType[]) =>
 
 // lifts the frameless hero artwork off the page
 const heroShadow = 'drop-shadow-[0_20px_22px_rgba(0,0,0,0.5)]'
+// follows the pointer by up to 12px (--px/--py, -1…1, set by useHeroDepth)
+const heroDepth = 'transition-[translate] duration-500 ease-out [translate:calc(var(--px,0)*12px)_calc(var(--py,0)*8px)]'
+
+/**
+ * Depth in the hero: the pointer's offset from the hero's centre (-1…1 across half the window) as --px/--py on it, which the
+ * artwork follows and the dex number counters. CSS variables, not state, so moving the mouse doesn't re-render the page.
+ * Desktop only: off for touch, pens and reduced motion.
+ */
+function useHeroDepth(ref: RefObject<HTMLElement | null>, deps: unknown[]) {
+  useEffect(() => {
+    const hero = ref.current
+    if (!hero || !matchMedia('(hover: hover) and (pointer: fine)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return
+    }
+    const set = (x: number, y: number) => {
+      hero.style.setProperty('--px', x.toFixed(3))
+      hero.style.setProperty('--py', y.toFixed(3))
+    }
+    const clamp = (v: number) => Math.max(-1, Math.min(1, v))
+    let frame = 0
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') {
+        return
+      }
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => {
+        const r = hero.getBoundingClientRect()
+        set(clamp((e.clientX - r.left - r.width / 2) / (window.innerWidth / 2)), clamp((e.clientY - r.top - r.height / 2) / (window.innerHeight / 2)))
+      })
+    }
+    // the pointer leaving the window: back to rest
+    const onLeave = () => {
+      cancelAnimationFrame(frame)
+      set(0, 0)
+    }
+    window.addEventListener('pointermove', onMove, { passive: true })
+    document.documentElement.addEventListener('pointerleave', onLeave)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('pointermove', onMove)
+      document.documentElement.removeEventListener('pointerleave', onLeave)
+      set(0, 0)
+    }
+  }, deps)
+}
 
 /** Wide soft ellipses from the top corners, the first type on the left and the second (or the same) on the right. */
 const pageGlow = (types: CardType[], caught: boolean) => {
