@@ -41,9 +41,11 @@ node .claude/skills/screenshot/drive.mjs /pokedex "$SCRATCH/dex" 390 844 -- \
   "js:document.querySelector('[data-gen-chip=\"5\"]').click()" wait:1500 shot 'js:scrollY'
 ```
 
-Steps run in order. `js:<expr>` evaluates in the page and prints the value, `wait:<ms>` pauses, and
+Steps run in order. `js:<expr>` evaluates in the page and prints the value, `wait:<ms>` pauses,
+`hover:<css selector>` moves a real mouse onto that element (so CSS `:hover` applies; a JS event wouldn't), and
 `shot` writes `<prefix>-<n>.png`. Asserting with `js:` (what's highlighted, `scrollY`, `location.hash`)
-is often more reliable than reading a screenshot.
+is often more reliable than reading a screenshot. Tailwind v4 transforms land in the `translate` / `scale`
+properties, not `transform`, so read those with `getComputedStyle`.
 
 ## Saved checks: `checks/`
 
