@@ -151,7 +151,7 @@ const spritePop =
 
 /** Starts the species page's large artwork loading on hover or touch, so it's usually there when the page is. */
 const preloaded = new Set<string>()
-const preload = (url: string) => {
+export const preload = (url: string) => {
   if (!preloaded.has(url)) {
     preloaded.add(url)
     new Image().src = url

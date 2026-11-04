@@ -1,7 +1,7 @@
 // Personal fork: a species' Pokédex entry and every printing of it, grouped by form, with what's owned and the best pack for a missing one.
 import { useQuery } from '@tanstack/react-query'
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
-import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { type RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { CardThumb } from '@/components/CardThumb'
@@ -19,6 +19,7 @@ import {
   ownedCount,
   shinySpecies,
   speciesName,
+  spriteUrl,
   typesOf,
 } from '@/lib/pokedex'
 import { cn, getCardNameByLang } from '@/lib/utils'
@@ -28,7 +29,7 @@ import { useCollection, useSelectedCard } from '@/services/collection/useCollect
 import { type CardType, type ExpansionId, rarities } from '@/types'
 import { dexMatcher, parseDexFilters } from './dexFilters'
 import { chainScroller, EvolutionChain } from './EvolutionChain'
-import { dexArtName, dexLabel, GroupIcon, groupLabels, ProgressBar, Sprite, surface, typeColors, useOwnScrollRestore } from './SpeciesTile'
+import { dexArtName, dexLabel, GroupIcon, groupLabels, ProgressBar, preload, Sprite, surface, typeColors, useOwnScrollRestore } from './SpeciesTile'
 
 export default function SpeciesDetail() {
   const { t, i18n } = useTranslation(['common/sets', 'common/packs'])
@@ -41,18 +42,37 @@ export default function SpeciesDetail() {
   const navigate = useNavigate()
   // opened from the Pokédex, ← / → step through its filtered list (in its sort order); otherwise through every species
   const location = useLocation()
-  const saved = location.state?.fromDex === true ? loadReturn() : undefined
-  const dexList = saved ? dexMatcher(parseDexFilters(new URLSearchParams(saved.search)), collection).filtered : allSpecies
+  const fromDex = location.state?.fromDex === true
+  // filtering the whole Pokédex isn't free, and the page re-renders on scroll (the compact bar)
+  const dexList = useMemo(() => {
+    const saved = fromDex ? loadReturn() : undefined
+    return saved ? dexMatcher(parseDexFilters(new URLSearchParams(saved.search)), collection).filtered : allSpecies
+  }, [fromDex, collection])
   const steps = species && dexList.some((s) => s.dexNr === species.dexNr) ? dexList : allSpecies
   const index = species ? steps.findIndex((s) => s.dexNr === species.dexNr) : -1
   const prev = steps[index - 1]
   const next = steps[index + 1]
-  // a species opens at the top, not at the scroll position of the list or species it came from
+  const heroRef = useRef<HTMLDivElement>(null)
+  // a species opens at the top, not at the scroll position of the list or species it came from; the hero drops where a swipe
+  // dragged it before the new page is snapshotted
   useLayoutEffect(() => {
     window.scrollTo(0, 0)
+    settleHero(heroRef.current, false)
   }, [nr])
   useOwnScrollRestore()
-  const stepTo = (to: { dexNr: number }) => navigate(`/pokedex/${to.dexNr}`, { replace: true, state: location.state, viewTransition: true })
+  // the neighbours' artwork starts loading now, so a step doesn't land on an empty hero
+  useEffect(() => {
+    for (const s of [prev, next]) {
+      if (s) {
+        preload(spriteUrl(s.dexNr))
+        preload(spriteUrl(s.dexNr, false, true))
+      }
+    }
+  }, [prev, next])
+  const stepTo = (to: { dexNr: number }) => {
+    markStep(to === prev ? 'prev' : 'next')
+    navigate(`/pokedex/${to.dexNr}`, { replace: true, state: location.state, viewTransition: true })
+  }
 
   // ← / → on desktop; ignored while typing or with a dialog (card detail) open
   useEffect(() => {
@@ -69,7 +89,6 @@ export default function SpeciesDetail() {
     return () => window.removeEventListener('keydown', onKey)
   }, [prev, next, stepTo])
 
-  // a mostly horizontal swipe on phones does the same
   // ?shiny (from the Shiny Pokédex) opens on the shiny artwork; the ✵ button flips it
   const [searchParams, setSearchParams] = useSearchParams()
   const [showShiny, setShowShiny] = useState(searchParams.has('shiny'))
@@ -107,26 +126,51 @@ export default function SpeciesDetail() {
     observer.observe(header)
     return () => observer.disconnect()
   }, [isLoading, species])
-  const heroRef = useRef<HTMLDivElement>(null)
   useHeroDepth(heroRef, [isLoading, species])
 
-  const touchStart = useRef<{ x: number; y: number } | undefined>(undefined)
+  // a horizontal swipe on phones steps too; the artwork follows the finger once the swipe reads as sideways (not a scroll), and
+  // resists where there's no species to step to
+  const touch = useRef<{ x: number; y: number; dx: number; sideways?: boolean } | undefined>(undefined)
   const onTouchStart = (e: React.TouchEvent) => {
-    // not on the evolution line, which scrolls sideways itself
-    touchStart.current = (e.target as HTMLElement).closest('.overflow-x-auto') ? undefined : { x: e.touches[0].clientX, y: e.touches[0].clientY }
+    // not on the evolution line, which scrolls sideways itself, nor a pinch
+    touch.current =
+      e.touches.length > 1 || (e.target as HTMLElement).closest('.overflow-x-auto') ? undefined : { x: e.touches[0].clientX, y: e.touches[0].clientY, dx: 0 }
   }
-  const onTouchEnd = (e: React.TouchEvent) => {
-    const start = touchStart.current
-    touchStart.current = undefined
-    if (!start) {
+  const onTouchMove = (e: React.TouchEvent) => {
+    const t = touch.current
+    if (!t || e.touches.length > 1) {
       return
     }
-    const dx = e.changedTouches[0].clientX - start.x
-    const dy = e.changedTouches[0].clientY - start.y
-    const to = Math.abs(dx) > 80 && Math.abs(dx) > 2 * Math.abs(dy) ? (dx > 0 ? prev : next) : undefined
+    const dx = e.touches[0].clientX - t.x
+    const dy = e.touches[0].clientY - t.y
+    t.sideways ??= Math.hypot(dx, dy) > 10 ? Math.abs(dx) > 1.5 * Math.abs(dy) : undefined
+    const hero = heroRef.current
+    if (!t.sideways || !hero) {
+      return
+    }
+    t.dx = dx
+    const shift = (dx > 0 ? prev : next) ? dx * 0.5 : dx * 0.12
+    hero.style.transition = 'none'
+    hero.style.transform = `translateX(${shift}px)`
+    hero.style.opacity = String(1 - Math.min(Math.abs(shift) / 300, 0.5))
+  }
+  const onTouchEnd = () => {
+    const t = touch.current
+    touch.current = undefined
+    if (!t?.sideways) {
+      return
+    }
+    const to = Math.abs(t.dx) > 60 ? (t.dx > 0 ? prev : next) : undefined
     if (to) {
       stepTo(to)
+    } else {
+      settleHero(heroRef.current, true)
     }
+  }
+  // the browser took the touch (Safari's edge swipe back, a scroll)
+  const onTouchCancel = () => {
+    touch.current = undefined
+    settleHero(heroRef.current, true)
   }
 
   if (isLoading) {
@@ -191,7 +235,13 @@ export default function SpeciesDetail() {
   const shown = shiny ? { artworkId: species.dexNr, caught: shinyOwned > 0 } : { artworkId: heroForm?.artworkId ?? species.dexNr, caught: heroOwned > 0 }
 
   return (
-    <main className="relative isolate mx-auto max-w-6xl px-4 pb-12" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+    <main
+      className="dex-page relative isolate mx-auto max-w-6xl px-4 pb-12"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchCancel}
+    >
       <div
         inert={!compact}
         className={cn(
@@ -260,7 +310,14 @@ export default function SpeciesDetail() {
         </Link>
         <span className="flex items-center gap-4">
           {prev && (
-            <Link to={`/pokedex/${prev.dexNr}`} replace viewTransition state={location.state} className="flex items-center hover:text-white">
+            <Link
+              to={`/pokedex/${prev.dexNr}`}
+              replace
+              viewTransition
+              state={location.state}
+              onClick={() => markStep('prev')}
+              className="flex items-center hover:text-white"
+            >
               <ChevronLeft className="size-4" />
               {speciesName(prev, i18n.language)}
             </Link>
@@ -271,7 +328,14 @@ export default function SpeciesDetail() {
             </span>
           )}
           {next && (
-            <Link to={`/pokedex/${next.dexNr}`} replace viewTransition state={location.state} className="flex items-center hover:text-white">
+            <Link
+              to={`/pokedex/${next.dexNr}`}
+              replace
+              viewTransition
+              state={location.state}
+              onClick={() => markStep('next')}
+              className="flex items-center hover:text-white"
+            >
               {speciesName(next, i18n.language)}
               <ChevronRight className="size-4" />
             </Link>
@@ -304,7 +368,7 @@ export default function SpeciesDetail() {
                   shiny
                   large
                   alt={name}
-                  className={cn(heroShadow, heroDepth, shinyOwned === 0 && 'opacity-25')}
+                  className={cn('dex-hero', heroShadow, heroDepth, shinyOwned === 0 && 'opacity-25')}
                   style={{ viewTransitionName: dexArtName(species.dexNr) }}
                 />
                 {shinyOwned === 0 && <span className="absolute inset-x-0 -bottom-1 text-center text-xs font-medium text-neutral-400">No shiny caught yet</span>}
@@ -316,7 +380,7 @@ export default function SpeciesDetail() {
                   large
                   caught={heroOwned > 0}
                   alt={heroForm?.name ?? name}
-                  className={cn(heroShadow, heroDepth, heroOwned === 0 && 'opacity-25')}
+                  className={cn('dex-hero', heroShadow, heroDepth, heroOwned === 0 && 'opacity-25')}
                   // a tile's artwork morphs into this (SpeciesTile)
                   style={{ viewTransitionName: dexArtName(species.dexNr) }}
                 />
@@ -496,6 +560,27 @@ export default function SpeciesDetail() {
       })}
     </main>
   )
+}
+
+/**
+ * Marks a step to the previous or next species for the view transition: the page slides out one side and the next species in
+ * from the other (pokedex.css), instead of the two heroes, which go by different names, crossfading on top of each other.
+ * Cleared once the transition is over.
+ */
+let stepTimer = 0
+function markStep(direction: 'prev' | 'next') {
+  document.documentElement.dataset.dexStep = direction
+  clearTimeout(stepTimer)
+  stepTimer = window.setTimeout(() => delete document.documentElement.dataset.dexStep, 600)
+}
+
+/** The hero back from where a swipe dragged it: eased back when the swipe fell short, at once for the next species. */
+function settleHero(hero: HTMLElement | null, animate: boolean) {
+  if (hero) {
+    hero.style.transition = animate ? 'transform 200ms ease-out, opacity 200ms ease-out' : ''
+    hero.style.transform = ''
+    hero.style.opacity = ''
+  }
 }
 
 /** The hero's glow: soft-edged (closest-side, so it's gone before the box's edge); dual types side by side. */
