@@ -1,4 +1,4 @@
-// Personal fork: the rankings page's demand map — every card on log–log scatters of wishlists per offer against listings, one per rarity.
+// Personal fork: the rankings page's demand map — every card on a log–log scatter of offers (supply) against wishlists (demand).
 import { type MouseEvent, type RefObject, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMediaQuery } from 'react-responsive'
@@ -24,11 +24,11 @@ import { getLocalizedImagePath } from '@/lib/imageLocales'
 import type { DemandPoint } from '@/lib/rankings'
 import { getCardNameByLang } from '@/lib/utils'
 import { averageDemandRatio } from '@/lib/ValueDB'
-import { type Card, type ExpansionId, type Rarity, rarities } from '@/types'
+import type { Card, ExpansionId } from '@/types'
 
 // The app is dark-only, but both steps are given so the chart wrapper's theme scopes stay complete.
-// The highlighted group (owned cards, or the newest set) is the one categorical hue; the rest is context grey, drawn
-// underneath.
+// The highlighted group (owned cards, or the newest set) is the one categorical hue; the rest is context grey, also drawn
+// smaller and underneath.
 const chartConfig = {
   owned: { label: 'Highlighted', theme: { light: '#2a78d6', dark: '#3987e5' } },
   rest: { label: 'Rest', theme: { light: '#a3a3a3', dark: '#737373' } },
@@ -151,49 +151,64 @@ function CardDetails({ point, owned }: { point: DemandPoint; owned?: (card: Card
   )
 }
 
-interface PanelProps {
-  title: string
-  highDots: Dot[]
-  restDots: Dot[]
-  xDomain: [number, number]
-  yDomain: [number, number]
-  guides: Guide[]
-  plain: boolean
-  single: boolean // the only panel, so it gets the full width, a wider shape and the fuller tick set
-  coarse: boolean
-  picked?: DemandPoint
-  onPick: (point: DemandPoint | undefined) => void
+interface Props {
+  points: DemandPoint[]
+  owned?: (card: Card) => boolean // left out when ownership isn't shown: every dot is drawn the same
   onSelect: (card: Card) => void
-  owned?: (card: Card) => boolean
 }
 
-// One rarity's cards. Every panel shares the same axes, so positions compare across panels.
-function Panel({ title, highDots, restDots, xDomain, yDomain, guides, plain, single, coarse, picked, onPick, onSelect, owned }: PanelProps) {
+export function DemandMap({ points, owned, onSelect }: Props) {
+  const { t } = useTranslation('common/sets')
+  // Touch: a tap picks the nearest dot and shows it below the chart, where "Open card" is a real button
+  const coarse = useMediaQuery({ query: '(pointer: coarse)' })
+  const [picked, setPicked] = useState<DemandPoint>()
   const scalesRef = useRef<Scales>(undefined)
-  const pickedDot = picked && (highDots.find((d) => d.point === picked) ?? restDots.find((d) => d.point === picked))
-  const [lo, hi] = [averageDemandRatio() / 2, averageDemandRatio() * 2]
 
-  // The context cards are small and faint where they sit within 2× of the average, so a crowd adds up to a brighter
-  // patch instead of a solid blob, and the cards outside that band, the interesting ones, stay at full strength. The
-  // transparent circle is a ~22px hit area for hover and click; `ring` marks the hovered card.
-  const dot =
-    (fill: string, r: number, fade: boolean, ring = false) =>
-    (props: unknown) => {
-      const { cx, cy, payload } = props as { cx?: number; cy?: number; payload?: Dot }
-      if (cx === undefined || cy === undefined || !payload) {
-        return <g />
-      }
-      const inBand = fade && payload.y > lo && payload.y < hi
-      return (
-        <g className="cursor-pointer">
-          <circle cx={cx} cy={cy} r={11} fill="transparent" />
-          <circle cx={cx} cy={cy} r={r} fill={fill} fillOpacity={ring ? 1 : inBand ? 0.3 : 0.9} />
-          {ring && <circle cx={cx} cy={cy} r={r + 4} fill="none" stroke="#f5f5f5" strokeWidth={1.5} />}
-        </g>
-      )
+  // The newest-set highlight only means something when the map holds it alongside other sets
+  const newest: ExpansionId | undefined = useMemo(() => {
+    const id = newestSet(points)
+    return id && points.some((p) => p.card.expansion !== id) ? id : undefined
+  }, [points])
+  const options: Highlight[] = [owned ? 'owned' : 'none', ...(newest ? (['newest'] as const) : [])]
+  const [chosen, setChosen] = useState<Highlight>(owned ? 'owned' : 'none')
+  const highlight = options.includes(chosen) ? chosen : options[0]
+
+  const { highDots, restDots, xDomain, yDomain } = useMemo(() => {
+    const isHigh = (card: Card) => (highlight === 'owned' ? !!owned?.(card) : highlight === 'newest' ? card.expansion === newest : false)
+    const highDots: Dot[] = []
+    const restDots: Dot[] = []
+    for (const point of points) {
+      ;(isHigh(point.card) ? highDots : restDots).push({ x: activity(point), y: ratioOf(point), point })
     }
-  const r = single ? 3 : 2
-  const restFill = plain ? 'var(--color-owned)' : 'var(--color-rest)'
+    return { highDots, restDots, xDomain: logDomain(points.map(activity)), yDomain: logDomain(points.map(ratioOf)) }
+  }, [points, owned, highlight, newest])
+  const plain = highlight === 'none'
+  const pickedDot = picked && (highDots.find((d) => d.point === picked) ?? restDots.find((d) => d.point === picked))
+
+  // The average wishlists per offer (what demandScore shrinks toward), plus fainter lines at 2× and ½× it, splitting the
+  // map into hot / normal / cold bands. A line outside the cards' range is left out.
+  const ratio = averageDemandRatio()
+  const guides = (
+    [
+      [1, undefined],
+      [2, '2×'],
+      [0.5, '½×'],
+    ] as const
+  ).flatMap(([k, label]): Guide[] => (ratio * k > yDomain[0] && ratio * k < yDomain[1] ? [{ label, dashed: k === 1, y: ratio * k }] : []))
+
+  // a 2px-wide surface ring keeps overlapping dots apart; the transparent circle is a ~22px hit area for hover and click
+  const dot = (fill: string, r: number) => (props: unknown) => {
+    const { cx, cy, payload } = props as { cx?: number; cy?: number; payload?: Dot }
+    if (cx === undefined || cy === undefined || !payload) {
+      return <g />
+    }
+    return (
+      <g className="cursor-pointer">
+        <circle cx={cx} cy={cy} r={11} fill="transparent" />
+        <circle cx={cx} cy={cy} r={r} fill={fill} stroke="var(--color-surface)" strokeWidth={1} />
+      </g>
+    )
+  }
 
   const select = (item: { payload?: Dot }) => item.payload && onSelect(item.payload.point.card)
 
@@ -216,7 +231,7 @@ function Panel({ title, highDots, restDots, xDomain, yDomain, guides, plain, sin
         bestDist = dx * dx + dy * dy
       }
     }
-    onPick(best?.point)
+    setPicked(best?.point)
   }
 
   const tooltip = ({ active, payload }: TooltipContentProps<ValueType, NameType>) => {
@@ -230,140 +245,6 @@ function Panel({ title, highDots, restDots, xDomain, yDomain, guides, plain, sin
       </div>
     )
   }
-
-  const total = highDots.length + restDots.length
-  return (
-    <div className="min-w-0 rounded-lg border border-neutral-800 p-1.5">
-      <div className="flex items-baseline justify-between gap-2 px-1 text-xs">
-        <span className="font-medium text-neutral-200">{title}</span>
-        <span className="text-neutral-500 tabular-nums">
-          {!plain && <span className="text-[#3987e5]">{highDots.length.toLocaleString()} / </span>}
-          {total.toLocaleString()}
-        </span>
-      </div>
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: touch-only nearest-dot picking; the Most wanted tab is the list view */}
-      <div onClick={coarse ? tap : undefined}>
-        <ChartContainer
-          config={chartConfig}
-          className={`w-full [&_g]:outline-hidden ${single ? 'aspect-square sm:aspect-[16/9]' : 'aspect-[5/4]'}`}
-          role="img"
-          aria-label={`${title}: ${total} cards, wishlists per offer against total listings on log scales`}
-        >
-          <ScatterChart margin={{ top: 6, right: 4, bottom: 0, left: 0 }}>
-            <CartesianGrid stroke="#262626" strokeWidth={1} />
-            <XAxis
-              type="number"
-              dataKey="x"
-              scale="log"
-              domain={xDomain}
-              ticks={logTicks(xDomain, single ? 6 : 3)}
-              tickFormatter={formatCount}
-              allowDataOverflow
-              tickLine={false}
-              axisLine={false}
-              height={single ? 24 : 18}
-              tick={{ fontSize: single ? 12 : 10 }}
-            />
-            <YAxis
-              type="number"
-              dataKey="y"
-              scale="log"
-              domain={yDomain}
-              ticks={logTicks(yDomain, single ? 6 : 4)}
-              allowDataOverflow
-              tickLine={false}
-              axisLine={false}
-              width={single ? 40 : 30}
-              tick={{ fontSize: single ? 12 : 10 }}
-            />
-            {guides.map(({ label, dashed, y }) => (
-              <ReferenceLine key={label ?? 'average'} y={y} stroke={dashed ? '#a3a3a3' : '#525252'} strokeDasharray={dashed ? '4 4' : '1 3'} strokeWidth={1} />
-            ))}
-            {!coarse && <ChartTooltip content={tooltip} cursor={false} isAnimationActive={false} />}
-            {/* highlighted last, so it draws on top of the context dots */}
-            <Scatter
-              data={restDots}
-              shape={dot(restFill, r, true)}
-              activeShape={coarse ? undefined : dot(restFill, r, true, true)}
-              onClick={coarse ? undefined : select}
-              isAnimationActive={false}
-            />
-            {!plain && (
-              <Scatter
-                data={highDots}
-                shape={dot('var(--color-owned)', r + 0.5, false)}
-                activeShape={coarse ? undefined : dot('var(--color-owned)', r + 0.5, false, true)}
-                onClick={coarse ? undefined : select}
-                isAnimationActive={false}
-              />
-            )}
-            {/* the 2× and ½× labels only fit a full-width panel; the legend names the lines either way */}
-            <PlotOverlay guides={single ? guides : []} xMax={xDomain[1]} picked={coarse ? pickedDot : undefined} scalesRef={scalesRef} />
-          </ScatterChart>
-        </ChartContainer>
-      </div>
-    </div>
-  )
-}
-
-interface Props {
-  points: DemandPoint[]
-  owned?: (card: Card) => boolean // left out when ownership isn't shown: every dot is drawn the same
-  onSelect: (card: Card) => void
-}
-
-export function DemandMap({ points, owned, onSelect }: Props) {
-  const { t } = useTranslation('common/sets')
-  // Touch: a tap picks the nearest dot in its panel and shows it below the panels, where "Open card" is a real button
-  const coarse = useMediaQuery({ query: '(pointer: coarse)' })
-  const [picked, setPicked] = useState<DemandPoint>()
-
-  // The newest-set highlight only means something when the map holds it alongside other sets
-  const newest: ExpansionId | undefined = useMemo(() => {
-    const id = newestSet(points)
-    return id && points.some((p) => p.card.expansion !== id) ? id : undefined
-  }, [points])
-  const options: Highlight[] = [owned ? 'owned' : 'none', ...(newest ? (['newest'] as const) : [])]
-  const [chosen, setChosen] = useState<Highlight>(owned ? 'owned' : 'none')
-  const highlight = options.includes(chosen) ? chosen : options[0]
-
-  // One panel per rarity, in rarity order: rarity decides most of where a card lands, so stacked on one chart the
-  // rarities bury each other, while apart each panel holds a few hundred cards
-  const { panels, highCount, xDomain, yDomain } = useMemo(() => {
-    const isHigh = (card: Card) => (highlight === 'owned' ? !!owned?.(card) : highlight === 'newest' ? card.expansion === newest : false)
-    const byRarity = new Map<Rarity, { highDots: Dot[]; restDots: Dot[] }>()
-    let highCount = 0
-    for (const point of points) {
-      const panel = byRarity.get(point.card.rarity) ?? { highDots: [], restDots: [] }
-      const high = isHigh(point.card)
-      highCount += high ? 1 : 0
-      ;(high ? panel.highDots : panel.restDots).push({ x: activity(point), y: ratioOf(point), point })
-      byRarity.set(point.card.rarity, panel)
-    }
-    return {
-      panels: rarities.flatMap((rarity) => {
-        const panel = byRarity.get(rarity)
-        return panel ? [{ rarity, ...panel }] : []
-      }),
-      highCount,
-      xDomain: logDomain(points.map(activity)),
-      yDomain: logDomain(points.map(ratioOf)),
-    }
-  }, [points, owned, highlight, newest])
-  const plain = highlight === 'none'
-  const single = panels.length === 1
-  const pickedPoint = picked && points.includes(picked) ? picked : undefined
-
-  // The average wishlists per offer (what demandScore shrinks toward), plus fainter lines at 2× and ½× it, splitting the
-  // map into hot / normal / cold bands. A line outside the cards' range is left out.
-  const ratio = averageDemandRatio()
-  const guides = (
-    [
-      [1, undefined],
-      [2, '2×'],
-      [0.5, '½×'],
-    ] as const
-  ).flatMap(([k, label]): Guide[] => (ratio * k > yDomain[0] && ratio * k < yDomain[1] ? [{ label, dashed: k === 1, y: ratio * k }] : []))
 
   const highlightLabel = (h: Highlight) => (h === 'owned' ? 'Owned' : h === 'newest' && newest ? `Newest set (${newest})` : 'None')
   const legendItems =
@@ -398,11 +279,11 @@ export function DemandMap({ points, owned, onSelect }: Props) {
           <>
             <span className="flex items-center gap-1.5">
               <span aria-hidden className="size-2.5 rounded-full" style={{ backgroundColor: chartConfig.owned.theme.dark }} />
-              {legendItems[0]} · {highCount.toLocaleString()}
+              {legendItems[0]} · {highDots.length.toLocaleString()}
             </span>
             <span className="flex items-center gap-1.5">
               <span aria-hidden className="size-2 rounded-full opacity-60" style={{ backgroundColor: chartConfig.rest.theme.dark }} />
-              {legendItems[1]} · {(points.length - highCount).toLocaleString()}
+              {legendItems[1]} · {restDots.length.toLocaleString()}
             </span>
           </>
         ) : (
@@ -417,37 +298,69 @@ export function DemandMap({ points, owned, onSelect }: Props) {
           2× and ½× the average
         </span>
       </div>
-      <p className="mb-2 text-xs text-neutral-500">↑ wishlists per offer (higher is more wanted) · → listings, wishlists + offers (further is more traded)</p>
 
-      <div className={`grid gap-2 ${single ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-3'}`}>
-        {panels.map(({ rarity, highDots, restDots }) => (
-          <Panel
-            key={rarity}
-            title={rarity}
-            highDots={highDots}
-            restDots={restDots}
-            xDomain={xDomain}
-            yDomain={yDomain}
-            guides={guides}
-            plain={plain}
-            single={single}
-            coarse={coarse}
-            picked={pickedPoint}
-            onPick={setPicked}
-            onSelect={onSelect}
-            owned={owned}
-          />
-        ))}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: touch-only nearest-dot picking; the Most wanted tab is the list view */}
+      <div className="relative" onClick={coarse ? tap : undefined}>
+        <ChartContainer
+          config={chartConfig}
+          className="aspect-square w-full sm:aspect-[16/9] [&_g]:outline-hidden"
+          role="img"
+          aria-label={`Scatter of ${points.length} cards, wishlists per offer against total listings on log scales. Cards above the dashed line are more wanted than average.`}
+        >
+          <ScatterChart margin={{ top: 8, right: 8, bottom: 20, left: 4 }}>
+            <CartesianGrid stroke="#262626" strokeWidth={1} />
+            <XAxis
+              type="number"
+              dataKey="x"
+              scale="log"
+              domain={xDomain}
+              ticks={logTicks(xDomain)}
+              tickFormatter={formatCount}
+              allowDataOverflow
+              tickLine={false}
+              axisLine={false}
+              label={{ value: 'Listings (wishlists + offers)', position: 'insideBottom', offset: -14, className: 'fill-neutral-400' }}
+            />
+            <YAxis
+              type="number"
+              dataKey="y"
+              scale="log"
+              domain={yDomain}
+              ticks={logTicks(yDomain)}
+              allowDataOverflow
+              tickLine={false}
+              axisLine={false}
+              width={44}
+              label={{ value: 'Wishlists per offer', angle: -90, position: 'insideLeft', offset: 10, className: 'fill-neutral-400' }}
+            />
+            {guides.map(({ label, dashed, y }) => (
+              <ReferenceLine key={label ?? 'average'} y={y} stroke={dashed ? '#a3a3a3' : '#525252'} strokeDasharray={dashed ? '4 4' : '1 3'} strokeWidth={1} />
+            ))}
+            {!coarse && <ChartTooltip content={tooltip} cursor={false} isAnimationActive={false} />}
+            {/* highlighted last, so it draws on top of the context dots */}
+            <Scatter
+              data={restDots}
+              shape={dot(plain ? 'var(--color-owned)' : 'var(--color-rest)', plain ? 3 : 2.5)}
+              opacity={plain ? 0.85 : 0.6}
+              onClick={coarse ? undefined : select}
+              isAnimationActive={false}
+            />
+            {!plain && <Scatter data={highDots} shape={dot('var(--color-owned)', 3.5)} onClick={coarse ? undefined : select} isAnimationActive={false} />}
+            <PlotOverlay guides={guides} xMax={xDomain[1]} picked={coarse ? pickedDot : undefined} scalesRef={scalesRef} />
+          </ScatterChart>
+        </ChartContainer>
+        <span className="pointer-events-none absolute top-3 left-14 text-[11px] text-neutral-500">↑ more wanted than average</span>
+        <span className="pointer-events-none absolute bottom-12 left-14 text-[11px] text-neutral-500">↓ more offered than average</span>
       </div>
       {coarse && (
-        <div className="sticky bottom-19 z-20 mt-2 min-h-[5.5rem] rounded-lg border border-neutral-600 bg-neutral-900/95 p-2 text-xs shadow-lg backdrop-blur">
-          {pickedPoint ? (
+        <div className="mt-2 min-h-[5.5rem] rounded-lg border border-neutral-800 bg-neutral-900 p-2 text-xs">
+          {pickedDot ? (
             <div className="flex items-start gap-2">
-              <CardDetails point={pickedPoint} owned={owned} />
+              <CardDetails point={pickedDot.point} owned={owned} />
               <button
                 type="button"
                 className="shrink-0 rounded-md border border-neutral-700 px-2.5 py-1.5 text-neutral-200"
-                onClick={() => onSelect(pickedPoint.card)}
+                onClick={() => onSelect(pickedDot.point.card)}
               >
                 Open card
               </button>
@@ -458,9 +371,8 @@ export function DemandMap({ points, owned, onSelect }: Props) {
         </div>
       )}
       <p className="mt-1 text-[11px] text-neutral-500">
-        One panel per rarity, all on the same log scales. Height is (wishlists + 1) / (offers + 1). Cards within 2× of the average are faded so the outliers
-        stand out. Cards with no listings at all are left out. {coarse ? 'Tap near a dot to pick the closest card.' : 'Click a dot to open the card.'} The Most
-        wanted tab lists the same cards ranked.
+        Log scales. Height is (wishlists + 1) / (offers + 1); further right means more traded overall, so the numbers are surer. Cards with no listings at all
+        are left out. {coarse ? 'Tap near a dot to pick the closest card.' : 'Click a dot to open the card.'} The Most wanted tab lists the same cards ranked.
       </p>
     </section>
   )
