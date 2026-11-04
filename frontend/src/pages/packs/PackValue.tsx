@@ -13,6 +13,7 @@ import { useAccount } from '@/services/account/useAccount'
 import { userQuery } from '@/services/auth/useAuth'
 import { useCollection } from '@/services/collection/useCollection'
 import { PackCard } from './components/PackCard'
+import { PackOdds } from './components/PackOdds'
 import { PackSummary } from './components/PackSummary'
 import { goals, type PackRow, personalSorts, type Range, type Ranges, type SortKey, sortOrder } from './types'
 
@@ -105,6 +106,7 @@ export default function PackValue() {
       </div>
 
       {!waiting && packs.length > 0 && <PackSummary pack={packs[0]} sortKey={sortKey} total={all.length} />}
+      {!waiting && <PackOdds packs={packs} sortKey={sortKey} />}
 
       {waiting ? (
         <div className="flex justify-center py-16">
