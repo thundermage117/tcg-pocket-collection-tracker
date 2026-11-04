@@ -1,5 +1,5 @@
 // Personal fork: the rankings page's demand map — every card on a log–log scatter of offers (supply) against wishlists (demand).
-import { type MouseEvent, type RefObject, useEffect, useMemo, useRef, useState } from 'react'
+import { type MouseEvent, type RefObject, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMediaQuery } from 'react-responsive'
 import {
@@ -78,33 +78,6 @@ const newestSet = (points: DemandPoint[]) => {
 // How far a tap may land from a dot and still pick it, in px: dense clusters are far smaller than a fingertip
 const TAP_RADIUS = 32
 
-// The context cards are binned into hexagons, a hundredth of the plot's width from centre to corner but at least 7px.
-// A hex holding at least DENSE of them is shaded as one, darker the more it holds; the sparse fringe keeps its own
-// dots. So the map draws about as much however many cards there are, and the outliers stay individually visible.
-const hexRadius = (plotWidth: number) => Math.max(7, plotWidth / 100)
-const DENSE = 3
-const hexPath = (r: number) => `M${[0, 1, 2, 3, 4, 5].map((i) => `${r * Math.sin((i * Math.PI) / 3)},${-r * Math.cos((i * Math.PI) / 3)}`).join('L')}Z`
-
-// The hex (pointy-top, rows offset by half a hex) a pixel falls in, as its centre; d3-hexbin's rounding
-const hexCentre = (px: number, py: number, r: number) => {
-  const dx = r * Math.sqrt(3)
-  const dy = r * 1.5
-  const fy = py / dy
-  let j = Math.round(fy)
-  const fx = px / dx - (j & 1) / 2
-  let i = Math.round(fx)
-  const fy1 = fy - j
-  if (Math.abs(fy1) * 3 > 1) {
-    const i2 = i + (fx < i ? -1 : 1) / 2
-    const j2 = j + (fy < j ? -1 : 1)
-    if ((fx - i) ** 2 + fy1 ** 2 > (fx - i2) ** 2 + (fy - j2) ** 2) {
-      i = i2 + (j & 1 ? 1 : -1) / 2
-      j = j2
-    }
-  }
-  return { x: (i + (j & 1) / 2) * dx, y: j * dy }
-}
-
 type Highlight = 'owned' | 'newest' | 'none'
 
 interface Dot {
@@ -146,72 +119,6 @@ function PlotOverlay({ guides, xMax, picked, scalesRef }: { guides: Guide[]; xMa
           ) : null
         })}
         {ringX !== undefined && ringY !== undefined && <circle cx={ringX} cy={ringY} r={8} fill="none" stroke="#f5f5f5" strokeWidth={1.5} />}
-      </g>
-    </ZIndexLayer>
-  )
-}
-
-// Renders inside the chart to reach its scales: the context cards as shaded hexes where they crowd and dots where they
-// don't. Purely drawn; the context Scatter above it keeps an invisible hit area per card for hover, click and tap.
-function DensityLayer({
-  dots,
-  xDomain,
-  fill,
-  r,
-  opacity,
-  onShaded,
-}: {
-  dots: Dot[]
-  xDomain: [number, number]
-  fill: string
-  r: number
-  opacity: number
-  onShaded: (any: boolean) => void
-}) {
-  const x = useXAxisScale()
-  const y = useYAxisScale()
-  const { hexes, sparse, max, path } = useMemo(() => {
-    const hexR = hexRadius(x ? Math.abs((x(xDomain[1]) ?? 0) - (x(xDomain[0]) ?? 0)) : 0)
-    const cells = new Map<string, { x: number; y: number; dots: { x: number; y: number; id: string }[] }>()
-    if (x && y) {
-      for (const d of dots) {
-        const [px, py] = [x(d.x), y(d.y)]
-        if (px === undefined || py === undefined) {
-          continue
-        }
-        const c = hexCentre(px, py, hexR)
-        const key = `${c.x},${c.y}`
-        const cell = cells.get(key) ?? { ...c, dots: [] }
-        cell.dots.push({ x: px, y: py, id: d.point.card.card_id })
-        cells.set(key, cell)
-      }
-    }
-    const all = [...cells.values()]
-    const hexes = all.filter((c) => c.dots.length >= DENSE)
-    return {
-      hexes,
-      sparse: all.filter((c) => c.dots.length < DENSE).flatMap((c) => c.dots),
-      max: Math.max(DENSE + 1, ...hexes.map((c) => c.dots.length)),
-      path: hexPath(hexR),
-    }
-  }, [x, y, dots, xDomain])
-  const shaded = hexes.length > 0
-  useEffect(() => onShaded(shaded), [shaded, onShaded])
-
-  // log-scaled, so a hex of 3 is still visible next to one of 60
-  const shade = (n: number) => 0.3 + (0.65 * Math.log(n / DENSE)) / Math.log(max / DENSE)
-  return (
-    // under the guide lines (z 400), so they stay readable across the shaded core
-    <ZIndexLayer zIndex={DefaultZIndexes.line - 100}>
-      <g className="pointer-events-none">
-        {hexes.map((c) => (
-          <path key={`${c.x},${c.y}`} d={path} transform={`translate(${c.x},${c.y})`} fill={fill} fillOpacity={shade(c.dots.length)} />
-        ))}
-        <g opacity={opacity}>
-          {sparse.map((d) => (
-            <circle key={d.id} cx={d.x} cy={d.y} r={r} fill={fill} stroke="var(--color-surface)" strokeWidth={1} />
-          ))}
-        </g>
       </g>
     </ZIndexLayer>
   )
@@ -276,9 +183,6 @@ export function DemandMap({ points, owned, onSelect }: Props) {
     return { highDots, restDots, xDomain: logDomain(points.map(activity)), yDomain: logDomain(points.map(ratioOf)) }
   }, [points, owned, highlight, newest])
   const plain = highlight === 'none'
-  const rest = { fill: plain ? 'var(--color-owned)' : 'var(--color-rest)', r: plain ? 3 : 2.5, opacity: plain ? 0.85 : 0.6 }
-  // whether DensityLayer shaded any hexes, for the legend; it only knows once it has the chart's pixel scales
-  const [shaded, setShaded] = useState(false)
   const pickedDot = picked && (highDots.find((d) => d.point === picked) ?? restDots.find((d) => d.point === picked))
 
   // The average wishlists per offer (what demandScore shrinks toward), plus fainter lines at 2× and ½× it, splitting the
@@ -292,23 +196,19 @@ export function DemandMap({ points, owned, onSelect }: Props) {
     ] as const
   ).flatMap(([k, label]): Guide[] => (ratio * k > yDomain[0] && ratio * k < yDomain[1] ? [{ label, dashed: k === 1, y: ratio * k }] : []))
 
-  // a 2px-wide surface ring keeps overlapping dots apart; the transparent circle is a ~22px hit area for hover and click.
-  // Without a fill only the hit area is drawn (the context cards, which DensityLayer draws); `ring` marks a hovered card.
-  const dot =
-    (fill: string | undefined, r: number, ring = false) =>
-    (props: unknown) => {
-      const { cx, cy, payload } = props as { cx?: number; cy?: number; payload?: Dot }
-      if (cx === undefined || cy === undefined || !payload) {
-        return <g />
-      }
-      return (
-        <g className="cursor-pointer">
-          <circle cx={cx} cy={cy} r={11} fill="transparent" />
-          {fill && <circle cx={cx} cy={cy} r={r} fill={fill} stroke="var(--color-surface)" strokeWidth={1} />}
-          {ring && <circle cx={cx} cy={cy} r={r + 4} fill="none" stroke="#f5f5f5" strokeWidth={1.5} />}
-        </g>
-      )
+  // a 2px-wide surface ring keeps overlapping dots apart; the transparent circle is a ~22px hit area for hover and click
+  const dot = (fill: string, r: number) => (props: unknown) => {
+    const { cx, cy, payload } = props as { cx?: number; cy?: number; payload?: Dot }
+    if (cx === undefined || cy === undefined || !payload) {
+      return <g />
     }
+    return (
+      <g className="cursor-pointer">
+        <circle cx={cx} cy={cy} r={11} fill="transparent" />
+        <circle cx={cx} cy={cy} r={r} fill={fill} stroke="var(--color-surface)" strokeWidth={1} />
+      </g>
+    )
+  }
 
   const select = (item: { payload?: Dot }) => item.payload && onSelect(item.payload.point.card)
 
@@ -389,14 +289,6 @@ export function DemandMap({ points, owned, onSelect }: Props) {
         ) : (
           <span>{points.length.toLocaleString()} cards</span>
         )}
-        {shaded && (
-          <span className="flex items-center gap-1.5">
-            <svg aria-hidden viewBox="-8 -8 16 16" className="size-3.5" fill={plain ? chartConfig.owned.theme.dark : chartConfig.rest.theme.dark}>
-              <path d={hexPath(7)} />
-            </svg>
-            Crowded: shaded, darker is more cards
-          </span>
-        )}
         <span className="flex items-center gap-1.5">
           <span aria-hidden className="w-4 border-t border-dashed border-neutral-400" />
           Average: {ratio.toFixed(2)} wishlists per offer
@@ -445,24 +337,15 @@ export function DemandMap({ points, owned, onSelect }: Props) {
               <ReferenceLine key={label ?? 'average'} y={y} stroke={dashed ? '#a3a3a3' : '#525252'} strokeDasharray={dashed ? '4 4' : '1 3'} strokeWidth={1} />
             ))}
             {!coarse && <ChartTooltip content={tooltip} cursor={false} isAnimationActive={false} />}
-            <DensityLayer dots={restDots} xDomain={xDomain} {...rest} onShaded={setShaded} />
-            {/* the context cards' hit areas, drawn as a ringed dot only while hovered; highlighted last, on top */}
+            {/* highlighted last, so it draws on top of the context dots */}
             <Scatter
               data={restDots}
-              shape={dot(undefined, rest.r)}
-              activeShape={coarse ? undefined : dot(rest.fill, rest.r, true)}
+              shape={dot(plain ? 'var(--color-owned)' : 'var(--color-rest)', plain ? 3 : 2.5)}
+              opacity={plain ? 0.85 : 0.6}
               onClick={coarse ? undefined : select}
               isAnimationActive={false}
             />
-            {!plain && (
-              <Scatter
-                data={highDots}
-                shape={dot('var(--color-owned)', 3.5)}
-                activeShape={coarse ? undefined : dot('var(--color-owned)', 3.5, true)}
-                onClick={coarse ? undefined : select}
-                isAnimationActive={false}
-              />
-            )}
+            {!plain && <Scatter data={highDots} shape={dot('var(--color-owned)', 3.5)} onClick={coarse ? undefined : select} isAnimationActive={false} />}
             <PlotOverlay guides={guides} xMax={xDomain[1]} picked={coarse ? pickedDot : undefined} scalesRef={scalesRef} />
           </ScatterChart>
         </ChartContainer>
@@ -488,9 +371,8 @@ export function DemandMap({ points, owned, onSelect }: Props) {
         </div>
       )}
       <p className="mt-1 text-[11px] text-neutral-500">
-        Log scales. Height is (wishlists + 1) / (offers + 1); further right means more traded overall, so the numbers are surer. Where cards crowd they are
-        shaded rather than drawn one by one: {coarse ? 'tap' : 'hover'} inside the shading to find them. Cards with no listings at all are left out.{' '}
-        {coarse ? 'Tap near a dot to pick the closest card.' : 'Click a dot to open the card.'} The Most wanted tab lists the same cards ranked.
+        Log scales. Height is (wishlists + 1) / (offers + 1); further right means more traded overall, so the numbers are surer. Cards with no listings at all
+        are left out. {coarse ? 'Tap near a dot to pick the closest card.' : 'Click a dot to open the card.'} The Most wanted tab lists the same cards ranked.
       </p>
     </section>
   )
