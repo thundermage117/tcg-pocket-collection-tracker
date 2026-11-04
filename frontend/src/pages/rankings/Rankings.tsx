@@ -74,7 +74,7 @@ const descriptions: Record<Tab, string> = {
   elo: 'All ☆☆ cards by community vote Elo (pokemontcglivetrade), adjusted for vote count. Tiers split where the Elo jumps.',
   wanted: 'Every rarity by trade demand: wishlists per trade-list offer (eleet), adjusted for how many are listed. Reprints count as their original.',
   demand:
-    'Every card eleet tracks, by offers (supply) against wishlists (demand). Above the dashed average line is more wanted than offered. Reprints count as their original.',
+    'Every card eleet tracks, by wishlists per offer (height) against how much it is listed overall. Above the dashed average line is more wanted than average. Reprints count as their original.',
 }
 
 export default function Rankings() {

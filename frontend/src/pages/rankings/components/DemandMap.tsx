@@ -35,18 +35,38 @@ const chartConfig = {
   surface: { theme: { light: '#fcfcfb', dark: '#1a1a1a' } },
 } satisfies ChartConfig
 
-// log scales can't show 0, so every count is plotted as count + 1: a card nobody offers sits on the left edge.
-// Ticks go at 10^k + 1 and are labelled with the real count (0, 10, 100, …); the axes span the decades the data covers.
-const plotted = (count: number) => count + 1
+// Offers against wishlists is a thin diagonal band, so the map is turned to lie it flat: x is how much a card is traded
+// (wishlists + offers), y is wishlists per offer. The average and its 2× and ½× lines are then horizontal, and a card's
+// height is how wanted it is. Both axes are log; the ratio is (wish + 1) / (offers + 1), so a card nobody offers or
+// wants still has a finite height.
+const activity = (p: DemandPoint) => p.wish + p.offers
+const ratioOf = (p: DemandPoint) => (p.wish + 1) / (p.offers + 1)
 const formatCount = (n: number) => (n >= 1000 ? `${n / 1000}k` : `${n}`)
-const decadeTicks = (values: number[]) => {
-  const min = Math.min(...values)
-  const max = Math.max(...values)
-  const ticks = [1]
-  for (let p = 10; ticks[ticks.length - 1] < max; p *= 10) {
-    ticks.push(p + 1)
+
+// The axes hug the data, padded by a twentieth of its log span on each side, rather than rounding out to whole decades
+const logDomain = (values: number[]): [number, number] => {
+  const lo = Math.log10(Math.min(...values))
+  const hi = Math.log10(Math.max(...values))
+  const pad = Math.max(hi - lo, 0.5) / 20
+  return [10 ** (lo - pad), 10 ** (hi + pad)]
+}
+
+// Ticks at 1, 2 and 5 per decade, thinned to 1 and 3, then to the decades alone, while that would crowd the axis
+const logTicks = ([min, max]: [number, number], most = 6) => {
+  const ticksAt = (steps: number[]) => {
+    const ticks: number[] = []
+    for (let k = Math.floor(Math.log10(min)); 10 ** k <= max; k++) {
+      for (const m of steps) {
+        const tick = Number((m * 10 ** k).toPrecision(1))
+        if (tick >= min && tick <= max) {
+          ticks.push(tick)
+        }
+      }
+    }
+    return ticks
   }
-  return ticks.filter((_, i) => i + 1 === ticks.length || ticks[i + 1] > min)
+  const tiers = [[1, 2, 5], [1, 3], [1]].map(ticksAt)
+  return tiers.find((ticks) => ticks.length <= most) ?? tiers[tiers.length - 1]
 }
 
 // The newest set's cards have few spares listed yet, so they sit apart on the left; marking it explains that cluster
@@ -67,17 +87,16 @@ interface Dot {
 }
 
 interface Guide {
-  label?: string // the average line is named in the legend; the 2× and ½× lines get a label at their end
+  label?: string // the average line is named in the legend; the 2× and ½× lines get a label at their right end
   dashed: boolean
-  endsOnTop: boolean // clipped by the top edge rather than the right one
-  segment: readonly [{ x: number; y: number }, { x: number; y: number }]
+  y: number
 }
 
 type Scales = { x: ScaleFunction; y: ScaleFunction }
 
 // Renders inside the chart to reach its scales: labels the guide lines, rings the tapped dot, and hands the scales
 // out so a tap can be matched to the nearest dot in pixels
-function PlotOverlay({ guides, picked, scalesRef }: { guides: Guide[]; picked?: Dot; scalesRef: RefObject<Scales | undefined> }) {
+function PlotOverlay({ guides, xMax, picked, scalesRef }: { guides: Guide[]; xMax: number; picked?: Dot; scalesRef: RefObject<Scales | undefined> }) {
   const x = useXAxisScale()
   const y = useYAxisScale()
   if (!x || !y) {
@@ -86,16 +105,15 @@ function PlotOverlay({ guides, picked, scalesRef }: { guides: Guide[]; picked?: 
   scalesRef.current = { x, y }
   const ringX = picked && x(picked.x)
   const ringY = picked && y(picked.y)
+  const ex = x(xMax)
   return (
     // above the dots (scatter is z 600), so the ring around a tapped dot isn't buried in its cluster
     <ZIndexLayer zIndex={DefaultZIndexes.activeDot}>
       <g className="pointer-events-none">
-        {guides.map(({ label, endsOnTop, segment }) => {
-          const ex = x(segment[1].x)
-          const ey = y(segment[1].y)
-          // on the top edge the label sits just below the line's end, on the right edge just above it
+        {guides.map(({ label, y: value }) => {
+          const ey = y(value)
           return label && ex !== undefined && ey !== undefined ? (
-            <text key={label} x={ex - 4} y={endsOnTop ? ey + 12 : ey - 4} textAnchor="end" className="fill-neutral-500 text-[10px]">
+            <text key={label} x={ex - 4} y={ey - 4} textAnchor="end" className="fill-neutral-500 text-[10px]">
               {label}
             </text>
           ) : null
@@ -155,53 +173,28 @@ export function DemandMap({ points, owned, onSelect }: Props) {
   const [chosen, setChosen] = useState<Highlight>(owned ? 'owned' : 'none')
   const highlight = options.includes(chosen) ? chosen : options[0]
 
-  const { highDots, restDots, xTicks, yTicks } = useMemo(() => {
+  const { highDots, restDots, xDomain, yDomain } = useMemo(() => {
     const isHigh = (card: Card) => (highlight === 'owned' ? !!owned?.(card) : highlight === 'newest' ? card.expansion === newest : false)
     const highDots: Dot[] = []
     const restDots: Dot[] = []
     for (const point of points) {
-      ;(isHigh(point.card) ? highDots : restDots).push({ x: plotted(point.offers), y: plotted(point.wish), point })
+      ;(isHigh(point.card) ? highDots : restDots).push({ x: activity(point), y: ratioOf(point), point })
     }
-    return {
-      highDots,
-      restDots,
-      xTicks: decadeTicks(points.map((p) => plotted(p.offers))),
-      yTicks: decadeTicks(points.map((p) => plotted(p.wish))),
-    }
+    return { highDots, restDots, xDomain: logDomain(points.map(activity)), yDomain: logDomain(points.map(ratioOf)) }
   }, [points, owned, highlight, newest])
   const plain = highlight === 'none'
   const pickedDot = picked && (highDots.find((d) => d.point === picked) ?? restDots.find((d) => d.point === picked))
 
-  // The average wishlists per offer (what demandScore shrinks toward), as the line wishlists = ratio × offers, plus
-  // fainter lines at 2× and ½× it, splitting the map into hot / normal / cold bands. Each is clipped to the plot and
-  // drawn in plotted (count + 1) space, so it is straight; that is off by under one count near 0.
+  // The average wishlists per offer (what demandScore shrinks toward), plus fainter lines at 2× and ½× it, splitting the
+  // map into hot / normal / cold bands. A line outside the cards' range is left out.
   const ratio = averageDemandRatio()
-  const [xMin, xMax] = [xTicks[0], xTicks[xTicks.length - 1]]
-  const [yMin, yMax] = [yTicks[0], yTicks[yTicks.length - 1]]
   const guides = (
     [
       [1, undefined],
       [2, '2×'],
       [0.5, '½×'],
     ] as const
-  ).flatMap(([k, label]): Guide[] => {
-    const r = ratio * k
-    const startX = Math.max(xMin, yMin / r)
-    const endX = Math.min(xMax, yMax / r)
-    return startX < endX
-      ? [
-          {
-            label,
-            dashed: k === 1,
-            endsOnTop: endX < xMax,
-            segment: [
-              { x: startX, y: startX * r },
-              { x: endX, y: endX * r },
-            ],
-          },
-        ]
-      : []
-  })
+  ).flatMap(([k, label]): Guide[] => (ratio * k > yDomain[0] && ratio * k < yDomain[1] ? [{ label, dashed: k === 1, y: ratio * k }] : []))
 
   // a 2px-wide surface ring keeps overlapping dots apart; the transparent circle is a ~22px hit area for hover and click
   const dot = (fill: string, r: number) => (props: unknown) => {
@@ -312,7 +305,7 @@ export function DemandMap({ points, owned, onSelect }: Props) {
           config={chartConfig}
           className="aspect-square w-full sm:aspect-[16/9] [&_g]:outline-hidden"
           role="img"
-          aria-label={`Scatter of ${points.length} cards, offers against wishlists on log scales. Cards above the dashed line are more wanted than average.`}
+          aria-label={`Scatter of ${points.length} cards, wishlists per offer against total listings on log scales. Cards above the dashed line are more wanted than average.`}
         >
           <ScatterChart margin={{ top: 8, right: 8, bottom: 20, left: 4 }}>
             <CartesianGrid stroke="#262626" strokeWidth={1} />
@@ -320,36 +313,28 @@ export function DemandMap({ points, owned, onSelect }: Props) {
               type="number"
               dataKey="x"
               scale="log"
-              domain={[xMin, xMax]}
-              ticks={xTicks}
-              tickFormatter={(v: number) => formatCount(v - 1)}
+              domain={xDomain}
+              ticks={logTicks(xDomain)}
+              tickFormatter={formatCount}
               allowDataOverflow
               tickLine={false}
               axisLine={false}
-              label={{ value: 'Offers (trade lists)', position: 'insideBottom', offset: -14, className: 'fill-neutral-400' }}
+              label={{ value: 'Listings (wishlists + offers)', position: 'insideBottom', offset: -14, className: 'fill-neutral-400' }}
             />
             <YAxis
               type="number"
               dataKey="y"
               scale="log"
-              domain={[yMin, yMax]}
-              ticks={yTicks}
-              tickFormatter={(v: number) => formatCount(v - 1)}
+              domain={yDomain}
+              ticks={logTicks(yDomain)}
               allowDataOverflow
               tickLine={false}
               axisLine={false}
               width={44}
-              label={{ value: 'Wishlists', angle: -90, position: 'insideLeft', offset: 10, className: 'fill-neutral-400' }}
+              label={{ value: 'Wishlists per offer', angle: -90, position: 'insideLeft', offset: 10, className: 'fill-neutral-400' }}
             />
-            {guides.map(({ label, dashed, segment }) => (
-              <ReferenceLine
-                key={label ?? 'average'}
-                segment={segment}
-                stroke={dashed ? '#a3a3a3' : '#525252'}
-                strokeDasharray={dashed ? '4 4' : '1 3'}
-                strokeWidth={1}
-                ifOverflow="visible"
-              />
+            {guides.map(({ label, dashed, y }) => (
+              <ReferenceLine key={label ?? 'average'} y={y} stroke={dashed ? '#a3a3a3' : '#525252'} strokeDasharray={dashed ? '4 4' : '1 3'} strokeWidth={1} />
             ))}
             {!coarse && <ChartTooltip content={tooltip} cursor={false} isAnimationActive={false} />}
             {/* highlighted last, so it draws on top of the context dots */}
@@ -361,11 +346,11 @@ export function DemandMap({ points, owned, onSelect }: Props) {
               isAnimationActive={false}
             />
             {!plain && <Scatter data={highDots} shape={dot('var(--color-owned)', 3.5)} onClick={coarse ? undefined : select} isAnimationActive={false} />}
-            <PlotOverlay guides={guides} picked={coarse ? pickedDot : undefined} scalesRef={scalesRef} />
+            <PlotOverlay guides={guides} xMax={xDomain[1]} picked={coarse ? pickedDot : undefined} scalesRef={scalesRef} />
           </ScatterChart>
         </ChartContainer>
-        <span className="pointer-events-none absolute top-3 left-14 text-[11px] text-neutral-500">↖ more wanted than average</span>
-        <span className="pointer-events-none absolute right-3 bottom-12 text-[11px] text-neutral-500">more offered than average ↘</span>
+        <span className="pointer-events-none absolute top-3 left-14 text-[11px] text-neutral-500">↑ more wanted than average</span>
+        <span className="pointer-events-none absolute bottom-12 left-14 text-[11px] text-neutral-500">↓ more offered than average</span>
       </div>
       {coarse && (
         <div className="mt-2 min-h-[5.5rem] rounded-lg border border-neutral-800 bg-neutral-900 p-2 text-xs">
@@ -386,8 +371,8 @@ export function DemandMap({ points, owned, onSelect }: Props) {
         </div>
       )}
       <p className="mt-1 text-[11px] text-neutral-500">
-        Log scales, each count plotted as count + 1 so zeros sit on the axes. Cards with no listings at all are left out.{' '}
-        {coarse ? 'Tap near a dot to pick the closest card.' : 'Click a dot to open the card.'} The Most wanted tab lists the same cards ranked.
+        Log scales. Height is (wishlists + 1) / (offers + 1); further right means more traded overall, so the numbers are surer. Cards with no listings at all
+        are left out. {coarse ? 'Tap near a dot to pick the closest card.' : 'Click a dot to open the card.'} The Most wanted tab lists the same cards ranked.
       </p>
     </section>
   )
