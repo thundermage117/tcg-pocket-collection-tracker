@@ -19,6 +19,7 @@ import { type ExpansionId, type Rarity, rarities } from '@/types'
 import { DemandMap } from './components/DemandMap'
 import { TierNav } from './components/TierNav'
 import { TierSection, tierAnchor } from './components/TierSection'
+import { ZoomableDemandMap } from './components/ZoomableDemandMap'
 
 type Tab = 'elo' | 'wanted' | 'demand'
 type TierTab = Exclude<Tab, 'demand'>
@@ -95,6 +96,8 @@ export default function Rankings() {
   const rarityFilter = (params.get('rarity')?.split(',') ?? []).filter((r): r is Rarity => (rarities as readonly string[]).includes(r))
   const missingOnly = params.get('missing') === '1'
   const foils = tab !== 'elo' && params.get('foils') === '1'
+  // temporary: compare the zoomable demand map with the classic recharts one
+  const classicMap = params.get('classic') === '1'
   const ranking = foils ? wantedWithFoils : rankings[tierTab]
 
   // every filter change collapses tiers back to their previews
@@ -198,6 +201,12 @@ export default function Rankings() {
               </label>
             </>
           )}
+          {tab === 'demand' && (
+            <label htmlFor="rankings-classic-map" className="flex cursor-pointer items-center gap-2 text-sm text-neutral-300">
+              <Switch id="rankings-classic-map" checked={classicMap} onCheckedChange={(on) => update({ classic: on ? '1' : undefined })} />
+              Classic map
+            </label>
+          )}
           {collection && (
             <label htmlFor="rankings-missing-only" className="flex cursor-pointer items-center gap-2 text-sm text-neutral-300">
               <Switch id="rankings-missing-only" checked={missingOnly} onCheckedChange={(on) => update({ missing: on ? '1' : undefined })} />
@@ -211,7 +220,10 @@ export default function Rankings() {
         mapPoints.length === 0 ? (
           <p className="py-12 text-center text-neutral-400">No cards match these filters.</p>
         ) : (
-          <DemandMap points={mapPoints} owned={showOwned ? owned : undefined} onSelect={(c) => setSelectedCardId(c.internal_id)} />
+          (() => {
+            const MapView = classicMap ? DemandMap : ZoomableDemandMap
+            return <MapView points={mapPoints} owned={showOwned ? owned : undefined} onSelect={(c) => setSelectedCardId(c.internal_id)} />
+          })()
         )
       ) : filtered.length === 0 ? (
         <p className="py-12 text-center text-neutral-400">No cards match these filters.</p>

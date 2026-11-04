@@ -29,7 +29,7 @@ import type { Card, ExpansionId } from '@/types'
 // The app is dark-only, but both steps are given so the chart wrapper's theme scopes stay complete.
 // The highlighted group (owned cards, or the newest set) is the one categorical hue; the rest is context grey, also drawn
 // smaller and underneath.
-const chartConfig = {
+export const chartConfig = {
   owned: { label: 'Highlighted', theme: { light: '#2a78d6', dark: '#3987e5' } },
   rest: { label: 'Rest', theme: { light: '#a3a3a3', dark: '#737373' } },
   surface: { theme: { light: '#fcfcfb', dark: '#1a1a1a' } },
@@ -39,12 +39,12 @@ const chartConfig = {
 // (wishlists + offers), y is wishlists per offer. The average and its 2× and ½× lines are then horizontal, and a card's
 // height is how wanted it is. Both axes are log; the ratio is (wish + 1) / (offers + 1), so a card nobody offers or
 // wants still has a finite height.
-const activity = (p: DemandPoint) => p.wish + p.offers
-const ratioOf = (p: DemandPoint) => (p.wish + 1) / (p.offers + 1)
-const formatCount = (n: number) => (n >= 1000 ? `${n / 1000}k` : `${n}`)
+export const activity = (p: DemandPoint) => p.wish + p.offers
+export const ratioOf = (p: DemandPoint) => (p.wish + 1) / (p.offers + 1)
+export const formatCount = (n: number) => (n >= 1000 ? `${n / 1000}k` : `${n}`)
 
 // The axes hug the data, padded by a twentieth of its log span on each side, rather than rounding out to whole decades
-const logDomain = (values: number[]): [number, number] => {
+export const logDomain = (values: number[]): [number, number] => {
   const lo = Math.log10(Math.min(...values))
   const hi = Math.log10(Math.max(...values))
   const pad = Math.max(hi - lo, 0.5) / 20
@@ -70,17 +70,17 @@ const logTicks = ([min, max]: [number, number], most = 6) => {
 }
 
 // The newest set's cards have few spares listed yet, so they sit apart on the left; marking it explains that cluster
-const newestSet = (points: DemandPoint[]) => {
+export const newestSet = (points: DemandPoint[]) => {
   const present = new Set(points.map((p) => p.card.expansion))
   return expansions.findLast((e) => present.has(e.id))?.id
 }
 
 // How far a tap may land from a dot and still pick it, in px: dense clusters are far smaller than a fingertip
-const TAP_RADIUS = 32
+export const TAP_RADIUS = 32
 
-type Highlight = 'owned' | 'newest' | 'none'
+export type Highlight = 'owned' | 'newest' | 'none'
 
-interface Dot {
+export interface Dot {
   x: number
   y: number
   point: DemandPoint
@@ -124,7 +124,7 @@ function PlotOverlay({ guides, xMax, picked, scalesRef }: { guides: Guide[]; xMa
   )
 }
 
-function CardDetails({ point, owned }: { point: DemandPoint; owned?: (card: Card) => boolean }) {
+export function CardDetails({ point, owned }: { point: DemandPoint; owned?: (card: Card) => boolean }) {
   const { t, i18n } = useTranslation('common/sets')
   const { card } = point
   return (
