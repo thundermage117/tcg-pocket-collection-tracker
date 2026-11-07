@@ -17,6 +17,7 @@ import { getBoosterValues } from '@/lib/packValue'
 import { CompletionHeatmap } from '@/pages/overview/components/CompletionHeatmap.tsx'
 import { GradientCard } from '@/pages/overview/components/GradientCard.tsx'
 import { TierTile } from '@/pages/overview/components/TierTile'
+import { UnlockTile } from '@/pages/overview/components/UnlockTile'
 import { bestChance, getPackChances } from '@/pages/overview/packChances'
 import { countByTier, inValue, type ValueOption, valueLabels, valueOptions } from '@/pages/overview/valueTiers'
 import { oneIn } from '@/pages/packs/types'
@@ -151,6 +152,7 @@ function Overview() {
           )}
           {/* Personal fork: replaces upstream's "You have N cards in total" */}
           <TierTile counts={tierCounts} value={filters.value} rarity={filters.rarity} className="col-span-4 md:col-span-2" />
+          <UnlockTile className="col-span-8" />
         </section>
 
         <CompletionHeatmap

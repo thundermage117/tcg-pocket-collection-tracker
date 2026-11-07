@@ -59,6 +59,11 @@ export function unlockProgress(collection: Collection): UnlockProgress {
   }
 }
 
+const twoStarCards = allCards.filter((c) => c.expansion === latestExpansion.id && c.rarity === '☆☆')
+
+/** Whether the account has registered every ☆☆ of the latest set, when its ☆☆ Wonder Picks reportedly stop. */
+export const allTwoStarsRegistered = (collection: Collection) => twoStarCards.every((c) => registered(collection, c.internal_id))
+
 /** The latest-set pack most likely to give one of `cards` (the account's missing unlock cards nobody can hand it). */
 export function bestUnlockPack(cards: Card[]) {
   if (cards.length === 0 || !latestExpansion.packStructure) {
