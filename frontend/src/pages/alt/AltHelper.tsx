@@ -1,17 +1,19 @@
 // Personal fork: how the alt account helps the main one (see lib/altSupport.ts). The latest set's unlock for both
 // accounts, gifts both ways (◊–◊◊◊◊, one received a day) and trades to main (☆ and up), each moved between the two
-// collections with one click.
+// collections with one click. A trade opens in Trade check, which finalizes it.
 import { ArrowRight, Gift, Repeat, Sparkles } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 import { CardThumb } from '@/components/CardThumb'
 import { Spinner } from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { altCovers, bestUnlockPack, canMoveToMain, countsForUnlock, giftsToAlt, latestExpansion, type UnlockProgress, unlockProgress } from '@/lib/altSupport'
 import { getCardByInternalId } from '@/lib/CardsDB'
+import { getLocalizedImagePath } from '@/lib/imageLocales'
 import { shinedustCost } from '@/lib/tradeFairness'
-import { getCardNameByLang, getExtraCards } from '@/lib/utils'
+import { getCardNameByLang } from '@/lib/utils'
 import { valueSortKey } from '@/lib/ValueDB'
 import { oneIn } from '@/pages/packs/types'
 import { useLoginDialog } from '@/services/auth/useAuth'
@@ -117,6 +119,23 @@ const UnlockBadge = () => (
   </span>
 )
 
+/** A card in a trade row; the whole row is a link, so no button of its own. */
+function TradeImage({ card, badge }: { card: Card; badge?: ReactNode }) {
+  const { i18n } = useTranslation()
+  return (
+    <span className="relative w-16 shrink-0">
+      <img
+        src={getLocalizedImagePath(card, i18n.language)}
+        alt={getCardNameByLang(card, i18n.language)}
+        loading="lazy"
+        decoding="async"
+        className="aspect-[367/512] w-full rounded-md object-cover"
+      />
+      {badge && <span className="absolute top-1 left-1">{badge}</span>}
+    </span>
+  )
+}
+
 function GiftGrid({
   cards,
   receiver,
@@ -161,7 +180,6 @@ function GiftGrid({
 
 export default function AltHelper() {
   const { t, i18n } = useTranslation(['common/sets'])
-  const { setSelectedCardId } = useSelectedCard()
   const { setIsLoginDialogOpen } = useLoginDialog()
   const { data: mainAccount, isLoading: isLoadingAccount } = useProfileAccount('main')
   const { data: main } = useProfileCollection('main')
@@ -182,22 +200,27 @@ export default function AltHelper() {
     const altCanGive = (c: Card) => canMoveToMain(c) && (alt.get(c.internal_id)?.amount_owned ?? 0) > 0
     const toAltIds = new Set(toAlt.map((c) => c.internal_id))
 
-    // For each trade, the card main sends back: its least valuable spare of that rarity, each spare copy used once.
+    // For each trade, the card main sends back: its least valuable spare of that rarity, or with no spare left its least
+    // valuable card of that rarity at all. Each copy is promised to one trade only.
     const keep = Object.fromEntries(settings.map((s) => [s.rarity, s.to_keep]))
-    const spares = getExtraCards(main, settings)
-      .map((id) => getCardByInternalId(id))
-      .filter((card): card is Card => card !== undefined)
-      .map((card) => {
-        const row = main.get(card.internal_id)
-        return { card, left: (row?.amount_owned ?? 0) - (row?.amount_wanted ?? keep[card.rarity] ?? defaultRaritySettings.to_keep) }
+    const tradeRarities = new Set(cover.trade.map((c) => c.rarity))
+    const owned = [...main]
+      .filter(([, row]) => row.amount_owned > 0)
+      .flatMap(([id, row]) => {
+        const card = getCardByInternalId(id)
+        return card && canMoveToMain(card) && tradeRarities.has(card.rarity)
+          ? [{ card, left: row.amount_owned, spare: row.amount_owned - (row.amount_wanted ?? keep[card.rarity] ?? defaultRaritySettings.to_keep) }]
+          : []
       })
       .sort((a, b) => valueSortKey(a.card.card_id) - valueSortKey(b.card.card_id))
     const trades = cover.trade.map((card) => {
-      const spare = spares.find((s) => s.card.rarity === card.rarity && s.left > 0)
-      if (spare) {
-        spare.left--
+      const fits = (o: (typeof owned)[number]) => o.card.rarity === card.rarity && o.card.internal_id !== card.internal_id && o.left > 0
+      const pick = owned.find((o) => fits(o) && o.spare > 0) ?? owned.find(fits)
+      if (pick) {
+        pick.left--
+        pick.spare--
       }
-      return { card, back: spare?.card }
+      return { card, back: pick?.card, spare: pick ? pick.spare >= 0 : false, leaves: pick?.left ?? 0 }
     })
 
     return {
@@ -313,23 +336,22 @@ export default function AltHelper() {
           <Section
             icon={<Repeat className="size-5 text-sky-400" />}
             title="Trade to main"
-            note="Main sends back its least valuable spare of the same rarity. Both accounts pay Shinedust, so only for cards main needs. &quot;Traded&quot; swaps both cards."
+            note="Tap a trade to check it and finalize. Main sends back its least valuable spare of that rarity, or its least valuable card of that rarity if it has no spare. Both accounts pay Shinedust, so only for cards main needs."
           >
             {data.trades.length === 0 ? (
               <p className="py-6 text-center text-neutral-500">The alt has no ☆-and-up cards that main needs.</p>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {data.trades.map(({ card, back }) => (
-                  <div key={card.internal_id} className="flex items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-2">
-                    <CardThumb
-                      className="w-16 shrink-0"
-                      card={card}
-                      badge={countsForUnlock(main as Collection, card) && <UnlockBadge />}
-                      onClick={() => setSelectedCardId(card.internal_id)}
-                    />
+                {data.trades.map(({ card, back, spare, leaves }) => (
+                  <Link
+                    key={card.internal_id}
+                    to={`/trade/check?${new URLSearchParams({ ...(back && { give: back.card_id }), get: card.card_id, alt: '1' })}`}
+                    className="flex items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-2 transition-colors hover:border-neutral-600 hover:bg-neutral-800/60"
+                  >
+                    <TradeImage card={card} badge={countsForUnlock(main as Collection, card) && <UnlockBadge />} />
                     <ArrowRight className="size-4 shrink-0 rotate-180 text-neutral-500" aria-label="for" />
                     {back ? (
-                      <CardThumb className="w-16 shrink-0" card={back} onClick={() => setSelectedCardId(back.internal_id)} />
+                      <TradeImage card={back} />
                     ) : (
                       <div className="flex aspect-[367/512] w-16 shrink-0 items-center justify-center rounded-md border border-dashed border-neutral-700 text-center text-[10px] text-neutral-500">
                         no spare
@@ -339,29 +361,13 @@ export default function AltHelper() {
                       <span className="truncate font-medium">
                         {name(card)} <span className="text-neutral-400">{card.rarity}</span>
                       </span>
-                      <span className="truncate text-xs text-neutral-400">
-                        {back ? `main gives ${name(back)}` : `main has no spare ${card.rarity} to send back`}
-                      </span>
+                      <span className="truncate text-xs text-neutral-400">{back ? `main gives ${name(back)}` : `main has no ${card.rarity} to send back`}</span>
+                      {back && !spare && <span className="truncate text-xs text-amber-400">not a spare: leaves {leaves}</span>}
                       <span className="text-xs text-neutral-500 tabular-nums">
                         {shinedustCost[card.rarity as TradableRarity]?.toLocaleString()} Shinedust per account
                       </span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 self-start text-xs"
-                        disabled={!back || transfer.isPending}
-                        onClick={() =>
-                          back &&
-                          transfer.mutate([
-                            { internal_id: card.internal_id, from: 'alt', to: 'main' },
-                            { internal_id: back.internal_id, from: 'main', to: 'alt' },
-                          ])
-                        }
-                      >
-                        Traded
-                      </Button>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
