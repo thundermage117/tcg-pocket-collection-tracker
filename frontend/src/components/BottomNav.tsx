@@ -12,6 +12,7 @@ import { useUnreadChangelogCount } from '@/lib/useChangelog'
 import { cn } from '@/lib/utils'
 import { useProfileDialog } from '@/services/account/useAccount'
 import { useLoginDialog, useLogout, userQuery } from '@/services/auth/useAuth'
+import { resetProfiles } from '@/services/profile/useProfile'
 
 const tabClass = (active: boolean) =>
   cn(
@@ -119,6 +120,7 @@ export function BottomNav() {
                 className="flex cursor-pointer items-center gap-2 py-3 text-left"
                 onClick={() => {
                   if (user) {
+                    resetProfiles(user.user.email)
                     logoutMutation.mutate()
                   } else {
                     setIsLoginDialogOpen(true)

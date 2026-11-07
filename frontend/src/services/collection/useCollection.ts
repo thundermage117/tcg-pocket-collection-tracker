@@ -4,7 +4,6 @@ import { DialogContext } from '@/context/DialogContext.ts'
 import { useToast } from '@/hooks/use-toast.ts'
 import { getExtraCards, getWantedCards } from '@/lib/utils'
 import { updateCollectionTimestamp } from '@/services/account/accountService'
-import { useAccount } from '@/services/account/useAccount.ts'
 import { userQuery } from '@/services/auth/useAuth.ts'
 import {
   getCachedCollection,
@@ -14,6 +13,7 @@ import {
   updateAmountWanted,
   updateCards,
 } from '@/services/collection/collectionService.ts'
+import { useProfileAccount, useProfileEmail } from '@/services/profile/useProfile'
 import type { CardAmountUpdate, CollectionRow } from '@/types'
 
 export function collectionQuery(email: string | undefined, collectionLastUpdated: Date | undefined) {
@@ -29,18 +29,19 @@ export function collectionQuery(email: string | undefined, collectionLastUpdated
 }
 
 export function useCollection() {
-  const { data: user } = useQuery(userQuery)
-  const { data: account } = useAccount()
+  // Personal fork: the active profile's collection (main or alt), see services/profile/useProfile.ts
+  const email = useProfileEmail()
+  const { data: account } = useProfileAccount()
 
-  return useQuery(collectionQuery(user?.user.email, account?.collection_last_updated))
+  return useQuery(collectionQuery(email, account?.collection_last_updated))
 }
 
 export function useTradingCards() {
-  const { data: user } = useQuery(userQuery)
-  const { data: account } = useAccount()
+  const email = useProfileEmail()
+  const { data: account } = useProfileAccount()
 
   return useQuery({
-    ...collectionQuery(user?.user.email, account?.collection_last_updated),
+    ...collectionQuery(email, account?.collection_last_updated),
     // select would run on the placeholder before the account has loaded
     placeholderData: undefined,
     select: (collection) => {
@@ -68,9 +69,9 @@ export function publicCollectionQuery(friendId: string | undefined) {
 
 export function useUpdateCards() {
   const { toast } = useToast()
-  const { data: user, isLoading: isLoadingUser } = useQuery(userQuery)
+  const { isLoading: isLoadingUser } = useQuery(userQuery)
   const { data: collection, isLoading: isLoadingCollection, isPlaceholderData } = useCollection()
-  const email = user?.user.email
+  const email = useProfileEmail()
 
   const queryClient = useQueryClient()
   return useMutation({
@@ -98,9 +99,9 @@ export function useUpdateCards() {
 
 export function useUpdateAmountWanted() {
   const { toast } = useToast()
-  const { data: user, isLoading: isLoadingUser } = useQuery(userQuery)
+  const { isLoading: isLoadingUser } = useQuery(userQuery)
   const { data: collection, isLoading: isLoadingCollection, isPlaceholderData } = useCollection()
-  const email = user?.user.email
+  const email = useProfileEmail()
 
   const queryClient = useQueryClient()
   return useMutation({
@@ -129,9 +130,9 @@ export function useUpdateAmountWanted() {
 }
 
 export function useSetCollected() {
-  const { data: user, isLoading: isLoadingUser } = useQuery(userQuery)
+  const { isLoading: isLoadingUser } = useQuery(userQuery)
   const { data: collection, isLoading: isLoadingCollection, isPlaceholderData } = useCollection()
-  const email = user?.user.email
+  const email = useProfileEmail()
 
   const queryClient = useQueryClient()
   return useMutation({

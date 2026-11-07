@@ -21,6 +21,8 @@ import { useUnreadChangelogCount } from '@/lib/useChangelog'
 import { cn } from '@/lib/utils'
 import { useProfileDialog } from '@/services/account/useAccount'
 import { useLoginDialog, useLogout, userQuery } from '@/services/auth/useAuth'
+import { resetProfiles } from '@/services/profile/useProfile'
+import { ProfileSwitch } from './ProfileSwitch'
 import { Spinner } from './Spinner'
 import { Badge } from './ui/badge'
 
@@ -89,6 +91,7 @@ export function Header() {
         </div>
         <div className="grow" />
         <div className="flex shrink-0 items-center gap-2">
+          {user && <ProfileSwitch />}
           {user ? (
             <div className="hidden sm:block">
               <DropdownMenu>
@@ -115,7 +118,12 @@ export function Header() {
 
                   <DropdownMenuGroup>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => logoutMutation.mutate()}>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        resetProfiles(user.user.email)
+                        logoutMutation.mutate()
+                      }}
+                    >
                       {t('logOut')}
                       <LogOut />
                     </DropdownMenuItem>
