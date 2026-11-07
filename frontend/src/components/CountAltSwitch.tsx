@@ -1,4 +1,4 @@
-// Personal fork: "Count alt" switch for the planning pages (Overview, Packs), see useMainWithAlt.
+// Personal fork: "Count alt" switch for the planning pages (Overview, Packs, Rankings), see useMainWithAlt.
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import { setCountAlt, useCountAlt } from '@/services/profile/useProfile'

@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
+import { CountAltSwitch } from '@/components/CountAltSwitch'
 import { DropdownFilter, TabsFilter } from '@/components/Filters'
 import RarityFilter from '@/components/filters/RarityFilter'
 import SearchInput from '@/components/filters/SearchInput'
@@ -152,26 +153,28 @@ export default function Rankings() {
         <ValueDataAge className="mt-2" />
       </header>
 
-      <Tabs
-        value={tab}
-        onValueChange={(v) => {
-          update({ tab: v === 'elo' ? undefined : tabs.find((t) => t === v), set: undefined, kind: undefined, rarity: undefined, foils: undefined })
-          setOpen(defaultOpen)
-        }}
-        className="mb-4"
-      >
-        <TabsList className="inline-flex rounded-md border-1 border-neutral-700 bg-neutral-800">
-          <TabsTrigger className="rounded-sm" value="elo">
-            ☆☆ Elo
-          </TabsTrigger>
-          <TabsTrigger className="rounded-sm" value="wanted">
-            Most wanted
-          </TabsTrigger>
-          <TabsTrigger className="rounded-sm" value="demand">
-            Demand map
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <Tabs
+          value={tab}
+          onValueChange={(v) => {
+            update({ tab: v === 'elo' ? undefined : tabs.find((t) => t === v), set: undefined, kind: undefined, rarity: undefined, foils: undefined })
+            setOpen(defaultOpen)
+          }}
+        >
+          <TabsList className="inline-flex rounded-md border-1 border-neutral-700 bg-neutral-800">
+            <TabsTrigger className="rounded-sm" value="elo">
+              ☆☆ Elo
+            </TabsTrigger>
+            <TabsTrigger className="rounded-sm" value="wanted">
+              Most wanted
+            </TabsTrigger>
+            <TabsTrigger className="rounded-sm" value="demand">
+              Demand map
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <CountAltSwitch id="rankings-count-alt" />
+      </div>
 
       <div className="mb-6 flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row">

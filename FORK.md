@@ -106,7 +106,7 @@ The alt's rows live in the same tables as main's, under the key `alt:<login emai
   the email from `useProfileEmail()` instead of the login. If an upstream merge conflicts there, keep upstream's change and put the
   `useProfileEmail()` / `useProfileAccount()` calls back.
 - **The goal is always main.** Overview, Packs, Rankings and Trade read main's collection whatever the switch says.
-  "Count alt's cards" (Overview, Packs; off by default) counts cards the alt can hand over as owned (`lib/altSupport.ts`, `withAltCards`),
+  "Count alt's cards" (Overview, Packs, Rankings; off by default) counts cards the alt can hand over as owned (`lib/altSupport.ts`, `withAltCards`),
   so missing cards and the pack pick only chase cards neither account has.
 - **What the alt can hand over:** ◊–◊◊◊◊ by Share (each account receives one gift a day), ☆ and up by trading (main sends back its
   least valuable spare of the same rarity, or its least valuable card of that rarity when it has no spare; both accounts pay
