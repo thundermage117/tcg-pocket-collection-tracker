@@ -1,7 +1,7 @@
 // Personal fork: species tile and progress bar shared by the Pokédex grid, its lines view and the species page.
 import { Check, CircleDot, Crown, Sparkles } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { Link, useViewTransitionState } from 'react-router'
+import { type ComponentProps, useEffect, useState } from 'react'
+import { useLinkClickHandler, useViewTransitionState } from 'react-router'
 import { getLocalizedImagePath } from '@/lib/imageLocales'
 import { coverCard, dexName, type FormNode, ownedCount, plainTypes, type Species, type SpeciesGroup, speciesName, spriteUrl, typesOf } from '@/lib/pokedex'
 import { cn, getCardNameByLang } from '@/lib/utils'
@@ -26,6 +26,16 @@ export function useOwnScrollRestore() {
       history.scrollRestoration = before
     }
   }, [])
+}
+
+/**
+ * A tile's link. <Link> builds its href through the hash history, which runs document.querySelector('base') for every link:
+ * with a thousand tiles that's a thousand whole-document scans on each render (~0.4 s on a phone). Without a <base> the href
+ * is just `#` + the path, and the click goes through Link's own handler.
+ */
+function TileLink({ to, state, ...props }: Omit<ComponentProps<'a'>, 'href'> & { to: string; state?: unknown }) {
+  const onClick = useLinkClickHandler(to, { state, viewTransition: true })
+  return <a {...props} href={`#${to}`} onClick={onClick} />
 }
 
 export const dexLabel = (dexNr: number) => `#${String(dexNr).padStart(4, '0')}`
@@ -181,9 +191,8 @@ export function SpeciesTile({ species, collection, lang, art = 'sprite', shiny, 
   // current species' own tile, whose page already has the hero under that name
   const morphing = useViewTransitionState(to) && !current
   return (
-    <Link
+    <TileLink
       to={`${to}${shiny ? '?shiny' : ''}`}
-      viewTransition
       state={fromDex ? { fromDex } : undefined}
       title={name}
       onPointerEnter={() => preload(spriteUrl(species.dexNr, shiny, true))}
@@ -221,7 +230,7 @@ export function SpeciesTile({ species, collection, lang, art = 'sprite', shiny, 
         </span>
       </div>
       <p className={cn('truncate text-xs sm:text-sm', owned === 0 && 'text-neutral-500')}>{name}</p>
-    </Link>
+    </TileLink>
   )
 }
 
@@ -260,10 +269,9 @@ export function FormTile({ form, collection, lang, art = 'sprite', showDex, from
   const complete = owned === form.cards.length
   const types = typesOf(form.cards)
   return (
-    <Link
+    <TileLink
       // opens the species page on this form when it has artwork of its own
       to={`/pokedex/${form.species.dexNr}${form.artworkId === form.species.dexNr ? '' : `?form=${form.artworkId}`}`}
-      viewTransition
       state={fromDex ? { fromDex } : undefined}
       title={name}
       onPointerEnter={() => preload(spriteUrl(form.artworkId, false, true))}
@@ -292,6 +300,6 @@ export function FormTile({ form, collection, lang, art = 'sprite', showDex, from
       </div>
       {/* form names run long (Team Rocket's Raticate, Mega Charizard X): wrapped rather than cut off */}
       <p className={cn('line-clamp-3 text-xs leading-tight sm:text-sm', owned === 0 && 'text-neutral-500')}>{name}</p>
-    </Link>
+    </TileLink>
   )
 }
