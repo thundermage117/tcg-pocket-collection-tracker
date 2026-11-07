@@ -1,0 +1,47 @@
+name: Collection backup
+
+# Nightly CSV copy of the collection (main and alt) to the private repo thundermage117/tcg-collection-backup,
+# committed only when something changed, so its history is the backup's history. Needs repo secrets
+# BACKUP_DB_URL (the read-only backup_reader role through the session pooler; GitHub runners have no IPv6,
+# which the direct host needs) and BACKUP_REPO_TOKEN (Contents read/write on the backup repo). See FORK.md.
+on:
+  schedule:
+    - cron: '23 3 * * *'
+  workflow_dispatch:
+
+concurrency: collection-backup
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    if: github.repository != 'marcelpanse/tcg-pocket-collection-tracker'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: thundermage117/tcg-collection-backup
+          token: ${{ secrets.BACKUP_REPO_TOKEN }}
+
+      - name: Export tables as CSV
+        env:
+          DATABASE_URL: ${{ secrets.BACKUP_DB_URL }}
+        run: |
+          # Sorted so a commit's diff shows only the rows that changed. trade_rarity_settings leaves out
+          # rarity_id, a generated column that a restore can't write.
+          dump() { psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "\copy (select $2 from public.$1 order by $3) to '$1.csv' with csv header"; }
+          dump accounts '*' email
+          dump card_amounts '*' 'email, internal_id'
+          dump trade_rarity_settings 'email, rarity, to_collect, to_keep, collecting_carddex' 'email, rarity'
+          dump decks '*' id
+          # An empty collection means the role lost its access, not that the cards are gone: keep the last backup.
+          rows=$(($(wc -l < card_amounts.csv) - 1))
+          echo "card_amounts: $rows rows"
+          if [ "$rows" -lt 100 ]; then echo "::error::card_amounts has only $rows rows; not committing"; exit 1; fi
+
+      - name: Commit if changed
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then echo "No changes since the last backup"; exit 0; fi
+          git commit -m "Backup $(date -u +%F)"
+          git push

@@ -50,6 +50,19 @@ Removed from navigation, with the files left in place so upstream merges stay cl
    - A failed run usually means a new set's PackId is missing from `scripts/value/packs.py`.
    - The packs, rankings and trade pages show the data's age and turn amber after 21 days, which means the refresh has stopped.
 8. **Upstream sync**: `.github/workflows/upstream-sync.yml` (see [Staying up to date](#staying-up-to-date)) needs a repo secret `SYNC_TOKEN`: a fine-grained personal access token for this repo with **Contents** and **Workflows** read/write. Without it, the sync still works until upstream changes a file in `.github/workflows`, which the default token isn't allowed to push.
+9. **Collection backup**: `.github/workflows/collection-backup.yml` copies `accounts`, `card_amounts`, `trade_rarity_settings` and `decks` (main and alt) as sorted CSVs to the private repo [thundermage117/tcg-collection-backup](https://github.com/thundermage117/tcg-collection-backup) every night at 03:23 UTC, committing only when something changed. The CSVs hold your email, which is why they don't live in this public repo.
+   - Run `scripts/sql/personal-migrations/2026-11-backup-reader.sql` in the SQL editor with your own password. `backup_reader` can only read those four tables.
+   - Repo secret `BACKUP_DB_URL`: `postgresql://backup_reader.cjdqsonndawahfzzhcvr:<password>@aws-0-eu-west-1.pooler.supabase.com:5432/postgres?sslmode=require`. It goes through the session pooler because GitHub's runners have no IPv6 and the direct `db.<ref>.supabase.co` host is IPv6-only.
+   - Repo secret `BACKUP_REPO_TOKEN`: a fine-grained personal access token for the backup repo only, with **Contents** read/write. `SYNC_TOKEN` can't push there.
+   - The run fails without committing if `card_amounts` comes back nearly empty (under 100 rows), which means the role lost access, not that the cards are gone.
+   - **Restore** into a fresh project: run `personal-schema.sql`, then from a clone of the backup repo, with `psql` connected as `postgres`:
+     ```
+     \copy accounts from 'accounts.csv' with csv header
+     \copy card_amounts from 'card_amounts.csv' with csv header
+     \copy trade_rarity_settings (email, rarity, to_collect, to_keep, collecting_carddex) from 'trade_rarity_settings.csv' with csv header
+     \copy decks from 'decks.csv' with csv header
+     select setval('decks_id_seq', (select max(id) from decks));
+     ```
 
 ## Staying up to date
 
