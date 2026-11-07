@@ -1,7 +1,7 @@
 // Personal fork: how the alt account helps the main one (see lib/altSupport.ts). The latest set's unlock for both
 // accounts, gifts both ways (◊–◊◊◊◊, one received a day) and trades to main (☆ and up), each moved between the two
 // collections with one click. A trade opens in Trade check, which finalizes it.
-import { ArrowRight, Gift, Repeat, Sparkles } from 'lucide-react'
+import { ArrowRight, Gift, Library, Repeat, ScanLine, Sparkles } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
@@ -31,7 +31,7 @@ import { oneIn } from '@/pages/packs/types'
 import { useLoginDialog } from '@/services/auth/useAuth'
 import { useSelectedCard } from '@/services/collection/useCollection'
 import type { Profile } from '@/services/profile/useProfile'
-import { useProfileAccount } from '@/services/profile/useProfile'
+import { setActiveProfile, useProfileAccount } from '@/services/profile/useProfile'
 import { useProfileCollection, useTransferCards } from '@/services/profile/useProfileCollection'
 import { type Card, type Collection, defaultRaritySettings, type TradableRarity } from '@/types'
 
@@ -260,12 +260,24 @@ export default function AltHelper() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-12">
-      <header className="mb-5">
-        <h1 className="text-2xl font-semibold sm:text-3xl">Alt account</h1>
-        <p className="mt-1 text-sm text-neutral-400">
-          How the alt helps main: gifts, trades to main and the latest set's Wonder Pick unlock. Switch to{' '}
-          <span className="font-medium text-amber-400">Alt</span> in the header to add the alt's cards on the Collection, Scan or Import pages.
-        </p>
+      <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold sm:text-3xl">Alt account</h1>
+          <p className="mt-1 text-sm text-neutral-400">How the alt helps main: gifts, trades to main and the latest set's Wonder Pick unlock.</p>
+        </div>
+        <div className="flex gap-2">
+          {/* opens the page with Alt picked in its Main / Alt switch */}
+          <Link to="/collection" onClick={() => setActiveProfile('alt')}>
+            <Button variant="outline" size="sm" className="border-amber-500/60 text-amber-100 hover:bg-amber-500/10">
+              <Library /> Edit alt collection
+            </Button>
+          </Link>
+          <Link to="/scan" onClick={() => setActiveProfile('alt')}>
+            <Button variant="outline" size="sm" className="border-amber-500/60 text-amber-100 hover:bg-amber-500/10">
+              <ScanLine /> Scan alt cards
+            </Button>
+          </Link>
+        </div>
       </header>
 
       {!data ? (
