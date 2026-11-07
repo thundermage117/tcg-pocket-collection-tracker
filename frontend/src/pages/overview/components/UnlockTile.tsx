@@ -5,10 +5,14 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { Progress } from '@/components/ui/progress'
-import { allTwoStarsRegistered, altCovers, canMoveToMain, latestExpansion, readGiftDate, today, unlockProgress } from '@/lib/altSupport'
+import { allTwoStarsRegistered, altCovers, bestUnlockPack, canMoveToMain, latestExpansion, readGiftDate, today, unlockProgress } from '@/lib/altSupport'
 import { getCardNameByLang } from '@/lib/utils'
+import { oneIn } from '@/pages/packs/types'
 import { useProfileAccount } from '@/services/profile/useProfile'
 import { useProfileCollection } from '@/services/profile/useProfileCollection'
+import type { Card } from '@/types'
+
+const packCount = latestExpansion.packs.filter((p) => p.name !== 'everypack').length
 
 function Bar({ label, have, total }: { label: string; have: number; total: number }) {
   return (
@@ -25,7 +29,7 @@ function Bar({ label, have, total }: { label: string; have: number; total: numbe
 }
 
 export function UnlockTile({ className }: { className?: string }) {
-  const { t, i18n } = useTranslation(['common/sets'])
+  const { t, i18n } = useTranslation(['common/sets', 'common/packs'])
   const { data: mainAccount } = useProfileAccount('main')
   const { data: main } = useProfileCollection('main')
   const { data: alt } = useProfileCollection('alt')
@@ -39,15 +43,18 @@ export function UnlockTile({ className }: { className?: string }) {
       return undefined // nothing left for the Wonder Picks to show
     }
     const cover = altCovers(main, mainAccount.trade_rarity_settings, alt)
-    const altHas = progress.missing.filter((c) => c.rarity !== '☆' && canMoveToMain(c) && (alt.get(c.internal_id)?.amount_owned ?? 0) > 0).length
-    return { progress, cover, altHas }
+    const altCanGive = (c: Card) => canMoveToMain(c) && (alt.get(c.internal_id)?.amount_owned ?? 0) > 0
+    const altHas = progress.missing.filter((c) => c.rarity !== '☆' && altCanGive(c)).length
+    // only worth naming when the set has a choice of packs
+    const best = packCount > 1 ? bestUnlockPack(progress.missing.filter((c) => !altCanGive(c))) : undefined
+    return { progress, cover, altHas, best }
   }, [main, alt, mainAccount])
 
   if (!data) {
     return null
   }
 
-  const { progress, cover, altHas } = data
+  const { progress, cover, altHas, best } = data
   const diamondsLeft = progress.diamonds.total - progress.diamonds.have
   const starsLeft = progress.star.total - progress.star.have
   const status =
@@ -73,6 +80,11 @@ export function UnlockTile({ className }: { className?: string }) {
         <Bar label="☆" have={progress.star.have} total={progress.star.total} />
       </div>
       <p className="text-neutral-300">{status}</p>
+      {best && best.chance > 0 && (
+        <p className="text-neutral-400 text-xs">
+          Best pack: <span className="text-neutral-200">{t(best.pack.name, { ns: 'common/packs' })}</span> · {oneIn(best.chance)} packs gives one
+        </p>
+      )}
       {next && (
         <p className="text-neutral-400 text-xs">
           Next {next.kind}:{' '}
