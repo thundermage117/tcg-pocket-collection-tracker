@@ -47,13 +47,13 @@ export function useActiveProfile(): Profile {
 const countAltKey = 'tcg_count_alt'
 let countAlt = (() => {
   try {
-    return localStorage.getItem(countAltKey) !== '0'
+    return localStorage.getItem(countAltKey) === '1'
   } catch {
-    return true
+    return false
   }
 })()
 
-/** Whether Overview and Packs treat cards the alt can hand to main as owned. On by default. */
+/** Whether Overview and Packs treat cards the alt can hand to main as owned. Off by default. */
 export function useCountAlt() {
   return useSyncExternalStore(subscribe, () => countAlt)
 }
