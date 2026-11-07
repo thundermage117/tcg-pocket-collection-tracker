@@ -3,6 +3,7 @@
 // upstream collection code works for it unchanged; only the email it's given changes.
 import { useQuery } from '@tanstack/react-query'
 import { useSyncExternalStore } from 'react'
+import { useLocation } from 'react-router'
 import { accountQuery } from '@/services/account/useAccount'
 import { userQuery } from '@/services/auth/useAuth'
 import { removeLocalCacheItems } from '@/services/collection/collectionService'
@@ -41,9 +42,22 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener)
 }
 
-/** The profile the collection pages show and edit. */
-export function useActiveProfile(): Profile {
+// The only pages that show and edit the alt. Everywhere else (planning, trading, Pokédex, decks, missions, card dialogs
+// opened there) is main's, whatever the switch says: the alt doesn't trade with others and only matters as a source for main.
+const profileRoutes = ['/collection', '/scan', '/import']
+
+/** Whether `pathname` follows the Main / Alt switch. `/collection/<friend id>` doesn't: it's a friend's collection. */
+export const isProfileRoute = (pathname: string) => profileRoutes.includes(pathname)
+
+/** The profile picked in the switch, whatever the page. */
+export function useSelectedProfile(): Profile {
   return useSyncExternalStore(subscribe, () => active)
+}
+
+/** The profile this page shows and edits: the switch's pick on the Collection, Scan and Import pages, main elsewhere. */
+export function useActiveProfile(): Profile {
+  const selected = useSelectedProfile()
+  return isProfileRoute(useLocation().pathname) ? selected : 'main'
 }
 
 const countAltKey = 'tcg_count_alt'

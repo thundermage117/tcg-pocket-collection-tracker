@@ -98,8 +98,9 @@ The repo's front page is `.github/README.md`, which GitHub shows instead of upst
 The alt's rows live in the same tables as main's, under the key `alt:<login email>`
 (`scripts/sql/personal-migrations/2026-11-alt-collection.sql` adds the RLS policies; `personal-schema.sql` has them too).
 
-- **Main / Alt switch** in the header (`services/profile/useProfile.ts`): Collection, card detail, Scan, Import, Missions, Pokédex and Decks
-  show and edit the active profile. While the alt is active, an amber banner sits under the header on every page. The choice lasts
+- **Main / Alt switch** under the header on Collection, Scan and Import only (`components/ProfileSwitch.tsx`, `ProfileBar`):
+  those pages, and card detail opened from them, show and edit the picked profile. Every other page is main's whatever the
+  switch says (`useActiveProfile()` returns main off those routes, `isProfileRoute`). While the alt is picked the bar turns amber. The choice lasts
   only for the browser session (`sessionStorage`), so every new visit starts on main. This works through one upstream file, `services/collection/useCollection.ts`, whose hooks take
   the email from `useProfileEmail()` instead of the login. If an upstream merge conflicts there, keep upstream's change and put the
   `useProfileEmail()` / `useProfileAccount()` calls back.

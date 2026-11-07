@@ -1,5 +1,5 @@
 // Personal fork: main's progress towards the latest set's ☆☆ Wonder Pick unlock (see lib/altSupport.ts) and the next
-// thing the alt can do for it. Always main's real collection: it ignores the header switch and "Count alt's cards".
+// thing the alt can do for it. Always main's real collection: it ignores the Main / Alt switch and "Count alt's cards".
 import { ChevronRight, Sparkles } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
