@@ -25,6 +25,8 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.BACKUP_DB_URL }}
         run: |
+          # Anything but a URL makes psql fall back to a local socket, which hides the real problem.
+          case "$DATABASE_URL" in postgresql://*@*) ;; *) echo "::error::BACKUP_DB_URL must be a postgresql://user:password@host… URL"; exit 1;; esac
           # Sorted so a commit's diff shows only the rows that changed. trade_rarity_settings leaves out
           # rarity_id, a generated column that a restore can't write.
           dump() { psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "\copy (select $2 from public.$1 order by $3) to '$1.csv' with csv header"; }
