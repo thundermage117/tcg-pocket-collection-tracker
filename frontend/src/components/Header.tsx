@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils'
 import { useProfileDialog } from '@/services/account/useAccount'
 import { useLoginDialog, useLogout, userQuery } from '@/services/auth/useAuth'
 import { resetProfiles } from '@/services/profile/useProfile'
-import { ProfileSwitch } from './ProfileSwitch'
+import { AltBanner, ProfileSwitch } from './ProfileSwitch'
 import { Spinner } from './Spinner'
 import { Badge } from './ui/badge'
 
@@ -148,6 +148,7 @@ export function Header() {
           )}
         </div>
       </header>
+      {user && <AltBanner />}
       <Dialog open={isAboutUsDialogOpen} onOpenChange={setIsAboutUsDialogOpen}>
         <DialogContent className="border-1 border-neutral-700 shadow-none">
           <DialogHeader>

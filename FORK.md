@@ -99,7 +99,8 @@ The alt's rows live in the same tables as main's, under the key `alt:<login emai
 (`scripts/sql/personal-migrations/2026-11-alt-collection.sql` adds the RLS policies; `personal-schema.sql` has them too).
 
 - **Main / Alt switch** in the header (`services/profile/useProfile.ts`): Collection, card detail, Scan, Import, Missions, Pokédex and Decks
-  show and edit the active profile. This works through one upstream file, `services/collection/useCollection.ts`, whose hooks take
+  show and edit the active profile. While the alt is active, an amber banner sits under the header on every page. The choice lasts
+  only for the browser session (`sessionStorage`), so every new visit starts on main. This works through one upstream file, `services/collection/useCollection.ts`, whose hooks take
   the email from `useProfileEmail()` instead of the login. If an upstream merge conflicts there, keep upstream's change and put the
   `useProfileEmail()` / `useProfileAccount()` calls back.
 - **The goal is always main.** Overview, Packs, Rankings and Trade read main's collection whatever the switch says.

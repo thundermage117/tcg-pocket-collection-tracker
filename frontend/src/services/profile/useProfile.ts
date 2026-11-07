@@ -9,12 +9,14 @@ import { removeLocalCacheItems } from '@/services/collection/collectionService'
 
 export type Profile = 'main' | 'alt'
 
+// Session only: every new visit starts on main, so you can't come back days later still editing the alt.
 const storageKey = 'tcg_active_profile'
 const listeners = new Set<() => void>()
 
 function readProfile(): Profile {
   try {
-    return localStorage.getItem(storageKey) === 'alt' ? 'alt' : 'main'
+    localStorage.removeItem(storageKey) // older builds kept it here
+    return sessionStorage.getItem(storageKey) === 'alt' ? 'alt' : 'main'
   } catch {
     return 'main'
   }
@@ -25,7 +27,7 @@ let active: Profile = readProfile()
 export function setActiveProfile(profile: Profile) {
   active = profile
   try {
-    localStorage.setItem(storageKey, profile)
+    sessionStorage.setItem(storageKey, profile)
   } catch {
     // private mode: the switch still works for this session
   }
