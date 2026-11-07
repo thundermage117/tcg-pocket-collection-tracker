@@ -12,6 +12,7 @@ Work happens on the `personal` branch, which Vercel deploys. `main` mirrors upst
 - **Rankings** (`/rankings`): SSS–E tier lists. "☆☆ Elo" ranks every ☆☆ by community vote; "Most wanted" ranks every rarity by trade demand, with a "Deluxe foils" switch (off by default). See [Rankings](#rankings).
 - **Trade** (`/trade`): "Looking for" and "For trade" grids from your keep/collect settings, filtered by rarity, set, pack and name, sorted by number or value. A flame marks the top quarter by demand. "Copy for Discord" turns them into LF / FT messages grouped by expansion, split under Discord's 2,000-character limit.
 - **Trade check** (`/trade/check`): pick the card you give and the card you get for a fair / steal / overpay verdict with reasons, ownership, Shinedust and pack-point costs. See [Trade check](#trade-check).
+- **Alt account** (`/alt`, header Main / Alt switch): a second game account tracked under the same login. See [Alt account](#alt-account).
 - **Navigation**: below `lg` a bottom tab bar (Overview, Collection, Packs, Trade, More) replaces the hamburger; More holds the other pages and account actions. On desktop, Decks and Missions sit behind "More". Pages are listed once in `frontend/src/components/navItems.ts`.
 - **Filters in the URL** on the overview, packs, rankings, trade and trade check pages, so refresh, back and links keep the view (e.g. `/#/rankings?tab=wanted&set=B1`). `useUrlFilters` also remembers a few choices (overview filters, pack goal, trade rarity and sort) for when the URL leaves them out.
 
@@ -91,6 +92,23 @@ The repo's front page is `.github/README.md`, which GitHub shows instead of upst
 - A same-art reprint (e.g. Deluxe A4b-1 Bulbasaur) shares its original's `internal_id` (A1-1), and eleet pools their numbers. `build_values.py` marks it `same_as: "A1-1"`; Most wanted ranks only the original.
 - ☆☆ kind is full art → trainer → rainbow by print order, verified on card images.
 - Check the Discord formatter: `pnpm tsx scripts/value/check-discord.ts`.
+
+## Alt account
+
+The alt's rows live in the same tables as main's, under the key `alt:<login email>`
+(`scripts/sql/personal-migrations/2026-11-alt-collection.sql` adds the RLS policies; `personal-schema.sql` has them too).
+
+- **Main / Alt switch** in the header (`services/profile/useProfile.ts`): Collection, card detail, Scan, Import, Missions, Pokédex and Decks
+  show and edit the active profile. This works through one upstream file, `services/collection/useCollection.ts`, whose hooks take
+  the email from `useProfileEmail()` instead of the login. If an upstream merge conflicts there, keep upstream's change and put the
+  `useProfileEmail()` / `useProfileAccount()` calls back.
+- **The goal is always main.** Overview, Packs, Rankings and Trade read main's collection whatever the switch says.
+  "Count alt's cards" (Overview, Packs; on by default) counts cards the alt can hand over as owned (`lib/altSupport.ts`, `withAltCards`),
+  so missing cards and the pack pick only chase cards neither account has.
+- **What the alt can hand over:** ◊–◊◊◊◊ as a gift (one a day), ☆ and up by trading (main sends back a spare of the same rarity), both
+  only from tradable sets. `/alt` lists them, and its "Gifted" / "Traded" buttons move the cards between the two collections.
+- **Trade:** "Looking for" hides cards the alt has (switch to show them, marked "alt"). "For trade" offers spares from Main, Alt or Both;
+  the alt never offers a card main still needs. The alt's keep settings are the defaults (keep 1); Trade's settings panel edits main's.
 
 ## Rankings
 

@@ -45,6 +45,11 @@ guidance goes here or in FORK.md. Where the two disagree, this file wins.
   `upstream-sync.yml`) re-deletes them via `scripts/strip-locales.sh`, resolving conflicts only on those paths.
   Merge upstream by hand with that script, never a bare `git merge`. If you change what the fork deletes or trims,
   update both scripts: `strippable` in `merge-upstream.sh` must match the paths in `strip-locales.sh`.
+- **Alt collection (2026-11-07).** A second game account lives under the key `alt:<login email>` in `accounts`, `card_amounts`
+  and `trade_rarity_settings` (policies in `scripts/sql/personal-migrations/2026-11-alt-collection.sql`). The one upstream file
+  changed for it is `services/collection/useCollection.ts` (`useProfileEmail()` instead of the login email). Planning pages
+  (Overview, Packs, Rankings, Trade) read main through `useProfileCollection('main')` / `useMainWithAlt()`, never `useCollection()`.
+  See FORK.md, "Alt account".
 - **Stale upstream docs/scripts:** `pnpm sync-locales` no longer exists. `pnpm scraper` calls `scripts/scraper.js`,
   but the file is `scripts/scraper.ts`.
 - **Tooling:** pnpm isn't global on the dev machine (`npx pnpm@12.4.1`). The lefthook git hooks need a `pnpm` shim

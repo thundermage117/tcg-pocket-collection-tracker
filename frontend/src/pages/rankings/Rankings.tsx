@@ -14,7 +14,8 @@ import { ownsCard } from '@/lib/packValue'
 import { getDemandMap, getMostWanted, getTwoStarRanking, type RankedCard, type Tier, tiers, wantedShares } from '@/lib/rankings'
 import { getCardNameByLang } from '@/lib/utils'
 import { isProvisional, kindLabel, PROVISIONAL_VOTES, type TwoStarKind } from '@/lib/ValueDB'
-import { useCollection, useSelectedCard } from '@/services/collection/useCollection'
+import { useSelectedCard } from '@/services/collection/useCollection'
+import { useMainWithAlt } from '@/services/profile/useProfileCollection'
 import { type ExpansionId, type Rarity, rarities } from '@/types'
 import { DemandMap } from './components/DemandMap'
 import { TierNav } from './components/TierNav'
@@ -81,7 +82,7 @@ const descriptions: Record<Tab, string> = {
 export default function Rankings() {
   const { t, i18n } = useTranslation('common/sets')
   // rankings don't need the collection: render straight away, owned marks fill in when it arrives
-  const { data: collection } = useCollection()
+  const { data: collection } = useMainWithAlt() // personal fork: main, plus what the alt can hand over ("Count alt")
   const { setSelectedCardId } = useSelectedCard()
   const [params, setParams] = useSearchParams()
   const [open, setOpen] = useState(defaultOpen)
