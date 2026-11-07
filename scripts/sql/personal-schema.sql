@@ -116,6 +116,16 @@ CREATE POLICY "ensure-only-own-rows" ON public.card_amounts USING (((email)::tex
 CREATE POLICY "ensure-own-rows" ON public.trade_rarity_settings USING (((email)::text = ( SELECT auth.email() AS email)));
 CREATE POLICY "ensure only own rows" ON public.decks USING (((email)::text = ( SELECT auth.email() AS email)));
 CREATE POLICY "ensure only own rows" ON public.deck_likes USING (((email)::text = ( SELECT auth.email() AS email)));
+-- Fork addition: the alt collection lives under 'alt:<login email>' (personal-migrations/2026-11-alt-collection.sql).
+CREATE POLICY "alt-rows" ON public.accounts
+    USING (((email)::text = ('alt:'::text || ( SELECT auth.email() AS email))))
+    WITH CHECK (((email)::text = ('alt:'::text || ( SELECT auth.email() AS email))));
+CREATE POLICY "alt-rows" ON public.card_amounts
+    USING (((email)::text = ('alt:'::text || ( SELECT auth.email() AS email))))
+    WITH CHECK (((email)::text = ('alt:'::text || ( SELECT auth.email() AS email))));
+CREATE POLICY "alt-rows" ON public.trade_rarity_settings
+    USING (((email)::text = ('alt:'::text || ( SELECT auth.email() AS email))))
+    WITH CHECK (((email)::text = ('alt:'::text || ( SELECT auth.email() AS email))));
 
 -- Fork addition: create the accounts row on sign-up. Upstream only creates it when the
 -- profile dialog is saved, and collection writes (updateCollectionTimestamp) need it to exist.
