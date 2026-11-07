@@ -12,26 +12,30 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatRarity } from '@/components/utils'
 import { ValueDataAge } from '@/components/ValueDataAge'
 import { useUrlFilters } from '@/hooks/useUrlFilters'
+import { altSpares } from '@/lib/altSupport'
 import { expansions, getCardByInternalId, getExpansionById } from '@/lib/CardsDB'
 import { RARITY_ORDER } from '@/lib/discordTradeList'
-import { getCardNameByLang } from '@/lib/utils'
+import { getCardNameByLang, getExtraCards, getWantedCards } from '@/lib/utils'
 import { demandScore, getCardValue, valueSortKey } from '@/lib/ValueDB'
 import TradeSettings from '@/pages/trade/TradeSettings.tsx'
-import { useAccount } from '@/services/account/useAccount'
 import { useLoginDialog } from '@/services/auth/useAuth'
-import { useCollection, useTradingCards } from '@/services/collection/useCollection'
+import { useProfileAccount } from '@/services/profile/useProfile'
+import { useProfileCollection } from '@/services/profile/useProfileCollection'
 import { defaultRaritySettings, type ExpansionId, type Rarity, tradableRarities } from '@/types'
 import { DiscordExport, useDiscordMessages } from './components/DiscordExport'
 import { hotLabel, TradeGrid } from './components/TradeGrid'
 import { cardNumber, groupBySet, markHot, type SortMode, type TradeItem } from './tradeGroups'
 
 type Side = 'lf' | 'ft'
+// whose spares the FT list offers (the alt never offers a card main still needs)
+type Pool = 'main' | 'alt' | 'both'
 type SetOption = 'all' | ExpansionId
 // `${expansionId}|${packName}`; a set's "everypack" cards count as part of every pack
 type PackOption = 'all' | `${ExpansionId}|${string}`
 
 const rarityOptions = RARITY_ORDER.filter((r) => (tradableRarities as readonly string[]).includes(r)) as Rarity[]
 const sortOptions: SortMode[] = ['list', 'value']
+const poolOptions: Pool[] = ['main', 'alt', 'both']
 
 const DISCORD_SECTION_ID = 'discord-export'
 
@@ -51,9 +55,11 @@ function Collapsible({ id, title, children }: { id?: string; title: string; chil
 
 export default function PersonalTrade() {
   const { t, i18n } = useTranslation(['common/sets', 'common/packs'])
-  const { data: account } = useAccount()
-  const { data: collection } = useCollection()
-  const { data: trading, isLoading } = useTradingCards()
+  // Personal fork: always main's lists, whichever profile the header has active; the alt only adds to them
+  const { data: account } = useProfileAccount('main')
+  const { data: collection, isLoading } = useProfileCollection('main')
+  const { data: altAccount } = useProfileAccount('alt')
+  const { data: altCollection } = useProfileCollection('alt')
   // filters live in the URL (?rarity=☆☆&side=ft&set=B1&q=…); rarity and sort are remembered for the next visit
   const { get, update } = useUrlFilters('trade-view', ['rarity', 'sort'])
   const view = {
@@ -63,35 +69,54 @@ export default function PersonalTrade() {
   const side: Side = get('side') === 'ft' ? 'ft' : 'lf'
   const search = get('q') ?? ''
   const hotOnly = get('hot') === '1'
+  const pool: Pool = poolOptions.find((p) => p === get('pool')) ?? 'main'
+  const showAltHas = get('altHas') === 'show' // LF cards the alt can hand over are hidden by default
   const [copied, setCopied] = useState(false)
   const { setIsLoginDialogOpen } = useLoginDialog()
 
   // every LF / FT item of the selected rarity, before set / pack / search filters
   const items = useMemo(() => {
-    if (!trading || !collection || !account) {
-      return { lf: [], ft: [] }
+    if (!collection || !account) {
+      return { lf: [], ft: [], altHas: 0 }
     }
-    const keepByRarity = Object.fromEntries(account.trade_rarity_settings.map((s) => [s.rarity, s.to_keep]))
-    const toItems = (ids: number[], forTrade: boolean): TradeItem[] =>
-      ids.flatMap((id) => {
-        const card = getCardByInternalId(id)
-        if (!card || card.rarity !== view.rarity) {
-          return []
-        }
-        const row = collection.get(card.internal_id)
-        const keep = row?.amount_wanted ?? keepByRarity[card.rarity] ?? defaultRaritySettings.to_keep
-        return [
-          {
-            card,
-            name: getCardNameByLang(card, i18n.language),
-            number: cardNumber(card.card_id),
-            count: forTrade ? (row?.amount_owned ?? 0) - keep : undefined,
-            key: forTrade ? demandScore(getCardValue(card.card_id)) : valueSortKey(card.card_id),
-          },
-        ]
-      })
-    return { lf: markHot(toItems(trading.wanted, false), ratioOf), ft: markHot(toItems(trading.extra, true), ratioOf) }
-  }, [trading, collection, account, view.rarity, i18n.language])
+    const wanted = getWantedCards(collection, account.trade_rarity_settings)
+    const spareCount = (rows: typeof collection, settings: typeof account.trade_rarity_settings) => {
+      const keepByRarity = Object.fromEntries(settings.map((s) => [s.rarity, s.to_keep]))
+      return (id: number, rarity: Rarity) => {
+        const row = rows.get(id)
+        return (row?.amount_owned ?? 0) - (row?.amount_wanted ?? keepByRarity[rarity] ?? defaultRaritySettings.to_keep)
+      }
+    }
+    const mainSpare = spareCount(collection, account.trade_rarity_settings)
+    const altSpare = altCollection && altAccount ? spareCount(altCollection, altAccount.trade_rarity_settings) : undefined
+    const mainIds = pool === 'alt' ? [] : getExtraCards(collection, account.trade_rarity_settings)
+    const altIds = pool === 'main' || !altCollection || !altAccount ? [] : altSpares(altCollection, altAccount.trade_rarity_settings, new Set(wanted))
+
+    const toItem = (id: number, extra: Partial<TradeItem>, forTrade: boolean): TradeItem[] => {
+      const card = getCardByInternalId(id)
+      if (!card || card.rarity !== view.rarity) {
+        return []
+      }
+      return [
+        {
+          card,
+          name: getCardNameByLang(card, i18n.language),
+          number: cardNumber(card.card_id),
+          key: forTrade ? demandScore(getCardValue(card.card_id)) : valueSortKey(card.card_id),
+          ...extra,
+        },
+      ]
+    }
+    const lf = wanted.flatMap((id) => toItem(id, { alt: (altCollection?.get(id)?.amount_owned ?? 0) > 0 ? 1 : undefined }, false))
+    const ft = [...new Set([...mainIds, ...altIds])].flatMap((id) => {
+      const card = getCardByInternalId(id)
+      const fromMain = card && mainIds.includes(id) ? mainSpare(id, card.rarity) : 0
+      const fromAlt = card && altSpare && altIds.includes(id) ? altSpare(id, card.rarity) : 0
+      return toItem(id, { count: fromMain + fromAlt, alt: fromAlt > 0 ? fromAlt : undefined }, true)
+    })
+    const altHas = lf.filter((i) => i.alt).length
+    return { lf: markHot(showAltHas ? lf : lf.filter((i) => !i.alt), ratioOf), ft: markHot(ft, ratioOf), altHas }
+  }, [collection, account, altCollection, altAccount, pool, showAltHas, view.rarity, i18n.language])
 
   const all = [...items.lf, ...items.ft]
   const setOptions: SetOption[] = ['all', ...expansions.filter((e) => all.some((i) => i.card.expansion === e.id)).map((e) => e.id)]
@@ -205,6 +230,25 @@ export default function PersonalTrade() {
               </TabsList>
             </Tabs>
             <div className="flex flex-wrap items-center gap-4">
+              {side === 'ft' ? (
+                <TabsFilter
+                  label="Spares from"
+                  options={poolOptions}
+                  value={pool}
+                  onChange={(p) => update({ pool: p === 'main' ? undefined : p })}
+                  show={(p) => ({ main: 'Main', alt: 'Alt', both: 'Both' })[p]}
+                />
+              ) : (
+                <label
+                  htmlFor="trade-alt-has"
+                  className="flex cursor-pointer items-center gap-2 text-sm text-neutral-300"
+                  title="Cards the alt can gift or trade to main"
+                >
+                  <Switch id="trade-alt-has" checked={showAltHas} onCheckedChange={(on) => update({ altHas: on ? 'show' : undefined })} />
+                  Show cards the alt has
+                  {items.altHas > 0 && <span className="text-neutral-500 tabular-nums">{items.altHas}</span>}
+                </label>
+              )}
               <label htmlFor="trade-hot-only" className="flex cursor-pointer items-center gap-2 text-sm text-neutral-300" title={hotLabel[side]}>
                 <Switch id="trade-hot-only" checked={hotOnly} onCheckedChange={(on) => update({ hot: on ? '1' : undefined })} />
                 <Flame className="size-3.5 text-orange-500" />

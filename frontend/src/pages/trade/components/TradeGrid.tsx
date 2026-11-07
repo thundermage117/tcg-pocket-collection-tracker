@@ -46,9 +46,21 @@ export function TradeGrid({ groups, empty, side }: { groups: SetGroup[]; empty: 
                   card={item.card}
                   label={item.count !== undefined ? `×${item.count}` : undefined}
                   badge={
-                    item.hot && (
-                      <span title={hotLabel[side]} className="flex rounded-full bg-orange-500 p-0.5 text-white shadow">
-                        <Flame className="size-3" />
+                    (item.hot || item.alt) && (
+                      <span className="flex items-center gap-1">
+                        {item.hot && (
+                          <span title={hotLabel[side]} className="flex rounded-full bg-orange-500 p-0.5 text-white shadow">
+                            <Flame className="size-3" />
+                          </span>
+                        )}
+                        {item.alt && (
+                          <span
+                            title={side === 'lf' ? 'Your alt has this card' : `${item.alt} of these are on your alt`}
+                            className="rounded-full bg-amber-500 px-1.5 text-[10px] font-semibold leading-4 text-neutral-950 shadow"
+                          >
+                            {side === 'lf' ? 'alt' : `alt ×${item.alt}`}
+                          </span>
+                        )}
                       </span>
                     )
                   }
