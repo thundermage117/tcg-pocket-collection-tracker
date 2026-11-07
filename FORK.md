@@ -111,7 +111,10 @@ The alt's rows live in the same tables as main's, under the key `alt:<login emai
 - **Latest-set unlock** (community-tested, not official): with every ◊–◊◊◊◊ of the newest openable set registered, an account's
   24-hour Wonder Picks show its missing ☆ / ☆☆; with every ☆ too, only ☆☆. `/alt` tracks this for both accounts, puts those
   cards first in both gift queues (main can gift the alt its spares too) and names the best pack for what's left.
-  "Registered" is `collected` or owned. Recheck the rule if the game changes Wonder Picks.
+  "Registered" is `collected` or owned. They reportedly stop once the account owns every ☆☆ of the set (unconfirmed).
+  Sources, checked 2026-11-07: [Nintenpedia](https://nintenpedia.com/how-to-get-2-star-wonder-picks-in-pokemon-tcg-pocket/),
+  [PokeTrade's test](https://x.com/ptcgptrade/status/1999219869900845152) (both from Mega Rising, B1: 226 ◊ and 24 ☆);
+  Share rules: [Game8](https://game8.co/games/Pokemon-TCG-Pocket/archives/557585). Recheck if the game changes Wonder Picks.
 - **Trade:** "Looking for" hides cards the alt has (switch to show them, marked "alt"). "For trade" is main's spares only.
 
 ## Rankings

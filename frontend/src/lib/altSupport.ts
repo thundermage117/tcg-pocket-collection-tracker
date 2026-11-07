@@ -5,6 +5,7 @@
 // Latest-set unlock (community-tested, not official): once an account has registered every ◊–◊◊◊◊ card of the newest
 // set, its 24-hour Wonder Picks show ☆ or ☆☆ cards it's missing; with every ☆ registered too, only ☆☆. So the
 // newest set's ◊–☆ cards come first for both accounts, and the alt's ☆☆ Wonder Picks can then be traded to main.
+// They reportedly stop once the account owns every ☆☆ of the set. Sources are in FORK.md, "Alt account".
 import { allCards, basicRarities, expansions, getCardByInternalId, tradableExpansions } from '@/lib/CardsDB'
 import { pullRate } from '@/lib/stats'
 import { getWantedCards } from '@/lib/utils'

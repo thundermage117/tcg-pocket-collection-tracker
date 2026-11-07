@@ -49,7 +49,11 @@ guidance goes here or in FORK.md. Where the two disagree, this file wins.
   and `trade_rarity_settings` (policies in `scripts/sql/personal-migrations/2026-11-alt-collection.sql`). The one upstream file
   changed for it is `services/collection/useCollection.ts` (`useProfileEmail()` instead of the login email). Planning pages
   (Overview, Packs, Rankings, Trade) read main through `useProfileCollection('main')` / `useMainWithAlt()`, never `useCollection()`.
-  See FORK.md, "Alt account".
+  The alt only helps main: it gifts ◊–◊◊◊◊ (Share, one received per account per day) and trades ☆+ to main, never to
+  other people (Shinedust). Gift / trade order and `/alt` are built around a community-tested (not official) rule: every
+  ◊–◊◊◊◊ of the newest openable set registered → that account's 24-hour Wonder Picks show its missing ☆ / ☆☆; every ☆
+  too → ☆☆ only; reportedly they stop once it owns every ☆☆. Logic in `lib/altSupport.ts`; details and sources in
+  FORK.md, "Alt account".
 - **Stale upstream docs/scripts:** `pnpm sync-locales` no longer exists. `pnpm scraper` calls `scripts/scraper.js`,
   but the file is `scripts/scraper.ts`.
 - **Tooling:** pnpm isn't global on the dev machine (`npx pnpm@12.4.1`). The lefthook git hooks need a `pnpm` shim
