@@ -1,17 +1,23 @@
 // Personal fork: trade fairness check (/trade/check?give=<card_id>&get=<card_id>). Scoring lives in lib/tradeFairness.
-import { ArrowLeft, ArrowLeftRight, Plus, X } from 'lucide-react'
+// With &alt=1 it's a trade between your own accounts (from the Alt page): main gives, the alt gives back, and
+// "Finalize trade" moves both cards.
+import { ArrowLeft, ArrowLeftRight, Check, Plus, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useSearchParams } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { ValueDataAge } from '@/components/ValueDataAge'
+import { useToast } from '@/hooks/use-toast'
 import { getCardById, getCardByInternalId, getExpansionById } from '@/lib/CardsDB'
 import { getLocalizedImagePath } from '@/lib/imageLocales'
 import { bestAsks, type CardScore, duplicateShinedust, judgeTrade, PACK_POINTS_PER_PACK, packPointCost, shareLabel, shinedustCost } from '@/lib/tradeFairness'
-import { cn, getCardNameByLang } from '@/lib/utils'
+import { cn, getCardNameByLang, getExtraCards, getWantedCards } from '@/lib/utils'
+import { valueSortKey } from '@/lib/ValueDB'
 import { useAccount } from '@/services/account/useAccount'
 import { useLoginDialog } from '@/services/auth/useAuth'
 import { useCollection, useTradingCards } from '@/services/collection/useCollection'
+import { useProfileAccount } from '@/services/profile/useProfile'
+import { useProfileCollection, useTransferCards } from '@/services/profile/useProfileCollection'
 import { type Card, defaultRaritySettings, type TradableRarity } from '@/types'
 import { type PickItem, type PickSource, TradeCheckPicker } from './components/TradeCheckPicker'
 import { type ContextLine, TradeVerdict } from './components/TradeVerdict'
@@ -21,7 +27,21 @@ type Side = 'give' | 'get'
 
 const fmt = (n: number) => n.toLocaleString('en-US')
 
-function Slot({ side, card, score, active, onClick }: { side: Side; card?: Card; score?: CardScore; active: boolean; onClick: () => void }) {
+function Slot({
+  side,
+  card,
+  score,
+  active,
+  isAlt,
+  onClick,
+}: {
+  side: Side
+  card?: Card
+  score?: CardScore
+  active: boolean
+  isAlt: boolean
+  onClick: () => void
+}) {
   const { t, i18n } = useTranslation('common/sets')
   return (
     <button
@@ -33,7 +53,7 @@ function Slot({ side, card, score, active, onClick }: { side: Side; card?: Card;
       )}
     >
       <span className={cn('text-xs font-semibold uppercase tracking-wide', side === 'give' ? 'text-amber-400' : 'text-violet-400')}>
-        {side === 'give' ? 'I give' : 'I get'}
+        {isAlt ? (side === 'give' ? 'Main gives' : 'Main gets') : side === 'give' ? 'I give' : 'I get'}
       </span>
       {card ? (
         <>
@@ -67,9 +87,27 @@ function Slot({ side, card, score, active, onClick }: { side: Side; card?: Card;
 export default function TradeCheck() {
   const { t, i18n } = useTranslation('common/sets')
   const [params, setParams] = useSearchParams()
-  const { data: account } = useAccount()
-  const { data: collection } = useCollection()
-  const { data: trading } = useTradingCards()
+  const isAlt = params.get('alt') === '1'
+  const { data: activeAccount } = useAccount()
+  const { data: activeCollection } = useCollection()
+  const { data: activeTrading } = useTradingCards()
+  // alt mode always plans for main, whichever account the header is switched to
+  const { data: mainAccount } = useProfileAccount('main')
+  const { data: mainCollection } = useProfileCollection('main')
+  const { data: altCollection } = useProfileCollection('alt')
+  const account = isAlt ? mainAccount : activeAccount
+  const collection = isAlt ? mainCollection : activeCollection
+  const trading = useMemo(() => {
+    if (!isAlt) {
+      return activeTrading
+    }
+    return mainCollection && mainAccount
+      ? { wanted: getWantedCards(mainCollection, mainAccount.trade_rarity_settings), extra: getExtraCards(mainCollection, mainAccount.trade_rarity_settings) }
+      : undefined
+  }, [isAlt, activeTrading, mainCollection, mainAccount])
+  const transfer = useTransferCards()
+  const navigate = useNavigate()
+  const { toast } = useToast()
   const { setIsLoginDialogOpen } = useLoginDialog()
 
   const fromParam = (key: Side) => {
@@ -88,6 +126,9 @@ export default function TradeCheck() {
     }
     if (next.get) {
       search.set('get', next.get.card_id)
+    }
+    if (isAlt) {
+      search.set('alt', '1')
     }
     setParams(search, { replace: true })
   }
@@ -117,18 +158,28 @@ export default function TradeCheck() {
   const allItems: PickItem[] = useMemo(() => tradableCards.map((card) => ({ card })), [])
   const loggedIn = !!account
 
+  // alt mode: every card main owns (cheapest first, for when it has no spare) and every card the alt owns
+  const ownedItems = (owner: typeof collection): PickItem[] =>
+    tradableCards
+      .filter((card) => (owner?.get(card.internal_id)?.amount_owned ?? 0) > 0)
+      .sort((a, b) => valueSortKey(a.card_id) - valueSortKey(b.card_id))
+      .map((card) => ({ card, label: `×${owner?.get(card.internal_id)?.amount_owned}` }))
+  const mainItems = useMemo(() => (isAlt ? ownedItems(mainCollection) : []), [isAlt, mainCollection])
+  const altItems = useMemo(() => (isAlt ? ownedItems(altCollection) : []), [isAlt, altCollection])
+
   const giveSources: PickSource[] = [
     ...(loggedIn
       ? [
           {
             id: 'ft',
-            label: 'My spares',
+            label: isAlt ? "Main's spares" : 'My spares',
             empty: 'No spares beyond your keep counts.',
             items: lists.ft.map((card) => {
               const h = holding(card)
               return { card, label: `×${h.owned - h.keep}` }
             }),
           },
+          ...(isAlt ? [{ id: 'main', label: "Main's cards", empty: 'Main owns no tradable cards.', items: mainItems }] : []),
         ]
       : []),
     { id: 'all', label: 'All cards', empty: 'No tradable cards.', items: allItems },
@@ -143,6 +194,7 @@ export default function TradeCheck() {
   }, [give, lists.lf])
 
   const getSources: PickSource[] = [
+    ...(isAlt ? [{ id: 'alt', label: "Alt's cards", empty: 'The alt owns no card of this rarity.', items: altItems }] : []),
     ...(loggedIn && give
       ? [
           {
@@ -185,6 +237,10 @@ export default function TradeCheck() {
             ? { text: `You have ${g.owned} of ${name(get)} (keeping ${g.keep}), so this gets you closer.` }
             : { text: `You already have ${g.owned} of ${name(get)} (keeping ${g.keep}), so this would be a spare.`, warn: true },
       )
+      if (isAlt) {
+        const a = altCollection?.get(get.internal_id)?.amount_owned ?? 0
+        context.push(a === 0 ? { text: `The alt doesn't own ${name(get)}.`, warn: true } : { text: `The alt has ${a} of ${name(get)}.` })
+      }
       const h = holding(give)
       context.push(
         h.owned === 0
@@ -210,6 +266,34 @@ export default function TradeCheck() {
     }
   }
 
+  // what stops the trade between your accounts from being finalized, if anything
+  const blocker =
+    !give || !get
+      ? 'Pick both cards.'
+      : (collection?.get(give.internal_id)?.amount_owned ?? 0) === 0
+        ? `Main doesn't own ${getCardNameByLang(give, i18n.language)}.`
+        : (altCollection?.get(get.internal_id)?.amount_owned ?? 0) === 0
+          ? `The alt doesn't own ${getCardNameByLang(get, i18n.language)}.`
+          : undefined
+  const finalize = () =>
+    give &&
+    get &&
+    transfer.mutate(
+      [
+        { internal_id: get.internal_id, from: 'alt', to: 'main' },
+        { internal_id: give.internal_id, from: 'main', to: 'alt' },
+      ],
+      {
+        onSuccess: () => {
+          toast({
+            title: 'Trade recorded',
+            description: `Main got ${getCardNameByLang(get, i18n.language)}, the alt got ${getCardNameByLang(give, i18n.language)}.`,
+          })
+          navigate('/alt')
+        },
+      },
+    )
+
   const rarityNote = give && (
     <>
       Trades must be the same rarity, so only {give.rarity} cards are shown.
@@ -220,18 +304,29 @@ export default function TradeCheck() {
   return (
     <main className="mx-auto max-w-4xl px-4 pb-12">
       <header className="mb-5">
-        <Link to="/trade" className="mb-2 inline-flex items-center gap-1 text-sm text-neutral-400 hover:text-neutral-200">
+        <Link to={isAlt ? '/alt' : '/trade'} className="mb-2 inline-flex items-center gap-1 text-sm text-neutral-400 hover:text-neutral-200">
           <ArrowLeft className="size-4" />
-          Trade
+          {isAlt ? 'Alt account' : 'Trade'}
         </Link>
         <h1 className="text-2xl font-semibold sm:text-3xl">Trade check</h1>
-        <p className="mt-1 text-sm text-neutral-400">Pick the card you'd give and the card you'd get to see if the trade is fair.</p>
+        <p className="mt-1 text-sm text-neutral-400">
+          {isAlt
+            ? 'Trade between your accounts: main gives one card, the alt gives one back. Finalize once you have made it in the game.'
+            : "Pick the card you'd give and the card you'd get to see if the trade is fair."}
+        </p>
         <ValueDataAge className="mt-2" />
       </header>
 
       <div className="mb-5 flex items-stretch gap-2 sm:gap-4">
-        <Slot side="give" card={give} score={giveScore} active={active === 'give'} onClick={() => setActive(active === 'give' ? undefined : 'give')} />
-        <div className="flex items-center">
+        <Slot
+          side="give"
+          card={give}
+          score={giveScore}
+          active={active === 'give'}
+          isAlt={isAlt}
+          onClick={() => setActive(active === 'give' ? undefined : 'give')}
+        />
+        <div className={cn('flex items-center', isAlt && 'invisible')}>
           <Button
             variant="ghost"
             size="icon"
@@ -243,7 +338,7 @@ export default function TradeCheck() {
             <ArrowLeftRight className="size-5" />
           </Button>
         </div>
-        <Slot side="get" card={get} score={getScore} active={active === 'get'} onClick={() => setActive(active === 'get' ? undefined : 'get')} />
+        <Slot side="get" card={get} score={getScore} active={active === 'get'} isAlt={isAlt} onClick={() => setActive(active === 'get' ? undefined : 'get')} />
       </div>
       {(give || get) && (
         <div className="-mt-2 mb-5 flex justify-end">
@@ -263,6 +358,16 @@ export default function TradeCheck() {
 
       <div className="flex flex-col gap-5">
         {verdict && giveScore && getScore && <TradeVerdict verdict={verdict} give={giveScore} get={getScore} context={context} />}
+
+        {isAlt && (
+          <div className="flex flex-wrap items-center gap-3">
+            <Button disabled={!!blocker || transfer.isPending} onClick={finalize}>
+              <Check className="size-4" />
+              Finalize trade
+            </Button>
+            <span className="text-sm text-neutral-400">{blocker ?? 'Moves both cards between main and the alt.'}</span>
+          </div>
+        )}
 
         {active === 'give' && <TradeCheckPicker key="give" title="Card you give" sources={giveSources} onPick={(card) => pick('give', card)} />}
         {active === 'get' &&
