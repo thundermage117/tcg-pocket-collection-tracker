@@ -55,10 +55,10 @@ export function TradeGrid({ groups, empty, side }: { groups: SetGroup[]; empty: 
                         )}
                         {item.alt && (
                           <span
-                            title={side === 'lf' ? 'Your alt has this card' : `${item.alt} of these are on your alt`}
+                            title="Your alt has this card"
                             className="rounded-full bg-amber-500 px-1.5 text-[10px] font-semibold leading-4 text-neutral-950 shadow"
                           >
-                            {side === 'lf' ? 'alt' : `alt ×${item.alt}`}
+                            alt
                           </span>
                         )}
                       </span>

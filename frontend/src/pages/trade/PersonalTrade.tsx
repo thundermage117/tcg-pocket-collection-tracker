@@ -12,7 +12,6 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatRarity } from '@/components/utils'
 import { ValueDataAge } from '@/components/ValueDataAge'
 import { useUrlFilters } from '@/hooks/useUrlFilters'
-import { altSpares } from '@/lib/altSupport'
 import { expansions, getCardByInternalId, getExpansionById } from '@/lib/CardsDB'
 import { RARITY_ORDER } from '@/lib/discordTradeList'
 import { getCardNameByLang, getExtraCards, getWantedCards } from '@/lib/utils'
@@ -27,15 +26,12 @@ import { hotLabel, TradeGrid } from './components/TradeGrid'
 import { cardNumber, groupBySet, markHot, type SortMode, type TradeItem } from './tradeGroups'
 
 type Side = 'lf' | 'ft'
-// whose spares the FT list offers (the alt never offers a card main still needs)
-type Pool = 'main' | 'alt' | 'both'
 type SetOption = 'all' | ExpansionId
 // `${expansionId}|${packName}`; a set's "everypack" cards count as part of every pack
 type PackOption = 'all' | `${ExpansionId}|${string}`
 
 const rarityOptions = RARITY_ORDER.filter((r) => (tradableRarities as readonly string[]).includes(r)) as Rarity[]
 const sortOptions: SortMode[] = ['list', 'value']
-const poolOptions: Pool[] = ['main', 'alt', 'both']
 
 const DISCORD_SECTION_ID = 'discord-export'
 
@@ -58,7 +54,6 @@ export default function PersonalTrade() {
   // Personal fork: always main's lists, whichever profile the header has active; the alt only adds to them
   const { data: account } = useProfileAccount('main')
   const { data: collection, isLoading } = useProfileCollection('main')
-  const { data: altAccount } = useProfileAccount('alt')
   const { data: altCollection } = useProfileCollection('alt')
   // filters live in the URL (?rarity=☆☆&side=ft&set=B1&q=…); rarity and sort are remembered for the next visit
   const { get, update } = useUrlFilters('trade-view', ['rarity', 'sort'])
@@ -69,7 +64,6 @@ export default function PersonalTrade() {
   const side: Side = get('side') === 'ft' ? 'ft' : 'lf'
   const search = get('q') ?? ''
   const hotOnly = get('hot') === '1'
-  const pool: Pool = poolOptions.find((p) => p === get('pool')) ?? 'main'
   const showAltHas = get('altHas') === 'show' // LF cards the alt can hand over are hidden by default
   const [copied, setCopied] = useState(false)
   const { setIsLoginDialogOpen } = useLoginDialog()
@@ -80,17 +74,11 @@ export default function PersonalTrade() {
       return { lf: [], ft: [], altHas: 0 }
     }
     const wanted = getWantedCards(collection, account.trade_rarity_settings)
-    const spareCount = (rows: typeof collection, settings: typeof account.trade_rarity_settings) => {
-      const keepByRarity = Object.fromEntries(settings.map((s) => [s.rarity, s.to_keep]))
-      return (id: number, rarity: Rarity) => {
-        const row = rows.get(id)
-        return (row?.amount_owned ?? 0) - (row?.amount_wanted ?? keepByRarity[rarity] ?? defaultRaritySettings.to_keep)
-      }
+    const keepByRarity = Object.fromEntries(account.trade_rarity_settings.map((s) => [s.rarity, s.to_keep]))
+    const spareCount = (id: number, rarity: Rarity) => {
+      const row = collection.get(id)
+      return (row?.amount_owned ?? 0) - (row?.amount_wanted ?? keepByRarity[rarity] ?? defaultRaritySettings.to_keep)
     }
-    const mainSpare = spareCount(collection, account.trade_rarity_settings)
-    const altSpare = altCollection && altAccount ? spareCount(altCollection, altAccount.trade_rarity_settings) : undefined
-    const mainIds = pool === 'alt' ? [] : getExtraCards(collection, account.trade_rarity_settings)
-    const altIds = pool === 'main' || !altCollection || !altAccount ? [] : altSpares(altCollection, altAccount.trade_rarity_settings, new Set(wanted))
 
     const toItem = (id: number, extra: Partial<TradeItem>, forTrade: boolean): TradeItem[] => {
       const card = getCardByInternalId(id)
@@ -107,16 +95,15 @@ export default function PersonalTrade() {
         },
       ]
     }
-    const lf = wanted.flatMap((id) => toItem(id, { alt: (altCollection?.get(id)?.amount_owned ?? 0) > 0 ? 1 : undefined }, false))
-    const ft = [...new Set([...mainIds, ...altIds])].flatMap((id) => {
+    const lf = wanted.flatMap((id) => toItem(id, { alt: (altCollection?.get(id)?.amount_owned ?? 0) > 0 }, false))
+    // main's spares only: the alt doesn't trade with other people, that just spends Shinedust
+    const ft = getExtraCards(collection, account.trade_rarity_settings).flatMap((id) => {
       const card = getCardByInternalId(id)
-      const fromMain = card && mainIds.includes(id) ? mainSpare(id, card.rarity) : 0
-      const fromAlt = card && altSpare && altIds.includes(id) ? altSpare(id, card.rarity) : 0
-      return toItem(id, { count: fromMain + fromAlt, alt: fromAlt > 0 ? fromAlt : undefined }, true)
+      return card ? toItem(id, { count: spareCount(id, card.rarity) }, true) : []
     })
     const altHas = lf.filter((i) => i.alt).length
     return { lf: markHot(showAltHas ? lf : lf.filter((i) => !i.alt), ratioOf), ft: markHot(ft, ratioOf), altHas }
-  }, [collection, account, altCollection, altAccount, pool, showAltHas, view.rarity, i18n.language])
+  }, [collection, account, altCollection, showAltHas, view.rarity, i18n.language])
 
   const all = [...items.lf, ...items.ft]
   const setOptions: SetOption[] = ['all', ...expansions.filter((e) => all.some((i) => i.card.expansion === e.id)).map((e) => e.id)]
@@ -230,15 +217,7 @@ export default function PersonalTrade() {
               </TabsList>
             </Tabs>
             <div className="flex flex-wrap items-center gap-4">
-              {side === 'ft' ? (
-                <TabsFilter
-                  label="Spares from"
-                  options={poolOptions}
-                  value={pool}
-                  onChange={(p) => update({ pool: p === 'main' ? undefined : p })}
-                  show={(p) => ({ main: 'Main', alt: 'Alt', both: 'Both' })[p]}
-                />
-              ) : (
+              {side === 'lf' && (
                 <label
                   htmlFor="trade-alt-has"
                   className="flex cursor-pointer items-center gap-2 text-sm text-neutral-300"

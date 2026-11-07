@@ -9,7 +9,7 @@ export interface TradeItem {
   name: string
   number: number
   count?: number // FT only: spare copies
-  alt?: number // personal fork: LF: the alt has it (1); FT: how many of `count` are the alt's
+  alt?: boolean // personal fork, LF only: the alt has it and can gift or trade it to main
   key: number // value (LF) or demand (FT), higher first
   hot?: boolean // top quarter by demand: FT is easy to trade away, LF is scarce
 }

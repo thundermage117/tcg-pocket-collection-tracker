@@ -1,8 +1,13 @@
-// Personal fork: what the alt account can do for the main one. The alt can gift main a ◊–◊◊◊◊ card (one a day)
-// and trade it ☆ and up like any other trade, so a card main needs that the alt owns doesn't have to come from
-// packs or strangers.
-import { basicRarities, getCardByInternalId, tradableExpansions } from '@/lib/CardsDB'
-import { getExtraCards, getWantedCards } from '@/lib/utils'
+// Personal fork: what the alt account can do for the main one. Sharing gifts a ◊–◊◊◊◊ card (each account can
+// receive one a day) and ☆ and up go by trade, so a card main needs that the alt owns doesn't have to come from packs.
+// The alt doesn't trade with anyone else: that only spends Shinedust.
+//
+// Latest-set unlock (community-tested, not official): once an account has registered every ◊–◊◊◊◊ card of the newest
+// set, its 24-hour Wonder Picks show ☆ or ☆☆ cards it's missing; with every ☆ registered too, only ☆☆. So the
+// newest set's ◊–☆ cards come first for both accounts, and the alt's ☆☆ Wonder Picks can then be traded to main.
+import { allCards, basicRarities, expansions, getCardByInternalId, tradableExpansions } from '@/lib/CardsDB'
+import { pullRate } from '@/lib/stats'
+import { getWantedCards } from '@/lib/utils'
 import { valueSortKey } from '@/lib/ValueDB'
 import { type Card, type Collection, type Rarity, type RaritySettingsRow, tradableRarities } from '@/types'
 
@@ -11,23 +16,75 @@ export const canMoveToMain = (card: Card) => (tradableRarities as readonly Rarit
 
 export const isGiftable = (card: Card) => basicRarities.includes(card.rarity)
 
+/** The newest set you can open packs of (deluxe and promo sets aren't). */
+export const latestExpansion = expansions.filter((e) => e.openable && !e.promo).at(-1) ?? expansions[0]
+
+const unlockRarities: Rarity[] = [...basicRarities, '☆']
+const unlockCards = allCards.filter((c) => c.expansion === latestExpansion.id && unlockRarities.includes(c.rarity))
+
+/** In the account's dex: owned now, or owned once (`collected` stays set after a card is given away). */
+export const registered = (collection: Collection, id: number) => {
+  const row = collection.get(id)
+  return row !== undefined && (row.collected || row.amount_owned > 0)
+}
+
+export interface UnlockProgress {
+  diamonds: { have: number; total: number }
+  star: { have: number; total: number }
+  missing: Card[] // ◊–☆ of the latest set not registered yet
+}
+
+export function unlockProgress(collection: Collection): UnlockProgress {
+  const missing = unlockCards.filter((c) => !registered(collection, c.internal_id))
+  const diamondsTotal = unlockCards.filter((c) => c.rarity !== '☆').length
+  const diamondsMissing = missing.filter((c) => c.rarity !== '☆').length
+  return {
+    diamonds: { have: diamondsTotal - diamondsMissing, total: diamondsTotal },
+    star: { have: unlockCards.length - diamondsTotal - (missing.length - diamondsMissing), total: unlockCards.length - diamondsTotal },
+    missing,
+  }
+}
+
+/** The latest-set pack most likely to give one of `cards` (the account's missing unlock cards nobody can hand it). */
+export function bestUnlockPack(cards: Card[]) {
+  if (cards.length === 0 || !latestExpansion.packStructure) {
+    return undefined
+  }
+  return latestExpansion.packs
+    .filter((p) => p.name !== 'everypack')
+    .map((pack) => ({ pack, chance: pullRate(cards, latestExpansion, pack, false) }))
+    .reduce((a, b) => (b.chance > a.chance ? b : a))
+}
+
+const rarityOrder = new Map(tradableRarities.map((r, i) => [r as Rarity, i]))
+
+/**
+ * Order for cards one account can give the other: unregistered latest-set cards first (they count towards the
+ * unlock), then other cards the receiver has never registered, then extra copies it wants; rarest and most valuable
+ * first within each.
+ */
+export function byPriority(receiver: Collection) {
+  const tier = (c: Card) => (registered(receiver, c.internal_id) ? 2 : c.expansion === latestExpansion.id ? 0 : 1)
+  return (a: Card, b: Card) =>
+    tier(a) - tier(b) || (rarityOrder.get(b.rarity) ?? 0) - (rarityOrder.get(a.rarity) ?? 0) || valueSortKey(b.card_id) - valueSortKey(a.card_id)
+}
+
+export const countsForUnlock = (receiver: Collection, card: Card) =>
+  card.expansion === latestExpansion.id && unlockRarities.includes(card.rarity) && !registered(receiver, card.internal_id)
+
 export interface AltCover {
   gift: Card[] // ◊–◊◊◊◊ main needs and the alt owns
   trade: Card[] // ☆ and up main needs and the alt owns
   rest: number // main needs it and the alt doesn't have it either
 }
 
-const rarityOrder = new Map(tradableRarities.map((r, i) => [r as Rarity, i]))
-// rarest first (◊◊◊◊ before ◊), then most valuable
-const byRarityThenValue = (a: Card, b: Card) =>
-  (rarityOrder.get(b.rarity) ?? 0) - (rarityOrder.get(a.rarity) ?? 0) || valueSortKey(b.card_id) - valueSortKey(a.card_id)
-
-/** Splits main's wanted cards (its trade settings: to_collect, per-card wanted amounts) by how the alt can help. */
+/** Main's wanted cards (its trade settings) plus its missing latest-set unlock cards, split by how the alt can help. */
 export function altCovers(main: Collection, mainSettings: RaritySettingsRow[], alt: Collection): AltCover {
+  const needs = new Set([...getWantedCards(main, mainSettings), ...unlockProgress(main).missing.map((c) => c.internal_id)])
   const cover: AltCover = { gift: [], trade: [], rest: 0 }
-  for (const id of getWantedCards(main, mainSettings)) {
+  for (const id of needs) {
     const card = getCardByInternalId(id)
-    if (!card) {
+    if (!card || !canMoveToMain(card)) {
       continue
     }
     if ((alt.get(id)?.amount_owned ?? 0) > 0) {
@@ -36,9 +93,24 @@ export function altCovers(main: Collection, mainSettings: RaritySettingsRow[], a
       cover.rest++
     }
   }
-  cover.gift.sort(byRarityThenValue)
-  cover.trade.sort(byRarityThenValue)
+  cover.gift.sort(byPriority(main))
+  cover.trade.sort(byPriority(main))
   return cover
+}
+
+/**
+ * Main's ◊–◊◊◊◊ the alt hasn't registered in the latest set, for the alt's own unlock: its ☆☆ Wonder Picks can then be
+ * traded to main. Only copies beyond main's keep amount, so main's decks don't lose a card.
+ */
+export function giftsToAlt(main: Collection, mainSettings: RaritySettingsRow[], alt: Collection): Card[] {
+  const keep = Object.fromEntries(mainSettings.map((s) => [s.rarity, s.to_keep]))
+  return unlockCards
+    .filter((c) => isGiftable(c) && !registered(alt, c.internal_id))
+    .filter((c) => {
+      const row = main.get(c.internal_id)
+      return (row?.amount_owned ?? 0) > Math.max(1, row?.amount_wanted ?? keep[c.rarity] ?? 1)
+    })
+    .sort(byPriority(alt))
 }
 
 /**
@@ -59,9 +131,4 @@ export function withAltCards(main: Collection, alt: Collection | undefined): Col
     }
   }
   return merged
-}
-
-/** Alt cards worth trading away to other people: its extras, minus anything main still needs from it. */
-export function altSpares(alt: Collection, altSettings: RaritySettingsRow[], mainWanted: Set<number>): number[] {
-  return getExtraCards(alt, altSettings).filter((id) => !mainWanted.has(id))
 }
