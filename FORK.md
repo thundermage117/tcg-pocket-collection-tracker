@@ -114,7 +114,8 @@ The alt's rows live in the same tables as main's, under the key `alt:<login emai
   24-hour Wonder Picks show its missing ☆ / ☆☆; with every ☆ too, only ☆☆. `/alt` tracks this for both accounts, puts those
   cards first in both gift queues (main can gift the alt its spares too) and names the best pack for what's left.
   Overview shows main's progress as a strip under the top row (`pages/overview/components/UnlockTile.tsx`). It shows main's
-  real counts, never the "Count alt's cards" view, and the next gift or trade. The strip is hidden when logged out and once
+  real counts, never the "Count alt's cards" view, the best pack for the cards the alt can't hand over (when the set has more
+  than one) and the next gift or trade. The strip is hidden when logged out and once
   main has registered every ◊–☆☆ of the set.
   "Registered" is `collected` or owned. They reportedly stop once the account owns every ☆☆ of the set (unconfirmed).
   Sources, checked 2026-11-07: [Nintenpedia](https://nintenpedia.com/how-to-get-2-star-wonder-picks-in-pokemon-tcg-pocket/),
