@@ -4,11 +4,12 @@ import { CardThumb } from '@/components/CardThumb'
 import { ownsCard } from '@/lib/packValue'
 import { twoStarPosition } from '@/lib/rankings'
 import { getCardValue, isProvisional, kindLabel } from '@/lib/ValueDB'
-import { useCollection, useSelectedCard } from '@/services/collection/useCollection'
+import { useSelectedCard } from '@/services/collection/useCollection'
+import { useMainWithAlt } from '@/services/profile/useProfileCollection'
 import type { Card, ExpansionId } from '@/types'
 
 export function PackPool({ cards, expansionId }: { cards: Card[]; expansionId: ExpansionId }) {
-  const { data: collection } = useCollection()
+  const { data: collection } = useMainWithAlt()
   const { setSelectedCardId } = useSelectedCard()
 
   return (

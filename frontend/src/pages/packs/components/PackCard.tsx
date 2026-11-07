@@ -7,7 +7,8 @@ import { ownsCard } from '@/lib/packValue'
 import { twoStarPosition } from '@/lib/rankings'
 import { cn } from '@/lib/utils'
 import { PROVISIONAL_VOTES } from '@/lib/ValueDB'
-import { useCollection, useSelectedCard } from '@/services/collection/useCollection'
+import { useSelectedCard } from '@/services/collection/useCollection'
+import { useMainWithAlt } from '@/services/profile/useProfileCollection'
 import { fill, goals, type PackRow, type Ranges, type SortKey, sortOrder } from '../types'
 import { PackPool } from './PackPool'
 
@@ -23,7 +24,7 @@ interface Props {
 
 export function PackCard({ pack, position, sortKey, ranges, total, expanded, onToggle }: Props) {
   const { t } = useTranslation(['common/sets', 'common/packs'])
-  const { data: collection } = useCollection()
+  const { data: collection } = useMainWithAlt()
   const { setSelectedCardId } = useSelectedCard()
   const provisional = pack.minVotes < PROVISIONAL_VOTES
   const complete = collection !== undefined && pack.pNew === 0

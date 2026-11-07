@@ -1,15 +1,39 @@
 // Personal fork: explicit main / alt collections, for pages that need both at once (the active one is useCollection).
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { useToast } from '@/hooks/use-toast'
+import { withAltCards } from '@/lib/altSupport'
 import { updateCards } from '@/services/collection/collectionService'
 import { collectionQuery } from '@/services/collection/useCollection'
 import type { CollectionRow } from '@/types'
-import { type Profile, useProfileAccount, useProfileEmail } from './useProfile'
+import { type Profile, useCountAlt, useProfileAccount, useProfileEmail } from './useProfile'
 
 export function useProfileCollection(profile: Profile) {
   const email = useProfileEmail(profile)
   const { data: account } = useProfileAccount(profile)
   return useQuery(collectionQuery(email, account?.collection_last_updated))
+}
+
+/**
+ * Main's collection for planning (what's missing, which pack to open): with "Count alt" on, cards the alt can gift
+ * or trade to main count as owned. Ignores the header's Main / Alt switch, since the goal is always main.
+ */
+export function useMainWithAlt() {
+  const main = useProfileCollection('main')
+  const { data: alt } = useProfileCollection('alt')
+  const countAlt = useCountAlt()
+  const merged = useMemo(() => (main.data ? withAltCards(main.data, alt) : undefined), [main.data, alt])
+  // cards main lacks that the alt covers, for the switch's label
+  const covered = useMemo(() => {
+    let n = 0
+    for (const [id, row] of merged ?? []) {
+      if (row.amount_owned > 0 && (main.data?.get(id)?.amount_owned ?? 0) === 0) {
+        n++
+      }
+    }
+    return n
+  }, [merged, main.data])
+  return { data: countAlt ? merged : main.data, isLoading: main.isLoading, covered }
 }
 
 /** One copy of a card changing hands: `from` loses it, `to` gains it. */

@@ -2,6 +2,7 @@ import { ChevronRight, Siren } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
+import { CountAltSwitch } from '@/components/CountAltSwitch'
 import { DropdownFilter } from '@/components/Filters'
 import Footer from '@/components/Footer.tsx'
 import DeckbuildingFilter from '@/components/filters/DeckbuildingFilter'
@@ -19,7 +20,7 @@ import { TierTile } from '@/pages/overview/components/TierTile'
 import { bestChance, getPackChances } from '@/pages/overview/packChances'
 import { countByTier, inValue, type ValueOption, valueLabels, valueOptions } from '@/pages/overview/valueTiers'
 import { oneIn } from '@/pages/packs/types'
-import { useCollection } from '@/services/collection/useCollection'
+import { useMainWithAlt } from '@/services/profile/useProfileCollection'
 import { type Card, type CollectionRow, type Rarity, rarities } from '@/types'
 
 function getUniqueCount(cards: Card[]) {
@@ -27,7 +28,7 @@ function getUniqueCount(cards: Card[]) {
 }
 
 function Overview() {
-  const { data: ownedCards = new Map<number, CollectionRow>(), isLoading } = useCollection()
+  const { data: ownedCards = new Map<number, CollectionRow>(), isLoading } = useMainWithAlt()
 
   const { t } = useTranslation(['pages/overview', 'filters', 'common/sets', 'common/packs', 'expansion-overview'])
 
@@ -102,6 +103,7 @@ function Overview() {
             onChange={(v: ValueOption) => update({ value: v === 'all' ? undefined : v })}
           />
           <div className="grow" />
+          <CountAltSwitch id="overview-count-alt" />
           <DeckbuildingFilter
             deckbuildingMode={filters.deckbuildingMode}
             setDeckbuildingMode={(deckbuildingMode) => update({ deck: deckbuildingMode ? '1' : undefined })}

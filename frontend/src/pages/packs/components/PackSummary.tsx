@@ -5,12 +5,13 @@ import { CardThumb, SetLogo } from '@/components/CardThumb'
 import { ownsCard } from '@/lib/packValue'
 import { twoStarPosition } from '@/lib/rankings'
 import { getCardNameByLang } from '@/lib/utils'
-import { useCollection, useSelectedCard } from '@/services/collection/useCollection'
+import { useSelectedCard } from '@/services/collection/useCollection'
+import { useMainWithAlt } from '@/services/profile/useProfileCollection'
 import { goals, type PackRow, personalSorts, type SortKey } from '../types'
 
 export function PackSummary({ pack, sortKey, total }: { pack: PackRow; sortKey: SortKey; total: number }) {
   const { t, i18n } = useTranslation(['common/sets', 'common/packs'])
-  const { data: collection } = useCollection()
+  const { data: collection } = useMainWithAlt()
   const { setSelectedCardId } = useSelectedCard()
   // for personal sorts, highlight the best card you're still missing
   const highlight = (personalSorts.includes(sortKey) && pack.cards.find((c) => !ownsCard(collection, c))) || pack.best

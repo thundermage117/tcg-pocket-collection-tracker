@@ -1,6 +1,7 @@
 // Personal fork: which booster to open if the pull were a guaranteed ☆☆.
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
+import { CountAltSwitch } from '@/components/CountAltSwitch'
 import { TabsFilter } from '@/components/Filters'
 import { Spinner } from '@/components/Spinner'
 import { Switch } from '@/components/ui/switch'
@@ -11,7 +12,7 @@ import { getBoosterValues } from '@/lib/packValue'
 import { PROVISIONAL_VOTES } from '@/lib/ValueDB'
 import { useAccount } from '@/services/account/useAccount'
 import { userQuery } from '@/services/auth/useAuth'
-import { useCollection } from '@/services/collection/useCollection'
+import { useMainWithAlt } from '@/services/profile/useProfileCollection'
 import { PackCard } from './components/PackCard'
 import { PackOdds } from './components/PackOdds'
 import { PackSummary } from './components/PackSummary'
@@ -22,7 +23,7 @@ const rangeOf = (xs: number[]): Range => ({ min: Math.min(...xs), max: Math.max(
 export default function PackValue() {
   const { data: user, isLoading: userLoading } = useQuery(userQuery)
   const { isLoading: accountLoading } = useAccount()
-  const { data: collection, isLoading: collectionLoading } = useCollection()
+  const { data: collection, isLoading: collectionLoading } = useMainWithAlt()
   // logged in, collection on its way: only the personal goal has to wait for it, the page renders now
   const collectionPending = userLoading || (Boolean(user) && (accountLoading || collectionLoading))
   // filters live in the URL (?goal=meanAdj&series=B&hide=1); the goal is remembered for the next visit
@@ -102,6 +103,7 @@ export default function PackValue() {
               Hide fully owned
             </label>
           )}
+          <CountAltSwitch id="packs-count-alt" className="pb-2" />
         </div>
       </div>
 
