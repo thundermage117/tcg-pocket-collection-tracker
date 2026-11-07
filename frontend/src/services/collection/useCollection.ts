@@ -85,7 +85,7 @@ export function useUpdateCards() {
       return updateCards(email, updates, collection ?? new Map<number, CollectionRow>())
     },
     onSuccess: (result) => {
-      queryClient.setQueryData(['collection', email], result.cards)
+      queryClient.setQueryData(['collection', email], new Map(result.cards)) // personal fork: a new Map in all three hooks, as updateCards edits the cached one in place; with the same Map only the main account's re-render at the app root showed the change, so alt edits stayed stale until a reload
 
       // Update account data in cache (for collection_last_updated timestamp)
       queryClient.setQueryData(['account', email], result.account)
@@ -119,7 +119,7 @@ export function useUpdateAmountWanted() {
       ])
     },
     onSuccess: async ([cards, account]) => {
-      queryClient.setQueryData(['collection', email], cards)
+      queryClient.setQueryData(['collection', email], new Map(cards))
       queryClient.setQueryData(['account', email], account)
     },
     onError: async (error) => {
@@ -146,7 +146,7 @@ export function useSetCollected() {
       return setCollected(email, collection ?? new Map<number, CollectionRow>(), internal_ids, collected)
     },
     onSuccess: (result) => {
-      queryClient.setQueryData(['collection', email], result.cards)
+      queryClient.setQueryData(['collection', email], new Map(result.cards))
 
       // Update account data in cache (for collection_last_updated timestamp)
       queryClient.setQueryData(['account', email], result.account)
