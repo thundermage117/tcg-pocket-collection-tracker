@@ -22,18 +22,19 @@ const STALE_CACHE_KEYS = [
 const PAGE_SIZE = 1000
 
 // The localStorage copy parsed once per email. It is the collection query's placeholder, which is read on every render
-// until the real query resolves, so it must be the same Map each time.
-let parsedCache: { email: string; collection: Collection | null } | undefined
+// until the real query resolves, so it must be the same Map each time. Keyed by email: pages that read main and alt
+// together would otherwise evict each other and re-parse the whole collection on every render.
+const parsedCache = new Map<string, Collection | null>()
 
 export function getCachedCollection(email: string): Collection | null {
-  if (parsedCache?.email !== email) {
-    parsedCache = { email, collection: getCollectionFromCache(email) }
+  if (!parsedCache.has(email)) {
+    parsedCache.set(email, getCollectionFromCache(email))
   }
-  return parsedCache.collection
+  return parsedCache.get(email) ?? null
 }
 
 export const removeLocalCacheItems = (email: string) => {
-  parsedCache = undefined
+  parsedCache.delete(email)
   // Invalidate local cache by removing records from localStorage
   localStorage.removeItem(`${COLLECTION_CACHE_KEY}_${email}`)
   localStorage.removeItem(`${COLLECTION_TIMESTAMP_KEY}_${email}`)
@@ -330,7 +331,7 @@ function updateCollectionCache(collection: Collection, email: string, timestamp:
       // FIXIT: sometimes timestamp is a string, but I don't know why
       localStorage.setItem(`${COLLECTION_TIMESTAMP_KEY}_${email}`, typeof timestamp === 'string' ? timestamp : timestamp.toISOString())
       localStorage.setItem(`${COLLECTION_CACHE_KEY}_${email}`, JSON.stringify([...collection.values()]))
-      parsedCache = { email, collection }
+      parsedCache.set(email, collection)
     }
   } catch (error) {
     console.error('Error updating collection cache:', error)
