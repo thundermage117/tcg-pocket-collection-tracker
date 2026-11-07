@@ -105,10 +105,14 @@ The alt's rows live in the same tables as main's, under the key `alt:<login emai
 - **The goal is always main.** Overview, Packs, Rankings and Trade read main's collection whatever the switch says.
   "Count alt's cards" (Overview, Packs; on by default) counts cards the alt can hand over as owned (`lib/altSupport.ts`, `withAltCards`),
   so missing cards and the pack pick only chase cards neither account has.
-- **What the alt can hand over:** ◊–◊◊◊◊ as a gift (one a day), ☆ and up by trading (main sends back a spare of the same rarity), both
-  only from tradable sets. `/alt` lists them, and its "Gifted" / "Traded" buttons move the cards between the two collections.
-- **Trade:** "Looking for" hides cards the alt has (switch to show them, marked "alt"). "For trade" offers spares from Main, Alt or Both;
-  the alt never offers a card main still needs. The alt's keep settings are the defaults (keep 1); Trade's settings panel edits main's.
+- **What the alt can hand over:** ◊–◊◊◊◊ by Share (each account receives one gift a day), ☆ and up by trading (main sends back a
+  spare of the same rarity; both accounts pay Shinedust), both only from tradable sets. `/alt` lists them, and its "Gifted" /
+  "Traded" buttons move the cards between the two collections. The alt never trades with other people.
+- **Latest-set unlock** (community-tested, not official): with every ◊–◊◊◊◊ of the newest openable set registered, an account's
+  24-hour Wonder Picks show its missing ☆ / ☆☆; with every ☆ too, only ☆☆. `/alt` tracks this for both accounts, puts those
+  cards first in both gift queues (main can gift the alt its spares too) and names the best pack for what's left.
+  "Registered" is `collected` or owned. Recheck the rule if the game changes Wonder Picks.
+- **Trade:** "Looking for" hides cards the alt has (switch to show them, marked "alt"). "For trade" is main's spares only.
 
 ## Rankings
 
