@@ -9,7 +9,19 @@ import { CardThumb } from '@/components/CardThumb'
 import { Spinner } from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { altCovers, bestUnlockPack, canMoveToMain, countsForUnlock, giftsToAlt, latestExpansion, type UnlockProgress, unlockProgress } from '@/lib/altSupport'
+import {
+  altCovers,
+  bestUnlockPack,
+  canMoveToMain,
+  countsForUnlock,
+  giftKey,
+  giftsToAlt,
+  latestExpansion,
+  readGiftDate,
+  today,
+  type UnlockProgress,
+  unlockProgress,
+} from '@/lib/altSupport'
 import { getCardByInternalId } from '@/lib/CardsDB'
 import { getLocalizedImagePath } from '@/lib/imageLocales'
 import { shinedustCost } from '@/lib/tradeFairness'
@@ -24,17 +36,6 @@ import { useProfileCollection, useTransferCards } from '@/services/profile/usePr
 import { type Card, type Collection, defaultRaritySettings, type TradableRarity } from '@/types'
 
 const PREVIEW = 16
-
-const today = () => new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time
-const giftKey = (to: Profile) => `tcg_last_gift_to_${to}`
-
-function readGiftDate(to: Profile) {
-  try {
-    return localStorage.getItem(giftKey(to))
-  } catch {
-    return null
-  }
-}
 
 function Stat({ label, value, hint }: { label: string; value: number; hint?: string }) {
   return (

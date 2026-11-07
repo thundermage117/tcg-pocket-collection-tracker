@@ -10,7 +10,20 @@ import { allCards, basicRarities, expansions, getCardByInternalId, tradableExpan
 import { pullRate } from '@/lib/stats'
 import { getWantedCards } from '@/lib/utils'
 import { valueSortKey } from '@/lib/ValueDB'
+import type { Profile } from '@/services/profile/useProfile'
 import { type Card, type Collection, type Rarity, type RaritySettingsRow, tradableRarities } from '@/types'
+
+export const today = () => new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time
+/** localStorage key for the day the last gift to `to` was logged on /alt, so the next one waits for tomorrow. */
+export const giftKey = (to: Profile) => `tcg_last_gift_to_${to}`
+
+export function readGiftDate(to: Profile) {
+  try {
+    return localStorage.getItem(giftKey(to))
+  } catch {
+    return null
+  }
+}
 
 /** Cards the alt can hand over at all: gifts and trades both need a tradable rarity in a tradable set. */
 export const canMoveToMain = (card: Card) => (tradableRarities as readonly Rarity[]).includes(card.rarity) && tradableExpansions.includes(card.expansion)
