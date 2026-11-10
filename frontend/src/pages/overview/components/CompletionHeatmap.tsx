@@ -8,9 +8,10 @@ import { SetLogo } from '@/components/CardThumb'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { formatRarity } from '@/components/utils'
 import { expansions, getExpansionById } from '@/lib/CardsDB.ts'
-import { getLocalizedImagePath } from '@/lib/imageLocales'
-import { CompletionTreemap, type TreemapSet } from '@/pages/overview/components/CompletionTreemap'
+import { MissingThumbs, previewCount } from '@/pages/overview/components/MissingThumbs'
+import { type MapSet, PackValueMap, tierOf } from '@/pages/overview/components/PackValueMap'
 import { bestChance, type PackChance } from '@/pages/overview/packChances'
+import { getPackTierMap } from '@/pages/overview/packMap'
 import { type Card, type ExpansionId, type Pack, type Rarity, rarities, tradableRarities } from '@/types'
 import './heatmap.css'
 
@@ -54,9 +55,6 @@ function countByCell(cards: Card[]) {
   return new Map([...ids].map(([key, set]) => [key, set.size]))
 }
 
-// How many missing cards a cell previews as thumbnails
-const previewCount = 12
-
 // The first missing cards per cell key (same keys as countByCell), in card order, for the thumbnail previews
 function missingByCell(available: Card[], collected: Card[]) {
   const owned = new Set(collected.map((c) => c.internal_id))
@@ -77,29 +75,6 @@ function missingByCell(available: Card[], collected: Card[]) {
     }
   }
   return cards
-}
-
-// Small, dimmed images of cards still missing: what a cell's gap actually is
-function MissingThumbs({ cards, missing, className }: { cards: Card[]; missing: number; className?: string }) {
-  return (
-    <div className={`grid grid-cols-6 gap-1 ${className ?? ''}`}>
-      {cards.map((c) => (
-        <img
-          key={c.internal_id}
-          src={getLocalizedImagePath(c)}
-          alt={c.name}
-          loading="lazy"
-          decoding="async"
-          className="aspect-[367/512] w-full rounded-sm object-cover opacity-75 grayscale-[55%]"
-        />
-      ))}
-      {missing > cards.length && (
-        <span className="flex aspect-[367/512] items-center justify-center rounded-sm bg-neutral-700/60 text-[11px] text-neutral-300 tabular-nums">
-          +{missing - cards.length}
-        </span>
-      )}
-    </div>
-  )
 }
 
 // Ordinal bands, one blue brighter as a cell nears done, and the reserved "good" green (always with its 100% / ✓
@@ -170,9 +145,6 @@ const rarityLabel = (r: Rarity | 'all') => (r === 'all' ? 'all rarities' : r)
 // One decimal, minus a trailing .0, so a column of 100% / 45% doesn't read as a wall of "100.0%"
 const formatChance = (pct: number) => `${pct.toFixed(1).replace(/\.0$/, '')}%`
 
-// The treemap view is built but hidden: flip this to bring back its Map toggle
-const mapEnabled = false
-
 export function CompletionHeatmap({ availableCards, collectedCards, chances, cellMode, setCellMode, sortByValue }: Props) {
   const { t } = useTranslation(['common/sets', 'common/packs'])
   const navigate = useNavigate()
@@ -181,12 +153,10 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
   // Desktop: the hovered cell lights up its set and rarity headers, so a cell 15 columns in is easy to place
   const [hovered, setHovered] = useState<{ row: string; col: string } | null>(null)
   const headerLit = 'rounded bg-neutral-600/70 text-white'
-  // The treemap view is local: Overview owns cellMode (it lives in the URL) and only knows 'pct' | 'left'. Phones keep
-  // the grid, where a dozen-plus sets would shrink the smaller sets' tiles to slivers below a usable tap target.
+  // The pack value map is local: Overview owns cellMode (it lives in the URL) and only knows 'pct' | 'left'. Phones keep
+  // the grid, where thirty-odd packs would shrink the smaller ones' tiles to slivers below a usable tap target.
   const [mapOn, setMapOn] = useState(false)
   const showMap = mapOn && !isMobile
-  // The map colours by %: area already shows pool size, and "cards left" grows with it, so it would say the same thing twice
-  const bandMode: CellMode = showMap ? 'pct' : cellMode
 
   // Scroll state drives the right-edge fade and the pinned column's shadow
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -215,7 +185,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
 
   const openable = expansions.filter((e) => e.openable)
   // Memoized: scrolling and selecting re-render the table
-  const { available, collected, missingCards } = useMemo(() => {
+  const { available, collected, missingCards, packGaps } = useMemo(() => {
     const openableIds = new Set(expansions.filter((e) => e.openable).map((e) => e.id))
     const openableAvailable = availableCards.filter((c) => openableIds.has(c.expansion))
     const openableCollected = collectedCards.filter((c) => openableIds.has(c.expansion))
@@ -223,6 +193,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
       available: countByCell(openableAvailable),
       collected: countByCell(openableCollected),
       missingCards: missingByCell(openableAvailable, openableCollected),
+      packGaps: getPackTierMap(availableCards, collectedCards),
     }
   }, [availableCards, collectedCards])
 
@@ -236,15 +207,9 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
   const cellPad = (col: Rarity | 'all') => (col !== 'all' && familyStarts.has(col) ? 'py-0.5 pr-0.5 pl-2' : 'p-0.5')
   const rows = openable.toReversed()
 
-  const mapSets = (): TreemapSet[] =>
-    rows.map((e) => ({
-      id: e.id,
-      name: setName(e.id),
-      tiles: columns.flatMap((r) => {
-        const c = cell(e.id, r)
-        return c ? [{ rarity: r, ...c, style: swatches[cellSwatch(c, 'pct')], nearlyDone: isNearlyDone(r, c) }] : []
-      }),
-    }))
+  const mapSets = (): MapSet[] => rows.map((e) => ({ id: e.id, name: setName(e.id), packs: packGaps.get(e.id) ?? [] }))
+  // the tiers the map has blocks for, for its key
+  const mapTiers = [...new Set([...packGaps.values()].flat().flatMap((p) => p.byTier.map((t) => t.tier)))].toSorted((a, b) => a - b)
 
   const setName = (row: string) => (row === 'all' ? 'All sets' : t(getExpansionById(row as ExpansionId).name, { ns: 'common/sets' }))
   const packName = (pack: Pack) => t(pack.name, { ns: 'common/packs' })
@@ -455,7 +420,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
     <section className="mt-4 rounded-lg border border-neutral-700 bg-neutral-800 p-3 sm:p-4">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <div className="flex items-center gap-3">
-          <h2 className="font-semibold text-base sm:text-lg">Completion by rarity</h2>
+          <h2 className="font-semibold text-base sm:text-lg">{showMap ? "What's left, by pack" : 'Completion by rarity'}</h2>
           <ToggleGroup
             type="single"
             value={showMap ? 'map' : cellMode}
@@ -477,16 +442,16 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
             <ToggleGroupItem value="left" className="h-7 px-2 text-xs">
               Cards left
             </ToggleGroupItem>
-            {mapEnabled && !isMobile && (
-              <ToggleGroupItem value="map" className="h-7 px-2 text-xs" aria-label="Map: tile size is the number of cards">
-                Map
+            {!isMobile && (
+              <ToggleGroupItem value="map" className="h-7 px-2 text-xs" aria-label="Pack value map">
+                Packs
               </ToggleGroupItem>
             )}
           </ToggleGroup>
         </div>
         <p className="text-neutral-400 text-xs">
           {showMap ? (
-            "A tile's size is how many cards that rarity has. Click one to see what's missing."
+            "A pack's size is how many cards you're missing from it, coloured by value tier. Click one to see them."
           ) : (
             <>
               "New card" is the chance one pack gives a card you're missing. <span className="md:hidden">Tap for details.</span>
@@ -496,18 +461,37 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
         </p>
       </div>
       <ul className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-neutral-400 text-xs" aria-label="Colour key">
-        {legend[bandMode].map(([swatch, label]) => (
-          <li key={swatch} className="flex items-center gap-1">
-            <span className="size-3 rounded-sm" style={{ backgroundColor: swatches[swatch].backgroundColor }} />
-            {label}
-          </li>
-        ))}
-        <li className="flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-amber-400" />
-          1–2 tradable cards left
-        </li>
+        {showMap ? (
+          mapTiers.map((i) => (
+            <li key={i} className="flex items-center gap-1">
+              <span className="size-3 rounded-sm" style={{ backgroundColor: tierOf(i).color }} />
+              {tierOf(i).name}
+            </li>
+          ))
+        ) : (
+          <>
+            {legend[cellMode].map(([swatch, label]) => (
+              <li key={swatch} className="flex items-center gap-1">
+                <span className="size-3 rounded-sm" style={{ backgroundColor: swatches[swatch].backgroundColor }} />
+                {label}
+              </li>
+            ))}
+            <li className="flex items-center gap-1">
+              <span className="size-1.5 rounded-full bg-amber-400" />
+              1–2 tradable cards left
+            </li>
+          </>
+        )}
       </ul>
-      {showMap && <CompletionTreemap sets={mapSets()} onOpen={openCollection} />}
+      {showMap && (
+        <PackValueMap
+          sets={mapSets()}
+          chances={chances}
+          best={bestChance([...chances.values()].flat())?.pack}
+          packName={packName}
+          onOpen={(expansion, pack) => openCollection(expansion, 'all', (chances.get(expansion)?.length ?? 0) > 1 ? pack.name : undefined)}
+        />
+      )}
       {/* Hidden rather than unmounted under the map, so the scroll observer keeps watching the same element */}
       <div className={showMap ? 'hidden' : 'relative'}>
         <div ref={scrollRef} className="overflow-x-auto" onScroll={updateScroll}>

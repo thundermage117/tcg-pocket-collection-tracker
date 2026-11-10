@@ -55,7 +55,8 @@ function packArtwork(pack: Pack): string | undefined {
 }
 
 const artworks = new Map<Pack, string | undefined>()
-const cachedArtwork = (pack: Pack) => {
+/** The pack's Pokémon artwork, looked up once per pack (the pack value map reuses it as a watermark) */
+export const packArtworkUrl = (pack: Pack) => {
   if (!artworks.has(pack)) {
     artworks.set(pack, packArtwork(pack))
   }
@@ -72,7 +73,7 @@ interface Props {
 export function BestPackCard({ pack, pct, className, children }: Props) {
   const { t } = useTranslation(['gradient-card', 'common/packs'])
   const chancePercentage = Math.round(pct * 10) / 10
-  const artwork = cachedArtwork(pack)
+  const artwork = packArtworkUrl(pack)
 
   return (
     <div
