@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router'
 import { Tooltip } from 'react-tooltip'
 import { SetLogo } from '@/components/CardThumb'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { formatRarity } from '@/components/utils'
 import { expansions, getExpansionById } from '@/lib/CardsDB.ts'
 import { getLocalizedImagePath } from '@/lib/imageLocales'
 import { CompletionTreemap, type TreemapSet } from '@/pages/overview/components/CompletionTreemap'
@@ -508,7 +509,8 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
                     key={r}
                     className={`${familyStarts.has(r) ? 'pr-0.5 pl-2' : 'px-0.5'} pb-1 text-center font-normal text-neutral-300 text-xs whitespace-nowrap`}
                   >
-                    {r === 'Crown Rare' ? '♛' : r}
+                    {/* coloured like the rarity filter above, so ◊ / ☆ / ✵ read as groups */}
+                    {formatRarity(r)}
                   </th>
                 ))}
                 <th />
