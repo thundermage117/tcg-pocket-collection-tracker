@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { CountAltSwitch } from '@/components/CountAltSwitch'
 import { TabsFilter } from '@/components/Filters'
-import { Spinner } from '@/components/Spinner'
+import { Skeleton, SkeletonGrid } from '@/components/Skeleton'
 import { TierChip } from '@/components/TierChip'
 import { Switch } from '@/components/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -117,7 +117,7 @@ export default function PackValue() {
             onChange={(r) => update({ rarity: r === '☆☆' ? undefined : raritySlug[r] })}
           />
           <div className="flex flex-col gap-1">
-            <span className="px-0.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Rank by chance of pulling…</span>
+            <span className="px-0.5 text-[11px] font-medium uppercase tracking-wider text-neutral-400">Rank by chance of pulling…</span>
             <ToggleGroup
               type="single"
               value={tier}
@@ -168,9 +168,10 @@ export default function PackValue() {
       {!waiting && <PackOdds packs={packs} filters={filters} />}
 
       {waiting ? (
-        <div className="flex justify-center py-16">
-          <Spinner size="lg" />
-        </div>
+        <>
+          <Skeleton className="mb-6 h-36" />
+          <SkeletonGrid count={6} className="gap-4 sm:grid-cols-2 lg:grid-cols-3" itemClassName="h-80" />
+        </>
       ) : packs.length === 0 ? (
         <p className="py-12 text-center text-neutral-400">No packs match these filters.</p>
       ) : (

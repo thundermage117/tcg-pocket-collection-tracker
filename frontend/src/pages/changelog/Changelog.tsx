@@ -56,7 +56,7 @@ export default function Changelog() {
         <div className="flex flex-col gap-4">
           {[...grouped.entries()].map(([date, entries]) => (
             <section key={date} className="flex flex-col gap-1.5">
-              <h2 className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 px-0.5">{formatDate(date, i18n.language)}</h2>
+              <h2 className="text-[11px] font-medium uppercase tracking-wider text-neutral-400 px-0.5">{formatDate(date, i18n.language)}</h2>
               <ul className="flex flex-col gap-1.5">
                 {entries.map((e) => (
                   <li key={e.sha} className="flex items-start gap-2 rounded-md border border-neutral-800 bg-neutral-900/60 px-3 py-2">

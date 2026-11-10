@@ -468,7 +468,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
                       {/* Mobile: set logo with the code underneath; desktop: code and full name */}
                       <span className="flex w-15 flex-col items-center md:hidden">
                         <SetLogo expansionId={e.id} className="h-7 w-full" />
-                        <span className="text-[10px] text-neutral-500 leading-tight tabular-nums">{e.id}</span>
+                        <span className="text-[11px] text-neutral-400 leading-tight tabular-nums">{e.id}</span>
                       </span>
                       <span className="hidden text-neutral-500 text-xs tabular-nums md:mr-1.5 md:inline">{e.id}</span>
                       <span className="hidden text-neutral-200 md:inline">{name}</span>

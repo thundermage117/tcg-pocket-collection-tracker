@@ -8,7 +8,7 @@ import Footer from '@/components/Footer.tsx'
 import DeckbuildingFilter from '@/components/filters/DeckbuildingFilter'
 import RarityFilter from '@/components/filters/RarityFilter'
 import { RadialChart } from '@/components/RadialChart'
-import { Spinner } from '@/components/Spinner'
+import { Skeleton } from '@/components/Skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTitle } from '@/components/ui/alert.tsx'
 import { useUrlFilters } from '@/hooks/useUrlFilters'
@@ -76,7 +76,18 @@ function Overview() {
   )
 
   if (isLoading) {
-    return <Spinner size="lg" overlay />
+    // Personal fork: the page's shape (filters, the three tiles, the heatmap) instead of a spinner
+    return (
+      <main role="status" aria-label="Loading" className="mx-auto max-w-7xl px-4">
+        <Skeleton className="mb-4 h-20" />
+        <div className="grid grid-cols-8 gap-3 sm:gap-4">
+          <Skeleton className="col-span-4 h-56 rounded-lg md:col-span-2 md:h-80" />
+          <Skeleton className="order-last col-span-8 h-40 rounded-lg md:order-none md:col-span-4 md:h-80" />
+          <Skeleton className="col-span-4 h-56 rounded-lg md:col-span-2 md:h-80" />
+        </div>
+        <Skeleton className="mt-6 h-[28rem]" />
+      </main>
+    )
   }
 
   return (

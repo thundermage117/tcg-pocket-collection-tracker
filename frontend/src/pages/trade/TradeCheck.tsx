@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { ValueDataAge } from '@/components/ValueDataAge'
-import { useToast } from '@/hooks/use-toast'
+import { useUndoTransferToast } from '@/hooks/useUndoToast'
 import { getCardById, getCardByInternalId, getExpansionById } from '@/lib/CardsDB'
 import { getLocalizedImagePath } from '@/lib/imageLocales'
 import { bestAsks, type CardScore, duplicateShinedust, judgeTrade, PACK_POINTS_PER_PACK, packPointCost, shareLabel, shinedustCost } from '@/lib/tradeFairness'
@@ -107,7 +107,7 @@ export default function TradeCheck() {
   }, [isAlt, activeTrading, mainCollection, mainAccount])
   const transfer = useTransferCards()
   const navigate = useNavigate()
-  const { toast } = useToast()
+  const undoToast = useUndoTransferToast()
   const { setIsLoginDialogOpen } = useLoginDialog()
 
   const fromParam = (key: Side) => {
@@ -284,11 +284,8 @@ export default function TradeCheck() {
         { internal_id: give.internal_id, from: 'main', to: 'alt' },
       ],
       {
-        onSuccess: () => {
-          toast({
-            title: 'Trade recorded',
-            description: `Main got ${getCardNameByLang(get, i18n.language)}, the alt got ${getCardNameByLang(give, i18n.language)}.`,
-          })
+        onSuccess: ({ before }) => {
+          undoToast('Trade recorded', `Main got ${getCardNameByLang(get, i18n.language)}, the alt got ${getCardNameByLang(give, i18n.language)}.`, before)
           navigate('/alt')
         },
       },

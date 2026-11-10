@@ -3,10 +3,10 @@ import { MinusIcon, PlusIcon, Trash2Icon } from 'lucide-react'
 import { startTransition, useOptimistic } from 'react'
 import FancyCard from '@/components/FancyCard.tsx'
 import { Button } from '@/components/ui/button.tsx'
+import { showUndoToast } from '@/hooks/useUndoToast'
 import { cn, getCardNameByLang } from '@/lib/utils'
 import { useSelectedCard, useSetCollected, useUpdateCards } from '@/services/collection/useCollection'
 import type { Card as CardType } from '@/types'
-import { Spinner } from './Spinner'
 
 interface CardProps {
   card: CardType
@@ -19,7 +19,6 @@ export function Card({ card, onImageClick, className, editable = true }: CardPro
   const { setSelectedCardId } = useSelectedCard()
   const updateCardsMutation = useUpdateCards()
   const setCollectedMutation = useSetCollected()
-  const isPending = updateCardsMutation.isPending || setCollectedMutation.isPending
   const [amountOwned, setAmountOwned] = useOptimistic(card.amount_owned ?? 0, (_prev, curr: number) => curr)
 
   const updateCardCount = (x: number) => {
@@ -37,6 +36,10 @@ export function Card({ card, onImageClick, className, editable = true }: CardPro
     if (card.collected && amountOwned === 0) {
       startTransition(async () => {
         await setCollectedMutation.mutateAsync({ internal_ids: [card.internal_id], collected: false })
+        // Personal fork: one tap removes it from the card dex, so offer Undo
+        showUndoToast(`Removed ${getCardNameByLang(card, i18n.language)} from the card dex`, `${card.card_id} no longer counts as registered.`, () =>
+          setCollectedMutation.mutate({ internal_ids: [card.internal_id], collected: true }),
+        )
       })
     } else {
       updateCardCount(amountOwned - 1)
@@ -46,7 +49,7 @@ export function Card({ card, onImageClick, className, editable = true }: CardPro
   const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value === '' ? 0 : Number.parseInt(e.target.value, 10)
     if (!Number.isNaN(value) && value >= 0) {
-      updateCardCount(value)
+      updateCardCount(Math.min(value, 99)) // Personal fork: max="99" does nothing on a text input
     }
   }
 
@@ -60,8 +63,8 @@ export function Card({ card, onImageClick, className, editable = true }: CardPro
           onImageClick?.()
         }}
       >
-        <FancyCard card={card} selected={Boolean(card.collected) && !isPending} />
-        {isPending && <Spinner size="md" overlay />}
+        {/* Personal fork: no dimming or spinner while saving; the count updates at once and a failed save shows a toast */}
+        <FancyCard card={card} selected={Boolean(card.collected) || amountOwned > 0} />
       </button>
       <p
         className="w-full min-w-0 text-[12px] pt-2 text-center font-semibold leading-tight md:truncate"
@@ -79,7 +82,7 @@ export function Card({ card, onImageClick, className, editable = true }: CardPro
               variant="ghost"
               size="icon"
               onClick={handleMinusButtonClick}
-              className="rounded-full"
+              className="rounded-full size-10 md:size-9"
               tabIndex={-1}
               disabled={!card.collected && amountOwned === 0}
               title={amountOwned === 0 ? 'Remove from card dex' : 'Decrease amount'}
@@ -90,12 +93,22 @@ export function Card({ card, onImageClick, className, editable = true }: CardPro
               min="0"
               max="99"
               type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              aria-label="Copies owned"
               value={amountOwned}
               onChange={handleInputChange}
               className="w-7 text-center border-none rounded"
               onFocus={(event) => event.target.select()}
             />
-            <Button variant="ghost" size="icon" className="rounded-full" onClick={() => updateCardCount(amountOwned + 1)} tabIndex={-1} title="Increase amount">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full size-10 md:size-9"
+              onClick={() => updateCardCount(amountOwned + 1)}
+              tabIndex={-1}
+              title="Increase amount"
+            >
               <PlusIcon />
             </Button>
           </>

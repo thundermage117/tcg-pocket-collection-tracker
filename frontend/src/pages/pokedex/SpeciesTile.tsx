@@ -240,9 +240,9 @@ export function AbsentTile({ dexNr, lang, className }: { dexNr: number; lang: st
   return (
     <div title={`${name} has no card in TCG Pocket`} className={cn('rounded-md border-1 border-dashed border-neutral-700 p-1.5 pt-2.5', className)}>
       <Sprite artworkId={dexNr} caught={false} alt={name} className="opacity-10" />
-      <p className="mt-1.5 text-[11px] text-neutral-600 tabular-nums">{dexLabel(dexNr)}</p>
+      <p className="mt-1.5 text-[11px] text-neutral-500 tabular-nums">{dexLabel(dexNr)}</p>
       <p className="truncate text-sm text-neutral-500">{name}</p>
-      <p className="truncate text-[10px] text-neutral-600">Not in TCG Pocket</p>
+      <p className="truncate text-[11px] text-neutral-500">Not in TCG Pocket</p>
     </div>
   )
 }

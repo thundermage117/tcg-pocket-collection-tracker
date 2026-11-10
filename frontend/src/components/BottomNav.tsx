@@ -16,7 +16,7 @@ import { resetProfiles } from '@/services/profile/useProfile'
 
 const tabClass = (active: boolean) =>
   cn(
-    'flex flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors',
+    'flex flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors',
     active ? 'text-white' : 'text-neutral-400 hover:text-neutral-200',
   )
 

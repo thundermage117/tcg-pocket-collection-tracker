@@ -6,9 +6,10 @@ import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { CardThumb } from '@/components/CardThumb'
-import { Spinner } from '@/components/Spinner'
+import { CardGridSkeleton, SkeletonGrid } from '@/components/Skeleton'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
+import { useUndoTransferToast } from '@/hooks/useUndoToast'
 import {
   altCovers,
   bestUnlockPack,
@@ -186,6 +187,7 @@ export default function AltHelper() {
   const { data: main } = useProfileCollection('main')
   const { data: alt } = useProfileCollection('alt')
   const transfer = useTransferCards()
+  const undoToast = useUndoTransferToast()
   const [giftDates, setGiftDates] = useState({ main: readGiftDate('main'), alt: readGiftDate('alt') })
   const name = (card: Card) => getCardNameByLang(card, i18n.language)
 
@@ -233,18 +235,29 @@ export default function AltHelper() {
     }
   }, [main, alt, mainAccount])
 
-  const gift = (card: Card, to: Profile) =>
+  const setGiftDate = (to: Profile, date: string | null) => {
+    setGiftDates((dates) => ({ ...dates, [to]: date }))
+    try {
+      if (date) {
+        localStorage.setItem(giftKey(to), date)
+      } else {
+        localStorage.removeItem(giftKey(to))
+      }
+    } catch {
+      // only a reminder
+    }
+  }
+
+  // one tap moves the card, so the toast offers Undo rather than asking first
+  const gift = (card: Card, to: Profile) => {
+    const previousDate = giftDates[to]
     transfer.mutate([{ internal_id: card.internal_id, from: to === 'main' ? 'alt' : 'main', to }], {
-      onSuccess: () => {
-        const date = today()
-        setGiftDates((dates) => ({ ...dates, [to]: date }))
-        try {
-          localStorage.setItem(giftKey(to), date)
-        } catch {
-          // only a reminder
-        }
+      onSuccess: ({ before }) => {
+        setGiftDate(to, today())
+        undoToast(`Gifted ${name(card)} to ${to}`, `Moved one copy from ${to === 'main' ? 'the alt' : 'main'}.`, before, () => setGiftDate(to, previousDate))
       },
     })
+  }
 
   if (!mainAccount && !isLoadingAccount) {
     return (
@@ -281,7 +294,10 @@ export default function AltHelper() {
       </header>
 
       {!data ? (
-        <Spinner size="md" />
+        <div role="status" aria-label="Loading">
+          <SkeletonGrid count={3} className="mb-6 gap-3 sm:grid-cols-3" itemClassName="h-20" />
+          <CardGridSkeleton count={16} className="grid-cols-4 gap-x-2 gap-y-3 sm:grid-cols-6 md:grid-cols-8" />
+        </div>
       ) : (
         <>
           <Section
@@ -366,7 +382,7 @@ export default function AltHelper() {
                     {back ? (
                       <TradeImage card={back} />
                     ) : (
-                      <div className="flex aspect-[367/512] w-16 shrink-0 items-center justify-center rounded-md border border-dashed border-neutral-700 text-center text-[10px] text-neutral-500">
+                      <div className="flex aspect-[367/512] w-16 shrink-0 items-center justify-center rounded-md border border-dashed border-neutral-700 text-center text-[11px] text-neutral-400">
                         no spare
                       </div>
                     )}

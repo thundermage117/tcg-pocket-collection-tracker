@@ -47,7 +47,7 @@ function ScoreScale({ give, get }: { give: CardScore; get: CardScore }) {
             ),
         )}
       </div>
-      <div className="mt-1 flex justify-between text-[11px] text-neutral-500">
+      <div className="mt-1 flex justify-between text-xs text-neutral-400">
         <span>0 least valued</span>
         <span>100 most valued</span>
       </div>

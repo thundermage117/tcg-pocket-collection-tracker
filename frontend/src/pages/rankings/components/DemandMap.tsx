@@ -113,7 +113,7 @@ function PlotOverlay({ guides, xMax, picked, scalesRef }: { guides: Guide[]; xMa
         {guides.map(({ label, y: value }) => {
           const ey = y(value)
           return label && ex !== undefined && ey !== undefined ? (
-            <text key={label} x={ex - 4} y={ey - 4} textAnchor="end" className="fill-neutral-500 text-[10px]">
+            <text key={label} x={ex - 4} y={ey - 4} textAnchor="end" className="fill-neutral-400 text-[11px]">
               {label}
             </text>
           ) : null
@@ -349,8 +349,8 @@ export function DemandMap({ points, owned, onSelect }: Props) {
             <PlotOverlay guides={guides} xMax={xDomain[1]} picked={coarse ? pickedDot : undefined} scalesRef={scalesRef} />
           </ScatterChart>
         </ChartContainer>
-        <span className="pointer-events-none absolute top-3 left-14 text-[11px] text-neutral-500">↑ more wanted than average</span>
-        <span className="pointer-events-none absolute bottom-12 left-14 text-[11px] text-neutral-500">↓ more offered than average</span>
+        <span className="pointer-events-none absolute top-3 left-14 text-xs text-neutral-400">↑ more wanted than average</span>
+        <span className="pointer-events-none absolute bottom-12 left-14 text-xs text-neutral-400">↓ more offered than average</span>
       </div>
       {coarse && (
         <div className="mt-2 min-h-[5.5rem] rounded-lg border border-neutral-800 bg-neutral-900 p-2 text-xs">
@@ -370,7 +370,7 @@ export function DemandMap({ points, owned, onSelect }: Props) {
           )}
         </div>
       )}
-      <p className="mt-1 text-[11px] text-neutral-500">
+      <p className="mt-1 text-xs text-neutral-400">
         Log scales. Height is (wishlists + 1) / (offers + 1); further right means more traded overall, so the numbers are surer. Cards with no listings at all
         are left out. {coarse ? 'Tap near a dot to pick the closest card.' : 'Click a dot to open the card.'} The Most wanted tab lists the same cards ranked.
       </p>
