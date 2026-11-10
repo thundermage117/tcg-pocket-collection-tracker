@@ -23,6 +23,7 @@ export interface PackFilters {
   maxTier: number // lowest tier index that counts (0 = SSS); Infinity for every card, ranked or not
   kind?: TwoStarKind // ☆☆ only; undefined for every style
   onlyMissing: boolean
+  everyCard?: boolean // completion: keep ☆☆ without an Elo yet (a new set's), which value stats leave out
 }
 
 export const defaultPackFilters: PackFilters = { rarity: '☆☆', maxTier: Number.POSITIVE_INFINITY, onlyMissing: true }
@@ -53,13 +54,13 @@ export const matchesFilters = (card: Card, collection: Collection | undefined, {
 // openable === false excludes the Deluxe packs (A4b, B4b) and promos
 const openableExpansions = expansions.filter((e) => e.openable && !e.promo)
 
-/** A rarity's cards in openable packs (every rarity's for 'all'); ☆☆ only those with an Elo, since every ☆☆ stat on the page comes from it. */
-const poolOf = (rarity: PackRarity) =>
+/** A rarity's cards in openable packs (every rarity's for 'all'); ☆☆ only those with an Elo, since every ☆☆ value stat comes from it. */
+const poolOf = (rarity: PackRarity, everyCard = false) =>
   allCards.filter(
     (c) =>
       (rarity === 'all' ? c.rarity !== 'P' : rarity === 'diamonds' ? diamonds.includes(c.rarity) : c.rarity === rarity) &&
       openableExpansions.some((e) => e.id === c.expansion) &&
-      (c.rarity !== '☆☆' || getCardValue(c.card_id)?.adj !== undefined),
+      (everyCard || c.rarity !== '☆☆' || getCardValue(c.card_id)?.adj !== undefined),
   )
 
 const rarityRank = (card: Card) => rarities.indexOf(card.rarity)
@@ -88,7 +89,7 @@ export function bestTierOf(rarity: PackRarity): number | undefined {
 
 export function getBoosterValues(collection: Collection | undefined, filters: PackFilters = defaultPackFilters): BoosterValue[] {
   const result: BoosterValue[] = []
-  const pool = poolOf(filters.rarity)
+  const pool = poolOf(filters.rarity, filters.everyCard)
 
   for (const expansion of openableExpansions) {
     const inSet = pool.filter((c) => c.expansion === expansion.id)

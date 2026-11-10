@@ -76,7 +76,7 @@ export default function PackValue() {
   const filters: TargetFilters = useMemo(
     () =>
       completion
-        ? { rarity, tier: 'all', maxTier: tierMax.all, onlyMissing }
+        ? { rarity, tier: 'all', maxTier: tierMax.all, onlyMissing, everyCard: true }
         : { rarity, tier, maxTier: tierMax[tier], kind: kind === 'all' ? undefined : kind, onlyMissing },
     [completion, rarity, tier, kind, onlyMissing],
   )
@@ -103,6 +103,7 @@ export default function PackValue() {
         {completion ? (
           <p className="mt-1 text-sm text-neutral-400">
             Packs ranked by how many cards you're missing one pack gives, on average: the pack that fills your collection fastest comes first.
+            {!hasCollection && ' Log in to count what you own; until then every card counts as missing.'}
           </p>
         ) : (
           <p className="mt-1 text-sm text-neutral-400">
@@ -192,13 +193,11 @@ export default function PackValue() {
         </div>
       </div>
 
-      {!waiting && packs.length > 0 && !(completion && !collection) && <PackSummary pack={packs[0]} filters={filters} goal={goal} />}
+      {!waiting && packs.length > 0 && <PackSummary pack={packs[0]} filters={filters} goal={goal} />}
       {/* the "≥1 hit within n packs" curve sits at 100% for nearly every pack with a missing ◊, so completion skips it */}
       {!waiting && !completion && <PackOdds packs={packs} filters={filters} />}
 
-      {completion && !collection && !waiting ? (
-        <p className="py-12 text-center text-neutral-400">Log in to track completion: it counts the cards you're missing.</p>
-      ) : waiting ? (
+      {waiting ? (
         <>
           <Skeleton className="mb-6 h-36" />
           <SkeletonGrid count={6} className="gap-4 sm:grid-cols-2 lg:grid-cols-3" itemClassName="h-80" />
