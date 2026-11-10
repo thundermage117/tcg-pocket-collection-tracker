@@ -5,6 +5,7 @@ import { Link } from 'react-router'
 import { tiers } from '@/lib/rankings'
 import { type TierCount, type ValueOption, valueMaxTier } from '@/pages/overview/valueTiers'
 import type { Rarity } from '@/types'
+import './heatmap.css'
 
 interface Props {
   counts: TierCount[]
@@ -38,11 +39,18 @@ export function TierTile({ counts, value, rarity, className }: Props) {
                 className="-mx-1 flex items-center gap-1.5 rounded px-1 py-0.5 text-[11px] transition-colors hover:bg-neutral-700/60 sm:gap-2 sm:py-[3px] sm:text-xs"
                 aria-label={`${tier.name}: ${collected} of ${available} owned`}
               >
-                <span className="w-8 shrink-0 rounded py-0.5 text-center font-black text-[10px] text-neutral-900" style={{ backgroundColor: tier.color }}>
+                <span
+                  className={`relative w-8 shrink-0 rounded py-0.5 text-center font-black text-[10px] text-neutral-900 ${collected === available ? 'heat-foil' : ''}`}
+                  style={{ backgroundColor: tier.color, ['--foil-delay' as string]: `${i * 0.12}s` }}
+                >
                   {tier.name}
                 </span>
                 <span className="h-1.5 min-w-4 grow overflow-hidden rounded-full bg-neutral-700">
-                  <span className="block h-full rounded-full" style={{ width: `${(100 * collected) / available}%`, backgroundColor: tier.color }} />
+                  {/* a finished tier's badge and bar get the heatmap's foil sweep, staggered down the list */}
+                  <span
+                    className={`relative block h-full rounded-full ${collected === available ? 'heat-foil' : ''}`}
+                    style={{ width: `${(100 * collected) / available}%`, backgroundColor: tier.color, ['--foil-delay' as string]: `${i * 0.12}s` }}
+                  />
                 </span>
                 {/* fixed width so every bar is the same length */}
                 <span className="w-13 shrink-0 text-right text-neutral-300 tabular-nums sm:w-16">
