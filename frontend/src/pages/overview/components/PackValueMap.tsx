@@ -24,6 +24,7 @@ interface Props {
   sets: MapSet[]
   chances: Map<ExpansionId, PackChance[]>
   best?: Pack // the overview's pick, ringed in its pack colour
+  focusTier?: number // the key's highlighted tier: other tiers' blocks fade back
   packName: (pack: Pack) => string
   onOpen: (expansion: ExpansionId, pack: Pack) => void
 }
@@ -65,7 +66,7 @@ function useSize() {
   return [ref, size] as const
 }
 
-export function PackValueMap({ sets, chances, best, packName, onOpen }: Props) {
+export function PackValueMap({ sets, chances, best, focusTier, packName, onOpen }: Props) {
   const [ref, size] = useSize()
   const trays = layout(sets, (s) => s.packs.reduce((sum, p) => sum + p.missing, 0), { x: 0, y: 0, ...size })
   // nothing missing out of something in view: a pack with no cards under the filters isn't "complete"
@@ -82,10 +83,12 @@ export function PackValueMap({ sets, chances, best, packName, onOpen }: Props) {
     const body = inset({ x: 0, y: head ? PACK_HEAD : 0, w: rect.w, h: rect.h - (head ? PACK_HEAD : 0) }, 2)
     const artwork = rect.w >= 150 && rect.h >= 120 ? packArtworkUrl(pack) : undefined
     const isBest = pack === best
+    // with a tier picked out, a pack without any of it steps back as a whole
+    const lacksFocus = focusTier !== undefined && !gap.byTier.some((t) => t.tier === focusTier)
     return (
       <div
         key={pack.name}
-        className="heat-in absolute overflow-hidden rounded-md bg-neutral-900"
+        className={`heat-in absolute overflow-hidden rounded-md bg-neutral-900 transition-opacity duration-200 ${lacksFocus ? 'opacity-40' : ''}`}
         style={{
           ...box(rect),
           boxShadow: isBest ? `inset 0 0 0 1.5px ${pack.color}, 0 0 14px -2px ${pack.color}` : `inset 0 0 0 1px ${pack.color}66`,
@@ -117,11 +120,12 @@ export function PackValueMap({ sets, chances, best, packName, onOpen }: Props) {
             const full = `${tier === unrankedTier ? '–' : tier.name} ${n}`
             const label = r.h >= 15 ? (fits(full, r.w) ? full : fits(String(n), r.w) ? String(n) : '') : ''
             const foil = item.tier <= 1
+            const dimmed = focusTier !== undefined && item.tier !== focusTier
             return (
               <button
                 key={item.tier}
                 type="button"
-                className={`absolute flex items-start justify-start rounded-[3px] px-1 pt-0.5 font-semibold text-[11px] tabular-nums leading-tight transition-[filter] hover:brightness-115 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-white ${foil ? 'heat-foil' : ''}`}
+                className={`absolute flex items-start justify-start rounded-[3px] px-1 pt-0.5 font-semibold text-[11px] tabular-nums leading-tight transition-[filter,opacity] duration-200 hover:brightness-115 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-white ${foil ? 'heat-foil' : ''} ${dimmed ? 'opacity-15 saturate-50' : ''}`}
                 style={{
                   ...box(inset(r, 0.5)),
                   backgroundColor: tier.color,

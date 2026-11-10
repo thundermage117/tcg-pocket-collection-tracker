@@ -157,6 +157,10 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
   // the grid, where thirty-odd packs would shrink the smaller ones' tiles to slivers below a usable tap target.
   const [mapOn, setMapOn] = useState(false)
   const showMap = mapOn && !isMobile
+  // The map's key picks out one tier across every pack: hovering previews it, a click pins it until clicked again
+  const [hoverTier, setHoverTier] = useState<number>()
+  const [pinnedTier, setPinnedTier] = useState<number>()
+  const focusTier = hoverTier ?? pinnedTier
 
   // Scroll state drives the right-edge fade and the pinned column's shadow
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -451,7 +455,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
         </div>
         <p className="text-neutral-400 text-xs">
           {showMap ? (
-            "A pack's size is how many cards you're missing from it, coloured by value tier. Click one to see them."
+            "A pack's size is how many cards you're missing from it, coloured by value tier. Point at a tier below to find it in every pack."
           ) : (
             <>
               "New card" is the chance one pack gives a card you're missing. <span className="md:hidden">Tap for details.</span>
@@ -463,9 +467,21 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
       <ul className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-neutral-400 text-xs" aria-label="Colour key">
         {showMap ? (
           mapTiers.map((i) => (
-            <li key={i} className="flex items-center gap-1">
-              <span className="size-3 rounded-sm" style={{ backgroundColor: tierOf(i).color }} />
-              {tierOf(i).name}
+            <li key={i}>
+              <button
+                type="button"
+                className={`-mx-1 flex items-center gap-1 rounded px-1 py-0.5 transition-[opacity,background-color] hover:bg-neutral-700/60 ${pinnedTier === i ? 'bg-neutral-700 text-neutral-100' : ''} ${focusTier !== undefined && focusTier !== i ? 'opacity-50' : ''}`}
+                onMouseEnter={() => setHoverTier(i)}
+                onMouseLeave={() => setHoverTier(undefined)}
+                onFocus={() => setHoverTier(i)}
+                onBlur={() => setHoverTier(undefined)}
+                onClick={() => setPinnedTier(pinnedTier === i ? undefined : i)}
+                aria-pressed={pinnedTier === i}
+                aria-label={`Highlight ${tierOf(i).name} in every pack`}
+              >
+                <span className="size-3 rounded-sm" style={{ backgroundColor: tierOf(i).color }} />
+                {tierOf(i).name}
+              </button>
             </li>
           ))
         ) : (
@@ -488,6 +504,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
           sets={mapSets()}
           chances={chances}
           best={bestChance([...chances.values()].flat())?.pack}
+          focusTier={focusTier}
           packName={packName}
           onOpen={(expansion, pack) => openCollection(expansion, 'all', (chances.get(expansion)?.length ?? 0) > 1 ? pack.name : undefined)}
         />
