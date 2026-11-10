@@ -7,6 +7,7 @@ import { Tooltip } from 'react-tooltip'
 import { SetLogo } from '@/components/CardThumb'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { expansions, getExpansionById } from '@/lib/CardsDB.ts'
+import { getLocalizedImagePath } from '@/lib/imageLocales'
 import { CompletionTreemap, type TreemapSet } from '@/pages/overview/components/CompletionTreemap'
 import { bestChance, type PackChance } from '@/pages/overview/packChances'
 import { type Card, type ExpansionId, type Pack, type Rarity, rarities, tradableRarities } from '@/types'
@@ -50,6 +51,54 @@ function countByCell(cards: Card[]) {
     add('all|all', c.internal_id)
   }
   return new Map([...ids].map(([key, set]) => [key, set.size]))
+}
+
+// How many missing cards a cell previews as thumbnails
+const previewCount = 12
+
+// The first missing cards per cell key (same keys as countByCell), in card order, for the thumbnail previews
+function missingByCell(available: Card[], collected: Card[]) {
+  const owned = new Set(collected.map((c) => c.internal_id))
+  const cards = new Map<string, Card[]>()
+  const seen = new Set<string>()
+  for (const c of available) {
+    if (owned.has(c.internal_id)) {
+      continue
+    }
+    for (const key of [`${c.expansion}|${c.rarity}`, `${c.expansion}|all`, `all|${c.rarity}`, 'all|all']) {
+      const list = cards.get(key) ?? []
+      // a card can be in several packs (or listed twice), so dedupe per cell
+      if (list.length < previewCount && !seen.has(`${key}|${c.internal_id}`)) {
+        seen.add(`${key}|${c.internal_id}`)
+        list.push(c)
+        cards.set(key, list)
+      }
+    }
+  }
+  return cards
+}
+
+// Small, dimmed images of cards still missing: what a cell's gap actually is
+function MissingThumbs({ cards, missing, className }: { cards: Card[]; missing: number; className?: string }) {
+  return (
+    <div className={`grid grid-cols-6 gap-1 ${className ?? ''}`}>
+      {cards.map((c) => (
+        <img
+          key={c.internal_id}
+          src={getLocalizedImagePath(c)}
+          alt={c.name}
+          loading="lazy"
+          decoding="async"
+          className="aspect-[367/512] w-full rounded-sm object-cover opacity-75 grayscale-[55%]"
+        />
+      ))}
+      {missing > cards.length && (
+        <span className="flex aspect-[367/512] items-center justify-center rounded-sm bg-neutral-700/60 text-[11px] text-neutral-300 tabular-nums">
+          +{missing - cards.length}
+        </span>
+      )}
+    </div>
+  )
 }
 
 // Ordinal bands, one blue brighter as a cell nears done, and the reserved "good" green (always with its 100% / ✓
@@ -159,11 +208,14 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
 
   const openable = expansions.filter((e) => e.openable)
   // Memoized: scrolling and selecting re-render the table
-  const { available, collected } = useMemo(() => {
+  const { available, collected, missingCards } = useMemo(() => {
     const openableIds = new Set(expansions.filter((e) => e.openable).map((e) => e.id))
+    const openableAvailable = availableCards.filter((c) => openableIds.has(c.expansion))
+    const openableCollected = collectedCards.filter((c) => openableIds.has(c.expansion))
     return {
-      available: countByCell(availableCards.filter((c) => openableIds.has(c.expansion))),
-      collected: countByCell(collectedCards.filter((c) => openableIds.has(c.expansion))),
+      available: countByCell(openableAvailable),
+      collected: countByCell(openableCollected),
+      missingCards: missingByCell(openableAvailable, openableCollected),
     }
   }, [availableCards, collectedCards])
 
@@ -289,6 +341,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
           onClick={() => (isMobile ? toggle({ row, col }) : openCollection(row, col))}
           data-tooltip-id={isMobile ? undefined : 'completion-heatmap'}
           data-tooltip-content={`${label}: ${c.collected} / ${c.available}${missing > 0 ? ` · ${missing} missing` : ' · complete'}`}
+          data-cell={`${row}|${col}`}
           aria-label={`${label}: ${c.collected} of ${c.available} collected`}
         >
           {cellMode === 'left' ? formatLeft(c) : formatPct(c)}
@@ -352,6 +405,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
       }
       const missing = c.available - c.collected
       const { row, col } = selected
+      const thumbs = missingCards.get(`${row}|${col}`) ?? []
       body = (
         <>
           {header(`${setName(row)} · ${rarityLabel(col)}`)}
@@ -370,6 +424,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
               </button>
             )}
           </div>
+          {thumbs.length > 0 && <MissingThumbs cards={thumbs} missing={missing} className="mt-2" />}
         </>
       )
     }
@@ -508,7 +563,24 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
         />
       </div>
       {renderDetails()}
-      <Tooltip id="completion-heatmap" />
+      <Tooltip
+        id="completion-heatmap"
+        className="z-30"
+        opacity={1}
+        // Cells add a preview of the cards they're missing under the text; the pack chips keep plain text
+        render={({ content, activeAnchor }) => {
+          const key = activeAnchor?.getAttribute('data-cell')
+          const [row, col] = key?.split('|') ?? []
+          const c = key ? cell(row, col) : undefined
+          const thumbs = key ? (missingCards.get(key) ?? []) : []
+          return (
+            <div className={c && thumbs.length > 0 ? 'w-64' : undefined}>
+              <p>{content}</p>
+              {c && thumbs.length > 0 && <MissingThumbs cards={thumbs} missing={c.available - c.collected} className="mt-1.5" />}
+            </div>
+          )
+        }}
+      />
     </section>
   )
 }
