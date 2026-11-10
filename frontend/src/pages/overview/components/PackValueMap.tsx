@@ -12,7 +12,7 @@ import type { PackChance } from '@/pages/overview/packChances'
 import type { PackGap, TierGap } from '@/pages/overview/packMap'
 import { type Rect, squarify } from '@/pages/overview/squarify'
 import type { ValueOption } from '@/pages/overview/valueTiers'
-import { gives, newPerPack, oneIn, packOdds } from '@/pages/packs/types'
+import { gives, oneIn, packOdds } from '@/pages/packs/types'
 import type { Card, ExpansionId, Pack, Rarity } from '@/types'
 import './heatmap.css'
 
@@ -83,11 +83,9 @@ function sentences(value: ValueOption, rarity: Rarity[]) {
       `${n} of your ${gap.missing} missing ${many} ${are(n)} ${tier < tiers.length ? tiers[tier].name : 'unranked (nobody trades them)'}`,
     /** "1 in 27 packs gives one", "≈1.4 of them per pack" (odds: expected count) */
     tierOdds: (odds: number) => (odds >= 0.5 ? `≈${odds.toFixed(1)} of them per pack opened` : `${oneIn(odds)} packs gives one`),
-    /** "≈1.8 new cards per pack", "1 new card every 6 packs" */
-    perPack: (odds: number) => {
-      const { stat, caption } = newPerPack(odds)
-      return `${stat} ${caption}`
-    },
+    /** the packs page's newPerPack, naming the cards: "≈1.8 new cards per pack", "1 new S+ card every 6 packs" */
+    perPack: (odds: number) =>
+      odds >= 1 ? `≈${odds.toFixed(1)} new ${many} per pack` : `1 new ${[quality, one].filter(Boolean).join(' ')} every ${Math.round(1 / odds)} packs`,
   }
 }
 
@@ -137,8 +135,10 @@ export function PackValueMap({ sets, chances, best, focusTier, fadeLow, sizeBy, 
     for (const gap of s.packs) {
       const chance = chances.get(s.id)?.find((c) => c.pack === gap.pack)
       const title = `${packName(gap.pack)} · ${s.name}`
-      const perPack = gap.odds > 0 ? [say.perPack(gap.odds)] : []
-      tips.set(`${s.id}|${gap.pack.name}`, { title, lines: [say.chance((chance?.pct ?? 0) / 100), say.quality(gap), ...perPack] })
+      // one odds line per mode, the one that matches the tile's size: the chance of a new card while sizes count what's
+      // missing, how many new cards a pack gives on average while they're per pack opened
+      const odds = sizeBy === 'odds' ? say.perPack(gap.odds) : say.chance((chance?.pct ?? 0) / 100)
+      tips.set(`${s.id}|${gap.pack.name}`, { title, lines: [odds, say.quality(gap)] })
       for (const t of gap.byTier) {
         const odds = t.odds > 0 ? [say.tierOdds(t.odds)] : []
         tips.set(`${s.id}|${gap.pack.name}|${t.tier}`, { title, lines: [say.tier(t.cards.length, gap, t.tier), ...odds], cards: t.cards })
@@ -148,11 +148,10 @@ export function PackValueMap({ sets, chances, best, focusTier, fadeLow, sizeBy, 
 
   const renderPack = (set: MapSet, gap: PackGap, rect: Rect, index: number) => {
     const { pack } = gap
-    const chance = chances.get(set.id)?.find((c) => c.pack === pack)
     const packTitle = packName(pack)
     const head = rect.h >= 56 && rect.w >= 64
     // a big tile says in words what its size means: what's left in it, or what opening it gives
-    const caption = rect.w >= 200 && rect.h >= 130 ? (sizeBy === 'odds' ? say.chance((chance?.pct ?? 0) / 100) : say.quality(gap)) : undefined
+    const caption = rect.w >= 200 && rect.h >= 130 ? (sizeBy === 'odds' ? say.perPack(gap.odds) : say.quality(gap)) : undefined
     const body = inset({ x: 0, y: head ? PACK_HEAD : 0, w: rect.w, h: rect.h - (head ? PACK_HEAD : 0) }, 2)
     const artwork = rect.w >= 150 && rect.h >= 120 ? packArtworkUrl(pack) : undefined
     const isBest = pack === best
