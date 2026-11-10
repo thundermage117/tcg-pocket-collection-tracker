@@ -1,6 +1,6 @@
 // Personal fork: card tier lists — ☆☆ community Elo and most-wanted by trade demand — and a demand map of the same cards.
 // Tab and filters live in the URL (?tab=wanted&set=B1&foils=1&q=…), so links, refresh and back keep the view.
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
 import { CountAltSwitch } from '@/components/CountAltSwitch'
@@ -83,7 +83,7 @@ const descriptions: Record<Tab, string> = {
 export default function Rankings() {
   const { t, i18n } = useTranslation('common/sets')
   // rankings don't need the collection: render straight away, owned marks fill in when it arrives
-  const { data: collection } = useMainWithAlt() // personal fork: main, plus what the alt can hand over ("Count alt")
+  const { data: collection, isLoading: collectionLoading } = useMainWithAlt() // personal fork: main, plus what the alt can hand over ("Count alt")
   const { setSelectedCardId } = useSelectedCard()
   const [params, setParams] = useSearchParams()
   const [open, setOpen] = useState(defaultOpen)
@@ -144,6 +144,17 @@ export default function Rankings() {
     // after the tier opens, so the scroll lands on its final position
     requestAnimationFrame(() => document.getElementById(tierAnchor(tier))?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }
+
+  // ?tier=SS (the overview's tier rows) opens that tier and scrolls to it once, then leaves the URL. With "missing only"
+  // it waits for the collection, which reshapes the tiers above it.
+  const linkedTier = tiers.find((t) => t.name === params.get('tier'))
+  const linkReady = linkedTier !== undefined && (!missingOnly || !collectionLoading)
+  useEffect(() => {
+    if (linkReady && linkedTier) {
+      jumpTo(linkedTier)
+      update({ tier: undefined })
+    }
+  }, [linkReady])
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-12">
