@@ -173,6 +173,7 @@ function Overview() {
           cellMode={get('cells') === 'left' ? 'left' : 'pct'}
           sortByValue={filters.value !== 'all'}
           rarity={filters.rarity}
+          value={filters.value}
           setCellMode={(mode) => update({ cells: mode === 'left' ? 'left' : undefined })}
         />
       </article>

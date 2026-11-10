@@ -13,6 +13,7 @@ import { MissingThumbs, previewCount } from '@/pages/overview/components/Missing
 import { type MapSet, PackValueMap, tierOf } from '@/pages/overview/components/PackValueMap'
 import { bestChance, type PackChance } from '@/pages/overview/packChances'
 import { getPackTierMap } from '@/pages/overview/packMap'
+import type { ValueOption } from '@/pages/overview/valueTiers'
 import { type Card, type ExpansionId, type Pack, type Rarity, rarities, tradableRarities } from '@/types'
 import './heatmap.css'
 
@@ -24,6 +25,7 @@ interface Props {
   setCellMode: (mode: CellMode) => void
   sortByValue: boolean // the overview's Value filter is on: the collection can't filter by tier, so most valuable go first
   rarity: Rarity[] // the overview's rarity filter, carried to Rankings when a pack map block opens its tier
+  value: ValueOption // the overview's Value filter, for the pack map's sentences
 }
 
 // What a cell shows: completion %, or how many cards are still missing
@@ -150,7 +152,7 @@ const rarityLabel = (r: Rarity | 'all') => (r === 'all' ? 'all rarities' : r)
 // One decimal, minus a trailing .0, so a column of 100% / 45% doesn't read as a wall of "100.0%"
 const formatChance = (pct: number) => `${pct.toFixed(1).replace(/\.0$/, '')}%`
 
-export function CompletionHeatmap({ availableCards, collectedCards, chances, cellMode, setCellMode, sortByValue, rarity }: Props) {
+export function CompletionHeatmap({ availableCards, collectedCards, chances, cellMode, setCellMode, sortByValue, rarity, value }: Props) {
   const { t } = useTranslation(['common/sets', 'common/packs'])
   const navigate = useNavigate()
   const isMobile = useMediaQuery({ query: '(max-width: 767px)' }) // tailwind "md"
@@ -205,8 +207,8 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
       missingCards: missingByCell(openableAvailable, openableCollected),
     }
   }, [availableCards, collectedCards])
-  // odds are a pull rate per missing card, so they're only worked out while the map is sized by them
-  const packGaps = useMemo(() => getPackTierMap(availableCards, collectedCards, mapSize === 'odds'), [availableCards, collectedCards, mapSize])
+  // odds are a pull rate per missing card, so they're only worked out while the map is on (its sizes and hover text use them)
+  const packGaps = useMemo(() => getPackTierMap(availableCards, collectedCards, showMap), [availableCards, collectedCards, showMap])
 
   const cell = (row: string, col: string): Cell | undefined => {
     const n = available.get(`${row}|${col}`) ?? 0
@@ -546,6 +548,8 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
           focusTier={focusTier}
           fadeLow={!sortByValue}
           sizeBy={mapSize}
+          value={value}
+          rarity={rarity}
           packName={packName}
           onOpen={(expansion, pack) => openCollection(expansion, 'all', (chances.get(expansion)?.length ?? 0) > 1 ? pack.name : undefined)}
           onOpenTier={openTier}
