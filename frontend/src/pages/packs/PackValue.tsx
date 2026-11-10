@@ -162,50 +162,55 @@ export default function PackValue() {
       <details ref={howItWorks} className="mt-8 scroll-mt-20 rounded-lg border border-neutral-800 px-4 py-3 text-sm text-neutral-400">
         <summary className="cursor-pointer font-medium text-neutral-300">How this works</summary>
         {!completion && <ValueDataAge className="mt-2" />}
-        {completion ? (
-          <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>
-              Completion ranks packs by how many cards you're missing one pack gives on average: each missing card's chance to be in a pack, added up, using the
-              real pull odds of every slot, rare packs included. Unlike "chance of a new card", it keeps telling packs apart while you still miss commons: a
-              pack with 40 missing ◊ beats one with 3.
-            </li>
-            <li>
-              It starts on ◊–◊◊◊◊, what "complete" usually means. Pick a single rarity to chase it alone, or All to count ☆ and up too (they barely move the
-              number: a pack gives one so rarely).
-            </li>
-            <li>The bar under each pack is how much of it you own. Count alt's cards adds what your alt can give you.</li>
-          </ul>
-        ) : (
-          <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>
-              Two scales, as on{' '}
-              <Link to="/rankings" className="underline underline-offset-2 hover:text-neutral-200">
-                Rankings
-              </Link>
-              . ☆☆ use the vote tiers: an Elo score from community votes on pokemontcglivetrade, with few-vote cards pulled toward the average, split where the
-              Elo jumps. Every other rarity uses the Most wanted tiers: wishlists per trade-list offer (eleet), split by share (SSS is the top 1% of every
-              traded card).
-            </li>
-            <li>
-              Most wanted tiers are shared by every rarity, so a common rarity can't reach the top ones: no ◊ is above B and no ◊◊ above A, so Top or Hot is
-              switched off there. ☆☆☆ and Crown Rare can't be traded and have no tier. Hot is SSS–S, Top is SSS–A.
-            </li>
-            <li>
-              All counts every rarity at once, each card on its own scale (☆☆ by vote, the rest by Most wanted), so "Top" means any card in its scale's SSS–A.
-              It starts on Top: with every rarity, nearly every pack has some common you're missing.
-            </li>
-            <li>
-              "1 in N packs" uses the real pull odds of every slot, rare packs included, for the cards that match the rarity, tier, style and "only missing"
-              choice. The more cards of a rarity a pack shares its slots with, the rarer each one is.
-            </li>
-            <li>The strip on each pack shows how many of its cards fall in each tier (grey: no tier); the faded part is what you already own.</li>
-            <li>
-              "provisional" (☆☆ only) means at least one card has fewer than {PROVISIONAL_VOTES} votes, so its value and tier may still move (usual in a set's
-              first month). Packs that can no longer be opened (Deluxe Pack: ex) are left out.
-            </li>
-          </ul>
-        )}
+        <dl className="mt-3 space-y-3">
+          {completion ? (
+            <>
+              <Faq q="What does “≈1.8 new cards per pack” mean?">
+                On average, one pack gives that many cards you don't have yet. It's each missing card's chance to be in a pack, added up, using the real pull
+                odds of every slot, rare packs included. A pack where you miss 40 cards beats one where you miss 3, even if both nearly always give something
+                new.
+              </Faq>
+              <Faq q="Why does it start on ◊–◊◊◊◊?">
+                That's what "complete" usually means. Pick one rarity to chase it alone, or All to count ☆ and up too (they barely move the number: a pack gives
+                one so rarely).
+              </Faq>
+              <Faq q="What's the bar under each pack?">How much of that pack you already own. Count alt's cards adds what your alt can give you.</Faq>
+            </>
+          ) : (
+            <>
+              <Faq q="What does “1 in 59 packs” mean?">
+                On average, one pack in 59 gives at least one card that counts: the chosen rarity, tier and style, and only ones you're missing unless you turn
+                that off. It uses the real pull odds of every slot, rare packs included.
+              </Faq>
+              <Faq q="What are Top and Hot?">
+                Value tiers, as on{' '}
+                <Link to="/rankings" className="underline underline-offset-2 hover:text-neutral-200">
+                  Rankings
+                </Link>
+                . Hot is SSS–S, Top is SSS–A. ☆☆ are tiered by community votes (an Elo score from pokemontcglivetrade); every other rarity by trade demand
+                (wishlists per trade offer, eleet). Under All, each card uses its own scale.
+              </Faq>
+              <Faq q="Why are Top or Hot greyed out?">
+                No card of that rarity reaches those tiers: commons aren't in demand enough (no ◊ is above B, no ◊◊ above A), and ☆☆☆ and Crown Rare can't be
+                traded, so they have no tier.
+              </Faq>
+              <Faq q="What does “new set” mean?">
+                Some ☆☆ in that pack have fewer than {PROVISIONAL_VOTES} votes, so their tiers may still move. Usual in a set's first month.
+              </Faq>
+              <Faq q="Which packs are left out?">Packs that can no longer be opened (Deluxe Pack: ex) and promos.</Faq>
+            </>
+          )}
+        </dl>
       </details>
     </main>
+  )
+}
+
+function Faq({ q, children }: { q: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <dt className="font-medium text-neutral-300">{q}</dt>
+      <dd className="mt-0.5">{children}</dd>
+    </div>
   )
 }
