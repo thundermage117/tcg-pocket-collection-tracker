@@ -1,10 +1,12 @@
 // Personal fork: "how many packs until…" — the chance of at least one hit within n packs, 1 − (1 − p)^n, for every
 // pack in the ranking. The best pick is the one coloured line; the rest are grey context behind it.
-import { useMemo } from 'react'
+import { ChevronDown } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CartesianGrid, Line, LineChart, ReferenceDot, ReferenceLine, type TooltipContentProps, XAxis, YAxis } from 'recharts'
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent'
 import { type ChartConfig, ChartContainer, ChartTooltip } from '@/components/ui/chart'
+import { cn } from '@/lib/utils'
 import type { PackRow, SortKey } from '../types'
 
 // Only goals with a per-pack chance have a curve; "best average card" and the trainer share are properties of the pool
@@ -36,11 +38,8 @@ function niceCeil(x: number) {
 
 type Row = { n: number } & Record<string, number>
 
-export function PackOdds({ packs, sortKey }: { packs: PackRow[]; sortKey: SortKey }) {
-  const { t } = useTranslation('common/packs')
-  const goal = curveGoals[sortKey]
-
-  const chart = useMemo(() => {
+function useOddsChart(packs: PackRow[], sortKey: SortKey, goal: string | undefined) {
+  return useMemo(() => {
     const live = goal ? packs.filter((p) => p[sortKey] > 0) : []
     if (live.length === 0) {
       return undefined
@@ -59,12 +58,52 @@ export function PackOdds({ packs, sortKey }: { packs: PackRow[]; sortKey: SortKe
     })
     return { live, best, maxN, rows, half: packsFor(p, 0.5), most: packsFor(p, 0.9) }
   }, [packs, sortKey, goal])
+}
+
+export function PackOdds({ packs, sortKey }: { packs: PackRow[]; sortKey: SortKey }) {
+  const { t } = useTranslation('common/packs')
+  const goal = curveGoals[sortKey]
+  const chart = useOddsChart(packs, sortKey, goal)
+  const [open, setOpen] = useState(false)
 
   if (!goal || !chart) {
     return null
   }
-  const { live, best, maxN, rows, half, most } = chart
+  const { best, half, most } = chart
   const name = (pack: PackRow) => t(pack.packName)
+
+  return (
+    <section className="mb-6 rounded-xl border border-neutral-800 bg-neutral-900/60 p-3 sm:p-4">
+      {/* the sentence is the answer, so the chart behind it starts folded and the pack list sits higher */}
+      <button type="button" aria-expanded={open} onClick={() => setOpen((x) => !x)} className="flex w-full cursor-pointer items-start gap-3 text-left">
+        <div className="min-w-0 flex-1">
+          <h2 className="font-semibold text-base sm:text-lg">How many packs until you get {goal}?</h2>
+          <p className="mt-1 text-sm text-neutral-300">
+            <span className="font-medium">{name(best)}</span>: a 50% chance within <span className="font-semibold tabular-nums">{half.toLocaleString()}</span>{' '}
+            packs (≈ {days(half).toLocaleString()} days of free packs), 90% within <span className="font-semibold tabular-nums">{most.toLocaleString()}</span>.
+          </p>
+        </div>
+        <span className="mt-0.5 flex shrink-0 items-center gap-1 text-xs text-neutral-400">
+          {open ? 'Hide chart' : 'Chart'}
+          <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} />
+        </span>
+      </button>
+      {open && <PackOddsChart chart={chart} goal={goal} sortKey={sortKey} name={name} />}
+    </section>
+  )
+}
+
+function PackOddsChart({
+  chart: { live, best, maxN, rows, half, most },
+  goal,
+  sortKey,
+  name,
+}: {
+  chart: NonNullable<ReturnType<typeof useOddsChart>>
+  goal: string
+  sortKey: SortKey
+  name: (pack: PackRow) => string
+}) {
   const rest = live.slice(1)
 
   const tooltip = ({ active, label }: TooltipContentProps<ValueType, NameType>) => {
@@ -75,7 +114,7 @@ export function PackOdds({ packs, sortKey }: { packs: PackRow[]; sortKey: SortKe
     return (
       <div className="w-60 rounded-lg border border-neutral-700 bg-neutral-900 p-2 text-xs shadow-xl">
         <div className="font-medium text-neutral-100">After {n.toLocaleString()} packs</div>
-        <div className="mb-1.5 text-neutral-500">
+        <div className="mb-1.5 text-neutral-400">
           ≈ {days(n).toLocaleString()} {days(n) === 1 ? 'day' : 'days'} of free packs
         </div>
         <ul className="flex flex-col gap-0.5">
@@ -83,7 +122,7 @@ export function PackOdds({ packs, sortKey }: { packs: PackRow[]; sortKey: SortKe
             <li key={pack.id} className="flex items-center gap-2">
               <span aria-hidden className="w-3 shrink-0 border-t-2" style={{ borderColor: pack === best ? 'var(--color-best)' : 'var(--color-rest)' }} />
               <span className="min-w-0 flex-1 truncate text-neutral-300">
-                {name(pack)} <span className="text-neutral-500">{pack.expansionId}</span>
+                {name(pack)} <span className="text-neutral-400">{pack.expansionId}</span>
               </span>
               <span className="font-medium text-neutral-100 tabular-nums">{pct(chanceWithin(pack[sortKey], n))}</span>
             </li>
@@ -94,13 +133,8 @@ export function PackOdds({ packs, sortKey }: { packs: PackRow[]; sortKey: SortKe
   }
 
   return (
-    <section className="mb-6 rounded-xl border border-neutral-800 bg-neutral-900/60 p-3 sm:p-4">
-      <h2 className="font-semibold text-base sm:text-lg">How many packs until you get {goal}?</h2>
-      <p className="mt-1 text-sm text-neutral-300">
-        <span className="font-medium">{name(best)}</span>: a 50% chance within <span className="font-semibold tabular-nums">{half.toLocaleString()}</span> packs
-        (≈ {days(half).toLocaleString()} days of free packs), 90% within <span className="font-semibold tabular-nums">{most.toLocaleString()}</span>.
-      </p>
-      <div className="mt-2 mb-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-400">
+    <>
+      <div className="mt-3 mb-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-400">
         <span className="flex items-center gap-1.5">
           <span aria-hidden className="w-4 border-t-2" style={{ borderColor: chartConfig.best.theme.dark }} />
           Best pick: {name(best)}
@@ -189,10 +223,10 @@ export function PackOdds({ packs, sortKey }: { packs: PackRow[]; sortKey: SortKe
           )}
         </LineChart>
       </ChartContainer>
-      <p className="mt-1 text-[11px] text-neutral-500">
+      <p className="mt-1 text-xs text-neutral-400">
         Chance of at least one {goal.replace(/^an? /, '')} within that many packs, from each pack's real pull odds. It assumes the odds stay put
         {sortKey === 'perPackNew' ? '; in practice they dip slightly after each new card you pull' : ''}. Days count two free packs a day.
       </p>
-    </section>
+    </>
   )
 }
