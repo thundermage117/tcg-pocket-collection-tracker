@@ -100,8 +100,7 @@ export function PackCard({ pack, position, filters, goal, range, expanded, onTog
       </div>
 
       {completion && <OwnedBar pack={pack} />}
-      {/* how the pack splits across tiers is detail, not what you pick on, so it waits for the expanded view */}
-      {expanded && !completion && <TierMix pack={pack} rarity={filters.rarity} showOwned={collection !== undefined} />}
+      {!completion && <TierMix pack={pack} rarity={filters.rarity} showOwned={collection !== undefined} />}
 
       {expanded && <PackPool cards={pack.cards} wanted={pack.wanted} expansionId={pack.expansionId} rarity={filters.rarity} />}
 
