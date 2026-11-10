@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { CardThumb, SetLogo } from '@/components/CardThumb'
 import { Progress } from '@/components/ui/progress'
 import { ownsCard, type PackRarity } from '@/lib/packValue'
-import { type Tier, tiers } from '@/lib/rankings'
+import { type Tier, tierFor, tiers } from '@/lib/rankings'
 import { cn } from '@/lib/utils'
 import { PROVISIONAL_VOTES } from '@/lib/ValueDB'
 import { useSelectedCard } from '@/services/collection/useCollection'
@@ -95,7 +95,8 @@ export function PackCard({ pack, position, filters, goal, range, expanded, onTog
         <p className="text-sm">
           <span className="font-semibold tabular-nums text-neutral-100">{headline.stat}</span> <span className="text-neutral-400">{headline.caption}</span>
         </p>
-        <Progress value={score > 0 ? Math.round(100 * fill(score, range)) : 0} barColor={pack.color} className="h-1.5" />
+        {/* value's tier strip below says what the odds are made of, so only completion keeps a plain bar */}
+        {completion && <Progress value={score > 0 ? Math.round(100 * fill(score, range)) : 0} barColor={pack.color} className="h-1.5" />}
         {poolCounts.length > 0 && <p className="text-xs text-neutral-500">{poolCounts.join(' · ')}</p>}
       </div>
 
@@ -140,20 +141,27 @@ function OwnedBar({ pack }: { pack: PackRow }) {
 // cards nobody trades (☆☆☆, Crown Rare) have no tier: a grey segment after E
 const unranked: Tier = { name: '–', color: '#525252' }
 
-/** How the pack's cards split across tiers: one segment per tier, the owned part faded. */
+/**
+ * How the pack's cards split across tiers, one segment per tier. The cards that count (in the chosen tiers and style,
+ * and missing unless owned ones count too) are bright; the rest fade, so the bright part is what the odds are for.
+ */
 function TierMix({ pack, rarity, showOwned }: { pack: PackRow; rarity: PackRarity; showOwned: boolean }) {
-  const shown = [...tiers, unranked].map((tier, i) => ({ tier, ...pack.tierMix[i] })).filter((x) => x.total > 0)
+  const counting = [...tiers, unranked].map(() => 0)
+  for (const c of pack.wanted) {
+    counting[tierFor(c) ?? tiers.length]++
+  }
+  const shown = [...tiers, unranked].map((tier, i) => ({ tier, ...pack.tierMix[i], counts: counting[i] })).filter((x) => x.total > 0)
   const cardCount = shown.reduce((sum, x) => sum + x.total, 0)
   const label = shown
-    .map(({ tier, total, owned }) => `${tier === unranked ? 'unranked' : tier.name}: ${total}${showOwned ? ` (${owned} owned)` : ''}`)
-    .join(', ')
+    .map(({ tier, total, owned, counts }) => `${tier === unranked ? 'unranked' : tier.name}: ${total}, ${counts} count${showOwned ? `, ${owned} owned` : ''}`)
+    .join('; ')
   return (
     <div title={`${scaleName(rarity)} tiers · ${label}`} role="img" aria-label={`${rarity} per ${scaleName(rarity)} tier: ${label}`}>
       <div className="flex h-2 gap-px overflow-hidden rounded-full">
-        {shown.map(({ tier, total, owned }) => (
+        {shown.map(({ tier, total, counts }) => (
           <div key={tier.name} className="flex h-full" style={{ flexGrow: total }}>
-            <span className="h-full opacity-30" style={{ flexGrow: showOwned ? owned : 0, backgroundColor: tier.color }} />
-            <span className="h-full" style={{ flexGrow: showOwned ? total - owned : total, backgroundColor: tier.color }} />
+            <span className="h-full" style={{ flexGrow: counts, backgroundColor: tier.color }} />
+            <span className="h-full opacity-25" style={{ flexGrow: total - counts, backgroundColor: tier.color }} />
           </div>
         ))}
       </div>

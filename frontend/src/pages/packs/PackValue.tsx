@@ -193,6 +193,10 @@ export default function PackValue() {
                 No card of that rarity reaches those tiers: commons aren't in demand enough (no ◊ is above B, no ◊◊ above A), and ☆☆☆ and Crown Rare can't be
                 traded, so they have no tier.
               </Faq>
+              <Faq q="What's the coloured strip on each pack?">
+                Its cards split by tier. The bright part is the cards that count for the odds (the chosen tiers and style, and only ones you're missing unless
+                you turn that off); the faded part is the rest. Hover it for the numbers.
+              </Faq>
               <Faq q="What does “new set” mean?">
                 Some ☆☆ in that pack have fewer than {PROVISIONAL_VOTES} votes, so their tiers may still move. Usual in a set's first month.
               </Faq>
