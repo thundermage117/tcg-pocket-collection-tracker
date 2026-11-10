@@ -32,9 +32,10 @@ interface Props {
   filters: Filters
   setFilters: (updates: Partial<Filters>) => void
   clearFilters: () => void
+  activeFilters?: number // personal fork: hides "Clear filters" at 0; left out, it always shows
 }
 
-const FilterPanel: FC<Props> = ({ className, filters, setFilters, clearFilters }: Props) => {
+const FilterPanel: FC<Props> = ({ className, filters, setFilters, clearFilters, activeFilters }: Props) => {
   const { t } = useTranslation(['pages/collection', 'common/sets', 'common/packs', 'filters'])
 
   const changeFilter = (k: keyof Filters) => (x: Filters[typeof k]) => setFilters({ [k]: x })
@@ -246,9 +247,12 @@ const FilterPanel: FC<Props> = ({ className, filters, setFilters, clearFilters }
           )}
         </div>
       )}
-      <Button variant="outline" className="!text-red-700" onClick={clearFilters}>
-        {t('filters.clear')}
-      </Button>
+      {/* Personal fork: only when there's something to clear, and red-400 to read on the dark background */}
+      {activeFilters !== 0 && (
+        <Button variant="outline" className="!text-red-400" onClick={clearFilters}>
+          {t('filters.clear')}
+        </Button>
+      )}
     </div>
   )
 }

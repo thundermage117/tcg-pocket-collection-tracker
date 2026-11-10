@@ -1,5 +1,5 @@
 import i18n from 'i18next'
-import { Trash2 } from 'lucide-react'
+import { ClipboardCopy, Share2, SlidersHorizontal } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMediaQuery } from 'react-responsive'
@@ -8,6 +8,8 @@ import { z } from 'zod'
 import { Card } from '@/components/Card'
 import { CardsTable } from '@/components/CardsTable.tsx'
 import FiltersPanel from '@/components/FiltersPanel'
+import ActiveFilterChips from '@/components/filters/ActiveFilterChips'
+import SearchInput from '@/components/filters/SearchInput'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import useSearchState from '@/hooks/use-search-state'
@@ -70,6 +72,13 @@ export default function CollectionCards({ children, cards, account }: Props) {
   const [filters, setFilters, activeFilters] = useSearchState(schema)
   const [_, setSearchParams] = useSearchParams()
   const clearFilters = () => setSearchParams(new URLSearchParams())
+  // Personal fork: the search box is uncontrolled, so clearing remounts it empty
+  const [clearCount, setClearCount] = useState(0)
+  const clear = () => {
+    clearFilters()
+    setClearCount((n) => n + 1)
+  }
+  const filterCount = activeFilters - (filters.search ? 1 : 0) // the phone's search box shows its own
 
   const filteredCards = getFilteredCards(filters, cards, account?.trade_rarity_settings)
 
@@ -148,47 +157,57 @@ export default function CollectionCards({ children, cards, account }: Props) {
     { key: 'copies', value: totalOwned() },
   ]
 
+  // Personal fork: on desktop these sit above the cards instead of under the filters, since they aren't filters
+  const shareButtons = !isPublic && (
+    <>
+      <Button variant="outline" size={isMobile ? 'default' : 'sm'} onClick={onShare}>
+        <Share2 />
+        {t('filters.share')}
+      </Button>
+      <Button
+        variant="outline"
+        size={isMobile ? 'default' : 'sm'}
+        disabled={!account}
+        onClick={() =>
+          navigator.clipboard.writeText(getTradingMessage()).then(() => toast({ title: t('trade.copiedInClipboard'), variant: 'default', duration: 3000 }))
+        }
+      >
+        <ClipboardCopy />
+        {t('trade.button')}
+      </Button>
+    </>
+  )
+
   const filtersPanel = (
     <div className="flex flex-col h-fit gap-2">
       <div className="grid grid-cols-3 gap-2 mb-1">
         {stats.map(({ key, value }) => (
           <div key={key} className="flex flex-col">
             <span className="text-lg font-semibold leading-tight text-neutral-200 tabular-nums">{value.toLocaleString(i18n.language)}</span>
-            <span className="text-[10px] font-medium uppercase tracking-wider text-neutral-500">{t(`stats.${key}`)}</span>
+            <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-400">{t(`stats.${key}`)}</span>
           </div>
         ))}
       </div>
-      <FiltersPanel className="flex flex-col gap-y-3" filters={filters} setFilters={setFilters} clearFilters={clearFilters} />
-      <div className="flex flex-col mt-4 gap-2">
-        {!isPublic && (
-          <>
-            <Button variant="outline" onClick={onShare}>
-              {t('filters.share')}
-            </Button>
-            <Button
-              className="w-full"
-              variant="outline"
-              disabled={!account}
-              onClick={() =>
-                navigator.clipboard
-                  .writeText(getTradingMessage())
-                  .then(() => toast({ title: t('trade.copiedInClipboard'), variant: 'default', duration: 3000 }))
-              }
-            >
-              {t('trade.button')}
-            </Button>
-          </>
-        )}
-      </div>
+      {/* Personal fork: on phones the search box lives above the cards, so the sheet leaves it out */}
+      <FiltersPanel
+        key={clearCount}
+        className="flex flex-col gap-y-3"
+        filters={isMobile ? { ...filters, search: undefined } : filters}
+        setFilters={setFilters}
+        clearFilters={clear}
+        activeFilters={activeFilters}
+      />
+      {isMobile && <div className="flex flex-col mt-4 gap-2">{shareButtons}</div>}
     </div>
   )
 
   return (
     <div ref={pageRef} style={{ height: pageHeight }} className="flex min-h-0 justify-center gap-2 xl:gap-8 px-1">
       {isMobile ? (
+        // Personal fork: a bottom sheet like the tab bar's "More", in reach of a thumb
         <Sheet open={isFiltersSheetOpen} onOpenChange={setIsFiltersSheetOpen}>
-          <SheetContent side="left" className="w-full">
-            <SheetHeader>
+          <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-xl border-neutral-800 px-4 pb-8">
+            <SheetHeader className="px-0">
               <SheetTitle>Filters</SheetTitle>
             </SheetHeader>
             {filtersPanel}
@@ -198,19 +217,21 @@ export default function CollectionCards({ children, cards, account }: Props) {
         <div className="w-80 min-h-0 overflow-y-auto">{filtersPanel}</div>
       )}
       <div className="flex min-h-0 min-w-0 w-full max-w-[900px] flex-col">
+        {/* Personal fork: on phones the search stays on screen, with the other filters as chips under it */}
         {isMobile && (
-          <div className="h-9 shrink-0 flex overflow-hidden text-center rounded-md text-sm font-medium border shadow-sm border-neutral-700 divide-x divide-neutral-700 [&>*]:cursor-pointer [&>*]:hover:bg-neutral-600 [&>*]:hover:text-neutral-50">
-            <button type="button" className="flex-1" onClick={() => setIsFiltersSheetOpen(true)}>
-              Filters
-              {activeFilters > 0 && ` (${activeFilters})`}
-            </button>
-            {activeFilters > 0 && (
-              <button type="button" className="group px-2" onClick={clearFilters}>
-                <Trash2 className="stroke-neutral-200 group-hover:stroke-neutral-50" />
-              </button>
-            )}
-          </div>
+          <>
+            <div className="flex shrink-0 gap-2">
+              <SearchInput key={clearCount} className="flex-1" value={filters.search} setValue={(search) => setFilters({ search })} />
+              <Button variant="outline" className="h-[38px] border-neutral-700" onClick={() => setIsFiltersSheetOpen(true)}>
+                <SlidersHorizontal />
+                Filters
+                {filterCount > 0 && <span className="rounded-full bg-neutral-200 px-1.5 text-xs leading-5 text-neutral-900 tabular-nums">{filterCount}</span>}
+              </Button>
+            </div>
+            <ActiveFilterChips filters={filters} setFilters={setFilters} omit={['search']} />
+          </>
         )}
+        {!isMobile && shareButtons && <div className="flex shrink-0 justify-end gap-2 pb-2">{shareButtons}</div>}
         {children && <div className="shrink-0">{children}</div>}
         <CardsTable
           cards={filteredCards}
