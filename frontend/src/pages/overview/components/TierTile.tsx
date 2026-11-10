@@ -21,15 +21,16 @@ export function TierTile({ counts, value, rarity, className }: Props) {
   const shown = tiers.map((tier, i) => ({ tier, i, ...counts[i] })).filter((t) => t.available > 0)
 
   return (
-    <div className={`flex flex-col justify-center rounded-lg border-1 border-neutral-700 border-solid bg-neutral-800 p-3 sm:p-5 ${className ?? ''}`}>
+    <div className={`flex flex-col rounded-lg border-1 border-neutral-700 border-solid bg-neutral-800 p-3 sm:p-5 ${className ?? ''}`}>
       <Link to={`/rankings?${params}`} className="mb-2 text-center font-bold text-base transition-colors hover:text-white sm:mb-3 sm:text-lg md:text-xl">
         Wanted tiers
         <ChevronRight className="ml-0.5 inline size-4 align-middle text-neutral-400" />
       </Link>
       {shown.length === 0 ? (
-        <p className="text-center text-neutral-400 text-xs">No ranked cards with these filters</p>
+        <p className="my-auto text-center text-neutral-400 text-xs">No ranked cards with these filters</p>
       ) : (
-        <ul className="flex flex-col">
+        // rows spread over the tile's height (set by the ring beside it) rather than floating mid-tile
+        <ul className="flex flex-1 flex-col justify-between">
           {shown.map(({ tier, i, available, collected }) => (
             <li key={tier.name} className={i > valueMaxTier[value] ? 'opacity-35' : ''}>
               <Link

@@ -128,7 +128,7 @@ function Overview() {
           <div className="col-span-4 md:col-span-2 flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 bg-neutral-800 border-solid p-3 sm:p-5">
             <h2 className="font-bold mb-2 text-center text-base sm:mb-3 sm:text-lg md:text-xl">{t('uniqueCards')}</h2>
             {/* Personal fork: upstream's RadialChart plus an inner ring for the newest set */}
-            <CollectionRing availableCards={availableCards} collectedCards={collectedCards} className="size-36 sm:size-48 md:size-56" />
+            <CollectionRing availableCards={availableCards} collectedCards={collectedCards} className="size-36 sm:size-48 md:size-52" />
             <p className="mt-2 text-balance text-center text-neutral-400 text-xs sm:mt-3">
               {t('numberOfCopies-single')}
               {filters.value !== 'all' && ` · ${valueLabels[filters.value]}`}
