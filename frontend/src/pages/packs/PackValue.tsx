@@ -4,44 +4,32 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router'
-import { CountAltSwitch } from '@/components/CountAltSwitch'
-import { TabsFilter } from '@/components/Filters'
 import { Skeleton, SkeletonGrid } from '@/components/Skeleton'
-import { TierChip } from '@/components/TierChip'
-import { Switch } from '@/components/ui/switch'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { ValueDataAge } from '@/components/ValueDataAge'
 import { useUrlFilters } from '@/hooks/useUrlFilters'
 import { bestTierOf, getBoosterValues } from '@/lib/packValue'
-import { tiers } from '@/lib/rankings'
 import { PROVISIONAL_VOTES } from '@/lib/ValueDB'
 import { useAccount } from '@/services/account/useAccount'
 import { userQuery } from '@/services/auth/useAuth'
 import { useMainWithAlt } from '@/services/profile/useProfileCollection'
 import { PackCard } from './components/PackCard'
+import { PackControls } from './components/PackControls'
 import { PackOdds } from './components/PackOdds'
 import { PackSummary } from './components/PackSummary'
 import {
   completionRarityOptions,
   describeTarget,
-  goalLabels,
   goalOptions,
   kindOptions,
   type PackRow,
   type Range,
   rarityOptions,
   raritySlug,
-  scaleName,
-  showKind,
   showRarity,
   type TargetFilters,
-  tierLabel,
   tierMax,
   tierOptions,
 } from './types'
-
-const countOptions = ['missing', 'any'] as const
-const countLabels = { missing: "I'm missing", any: 'Every card' }
 
 export default function PackValue() {
   const { data: user, isLoading: userLoading } = useQuery(userQuery)
@@ -126,81 +114,22 @@ export default function PackValue() {
         </p>
       </header>
 
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-        <div className="flex flex-wrap items-end gap-4">
-          <TabsFilter
-            label="Goal"
-            options={goalOptions}
-            value={goal}
-            show={(x) => goalLabels[x]}
-            onChange={(x) => update({ goal: x === 'value' ? undefined : x, rarity: undefined, owned: undefined })}
-          />
-          {/* what every number on the page counts, so it comes first */}
-          {hasCollection && !completion && (
-            <TabsFilter
-              label="Cards"
-              options={countOptions}
-              value={onlyMissing ? 'missing' : 'any'}
-              show={(x) => countLabels[x]}
-              onChange={(x) => update({ owned: x === 'missing' ? undefined : '1' })}
-            />
-          )}
-          <TabsFilter
-            label="Rarity"
-            options={completion ? completionRarityOptions : rarityOptions}
-            value={rarity}
-            show={showRarity}
-            onChange={(r) => update({ rarity: r === defaultRarity ? undefined : raritySlug[r] })}
-          />
-          {!completion && (
-            <div className="flex flex-col gap-1">
-              <span className="px-0.5 text-[11px] font-medium uppercase tracking-wider text-neutral-400">Rank by chance of pulling…</span>
-              <ToggleGroup
-                type="single"
-                value={tier}
-                onValueChange={(v) => v && update({ tier: v === defaultTier ? undefined : v })}
-                className="rounded-md border-1 border-neutral-700 bg-neutral-800"
-              >
-                {tierOptions.map((key) => (
-                  <ToggleGroupItem
-                    key={key}
-                    value={key}
-                    disabled={!reachable(key)}
-                    title={reachable(key) ? tierLabel(key, rarity) : `No ${rarity} is in ${key === 'hot' ? 'SSS–S' : 'SSS–A'} (${scaleName(rarity)} tiers)`}
-                    className="gap-1.5 px-3"
-                  >
-                    {key === 'all' ? (
-                      tierLabel('all', rarity)
-                    ) : (
-                      <>
-                        <span className="flex gap-0.5">
-                          {tiers.slice(0, tierMax[key] + 1).map((t) => (
-                            <TierChip key={t.name} tier={t} />
-                          ))}
-                        </span>
-                        {key === 'hot' ? 'Hot' : 'Top'}
-                      </>
-                    )}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-            </div>
-          )}
-          {rarity === '☆☆' && !completion && (
-            <TabsFilter label="Style" options={kindOptions} value={kind} show={showKind} onChange={(x) => update({ kind: x === 'all' ? undefined : x })} />
-          )}
-        </div>
-        <div className="flex flex-wrap items-end gap-4">
-          <TabsFilter label="Series" options={seriesOptions} value={series} onChange={(x) => update({ series: x === 'All' ? undefined : x })} />
-          {collection && (
-            <label htmlFor="packs-hide-complete" className="flex cursor-pointer items-center gap-2 pb-2 text-sm text-neutral-300">
-              <Switch id="packs-hide-complete" checked={hideComplete} onCheckedChange={(on) => update({ hide: on ? '1' : undefined })} />
-              Hide fully owned
-            </label>
-          )}
-          <CountAltSwitch id="packs-count-alt" className="pb-2" />
-        </div>
-      </div>
+      <PackControls
+        goal={goal}
+        rarity={rarity}
+        defaultRarity={defaultRarity}
+        tier={tier}
+        defaultTier={defaultTier}
+        reachable={reachable}
+        kind={kind}
+        onlyMissing={onlyMissing}
+        series={series}
+        seriesOptions={seriesOptions}
+        hideComplete={hideComplete}
+        hasCollection={hasCollection}
+        collectionLoaded={Boolean(collection)}
+        update={update}
+      />
 
       {!waiting && packs.length > 0 && <PackSummary pack={packs[0]} filters={filters} goal={goal} />}
       {/* the "≥1 hit within n packs" curve sits at 100% for nearly every pack with a missing ◊, so completion skips it */}
