@@ -472,9 +472,9 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
           {showMap ? (
             <>
               {mapSize === 'odds'
-                ? "A pack's size is how many cards you're missing one pack gives on average, coloured by value tier."
-                : "A pack's size is how many cards you're missing from it, coloured by value tier."}{' '}
-              Click a block to open that tier on Rankings; point at a tier below to find it in every pack.
+                ? 'Big = worth opening now: size is how many new cards one pack gives you on average. Rare cards barely count, since you seldom pull them; "1/50" means one in every 50 packs.'
+                : "Big = lots left to collect: size is how many cards you're still missing from the pack."}{' '}
+              Colours are value tiers. Click a block to open its tier on Rankings.
             </>
           ) : (
             <>
@@ -528,12 +528,12 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
             className="gap-0.5 rounded-md border-1 border-neutral-700 p-0.5"
             aria-label="Pack size"
           >
-            <span className="px-1.5 text-neutral-400 text-xs">Size</span>
-            <ToggleGroupItem value="missing" className="h-6 px-2 text-xs" aria-label="Size by cards missing">
-              Cards missing
+            <span className="px-1.5 text-neutral-400 text-xs">Size by</span>
+            <ToggleGroupItem value="missing" className="h-6 px-2 text-xs" title="How many cards you're still missing from each pack">
+              Missing cards
             </ToggleGroupItem>
-            <ToggleGroupItem value="odds" className="h-6 px-2 text-xs" aria-label="Size by new cards per pack">
-              Pull odds
+            <ToggleGroupItem value="odds" className="h-6 px-2 text-xs" title="How many new cards opening one pack gives you, on average">
+              Per pack opened
             </ToggleGroupItem>
           </ToggleGroup>
         )}

@@ -47,6 +47,12 @@ const fits = (text: string, width: number) => text.length * CHAR_W + 8 <= width
 const inset = ({ x, y, w, h }: Rect, d: number): Rect => ({ x: x + d, y: y + d, w: Math.max(0, w - 2 * d), h: Math.max(0, h - 2 * d) })
 const box = ({ x, y, w, h }: Rect) => ({ left: x, top: y, width: w, height: h })
 const formatChance = (pct: number) => `${pct.toFixed(1).replace(/\.0$/, '')}%`
+// Expected new cards per pack, short enough for a block: "1.4" at one or more, else "1/50" (one in every 50 packs)
+const formatOdds = (odds: number) => (odds >= 0.95 ? odds.toFixed(1) : odds > 0 ? `1/${Math.round(1 / odds)}` : '0')
+// A pack header's: "1.4 new/pack", or "1 new/4 packs" below one, never a "0.0"
+const packOdds = (odds: number) => (odds >= 0.95 ? `${odds.toFixed(1)} new/pack` : odds > 0 ? `1 new/${Math.round(1 / odds)} packs` : 'none')
+const oddsPhrase = (odds: number) =>
+  odds >= 0.95 ? `≈${odds.toFixed(1)} of them per pack opened` : odds > 0 ? `about 1 in every ${Math.round(1 / odds)} packs gives one` : 'not in this pack'
 
 // Tiles are laid out biggest first (squarest), so sort a copy and map rects back to the items
 function layout<T>(items: T[], value: (item: T) => number, rect: Rect): { item: T; rect: Rect }[] {
@@ -73,8 +79,8 @@ function useSize() {
 export function PackValueMap({ sets, chances, best, focusTier, fadeLow, sizeBy, packName, onOpen, onOpenTier }: Props) {
   const packSize = (p: PackGap) => (sizeBy === 'odds' ? p.odds : p.missing)
   const tierSize = (t: TierGap) => (sizeBy === 'odds' ? t.odds : t.cards.length)
-  // "≈0.12 per pack" next to a count, in odds mode
-  const perPack = (odds: number) => (sizeBy === 'odds' ? ` · ≈${odds < 0.01 ? odds.toFixed(3) : odds.toFixed(2)} per pack` : '')
+  // in odds mode the hover text says what the size is: how often a pack gives one of these
+  const perPack = (odds: number) => (sizeBy === 'odds' ? ` · ${oddsPhrase(odds)}` : '')
   const [ref, size] = useSize()
   // Tiles glide to their new place when the filters change, but only once the first layout is down: before the box is
   // measured every rect is empty, and growing them all out of the corner on first paint would just be noise
@@ -125,7 +131,8 @@ export function PackValueMap({ sets, chances, best, focusTier, fadeLow, sizeBy, 
           >
             <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: pack.color }} />
             <span className={`min-w-0 grow truncate ${isBest ? 'font-semibold' : ''}`}>{name}</span>
-            {chance && rect.w >= 120 && <span className="shrink-0 text-neutral-400 tabular-nums">{formatChance(chance.pct)}</span>}
+            {/* what sizes the tile, so the two modes read differently at a glance */}
+            {rect.w >= 120 && <span className="shrink-0 text-neutral-400 tabular-nums">{sizeBy === 'odds' ? packOdds(gap.odds) : `${gap.missing} left`}</span>}
           </button>
         )}
         {layout(gap.byTier, tierSize, body)
@@ -134,8 +141,10 @@ export function PackValueMap({ sets, chances, best, focusTier, fadeLow, sizeBy, 
           .map(({ item, rect: r }) => {
             const tier = tierOf(item.tier)
             const n = item.cards.length
-            const full = `${tier === unrankedTier ? '–' : tier.name} ${n}`
-            const label = r.h >= 15 ? (fits(full, r.w) ? full : fits(String(n), r.w) ? String(n) : '') : ''
+            // the number is what sizes the block: cards missing, or how often a pack gives one
+            const value = sizeBy === 'odds' ? formatOdds(item.odds) : String(n)
+            const full = `${tier === unrankedTier ? '–' : tier.name} ${value}`
+            const label = r.h >= 15 ? (fits(full, r.w) ? full : fits(value, r.w) ? value : '') : ''
             const foil = item.tier <= 1
             const dimmed = focusTier !== undefined && item.tier !== focusTier
             // a picked-out tier wins over the low-tier fade, so highlighting E still shows E at full strength
@@ -198,7 +207,8 @@ export function PackValueMap({ sets, chances, best, focusTier, fadeLow, sizeBy, 
                   <SetLogo expansionId={set.id} className="h-4 w-auto shrink-0" />
                   <span className="text-neutral-500 tabular-nums">{set.id}</span>
                   <span className="min-w-0 truncate text-neutral-200">{set.name}</span>
-                  <span className="ml-auto shrink-0 text-neutral-500 tabular-nums">{missing}</span>
+                  {/* a set's packs aren't opened together, so their per-pack odds don't add up to anything: count only */}
+                  {sizeBy === 'missing' && <span className="ml-auto shrink-0 text-neutral-500 tabular-nums">{missing} left</span>}
                 </header>
               )}
               {layout(set.packs, packSize, inner).map(({ item, rect: r }) => renderPack(set, item, inset(r, 1), packIndex++))}
