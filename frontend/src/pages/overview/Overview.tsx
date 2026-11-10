@@ -7,7 +7,6 @@ import { DropdownFilter } from '@/components/Filters'
 import Footer from '@/components/Footer.tsx'
 import DeckbuildingFilter from '@/components/filters/DeckbuildingFilter'
 import RarityFilter from '@/components/filters/RarityFilter'
-import { RadialChart } from '@/components/RadialChart'
 import { Skeleton } from '@/components/Skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTitle } from '@/components/ui/alert.tsx'
@@ -16,6 +15,7 @@ import { getFilteredCards } from '@/lib/filters'
 import { getBoosterValues } from '@/lib/packValue'
 import { CompletionHeatmap } from '@/pages/overview/components/CompletionHeatmap.tsx'
 import { GradientCard } from '@/pages/overview/components/GradientCard.tsx'
+import { RarityRing } from '@/pages/overview/components/RarityRing'
 import { TierTile } from '@/pages/overview/components/TierTile'
 import { UnlockTile } from '@/pages/overview/components/UnlockTile'
 import { bestChance, getPackChances } from '@/pages/overview/packChances'
@@ -23,10 +23,6 @@ import { countByTier, inValue, type ValueOption, valueLabels, valueOptions } fro
 import { oneIn } from '@/pages/packs/types'
 import { useMainWithAlt } from '@/services/profile/useProfileCollection'
 import { type Card, type CollectionRow, type Rarity, rarities } from '@/types'
-
-function getUniqueCount(cards: Card[]) {
-  return new Set(cards.map((c) => c.internal_id)).size
-}
 
 function Overview() {
   const { data: ownedCards = new Map<number, CollectionRow>(), isLoading } = useMainWithAlt()
@@ -126,14 +122,8 @@ function Overview() {
         <section className="grid grid-cols-8 gap-3 sm:gap-4">
           <div className="col-span-4 md:col-span-2 flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 bg-neutral-800 border-solid p-3 sm:p-6 md:p-8">
             <h2 className="font-bold mb-2 text-center text-base sm:mb-4 sm:text-lg md:text-3xl">{t('uniqueCards')}</h2>
-            <RadialChart
-              value={availableCards.length === 0 ? 0 : getUniqueCount(collectedCards) / getUniqueCount(availableCards)}
-              label={String(getUniqueCount(collectedCards))}
-              sublabel={`/ ${getUniqueCount(availableCards)}`}
-              color="#92C5FD"
-              strokeWidth={24}
-              className="size-28 sm:size-45"
-            />
+            {/* Personal fork: split by rarity family instead of upstream's single-colour RadialChart */}
+            <RarityRing availableCards={availableCards} collectedCards={collectedCards} className="size-28 sm:size-45" />
             <h2 className="mt-2 text-balance text-center text-neutral-300 text-xs sm:mt-6 sm:text-sm sm:text-white">{t('numberOfCopies-single')}</h2>
             {filters.value !== 'all' && <p className="mt-1 text-center text-neutral-400 text-xs">{valueLabels[filters.value]}</p>}
           </div>
