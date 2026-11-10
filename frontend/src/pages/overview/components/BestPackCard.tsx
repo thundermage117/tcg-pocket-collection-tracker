@@ -1,13 +1,13 @@
-// Personal fork: upstream's GradientCard pick with the pack's cover card beside the text, tilted and fading into the
-// pack colour, so the pick reads as a booster at a glance. A wrapper of our own so GradientCard.tsx stays upstream's.
+// Personal fork: upstream's GradientCard pick with the pack's Pokémon beside the text, in the Pokédex's official
+// artwork, so the pick reads as a booster at a glance. A wrapper of our own so GradientCard.tsx stays upstream's.
 import type { ReactNode } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { allCards, expansions } from '@/lib/CardsDB.ts'
-import { getLocalizedImagePath } from '@/lib/imageLocales'
+import { allSpecies, formArtworkId, speciesKey, spriteUrl } from '@/lib/pokedex'
 import { cn } from '@/lib/utils'
 import type { Card, Pack, Rarity } from '@/types'
 
-// Showiest art first: full-art Crown, immersive ☆☆☆, then ☆☆; shinies only when a set has nothing else
+// Which card names the pack's Pokémon: its showiest printing first (Crown, ☆☆☆, ☆☆), the set's headline Pokémon
 const coverRarities: Rarity[] = ['Crown Rare', '☆☆☆', '☆☆', '✵✵', '✵', '☆']
 
 const pickCover = (cards: Card[]) => coverRarities.flatMap((r) => cards.filter((c) => c.rarity === r))[0]
@@ -32,12 +32,21 @@ function packCover(pack: Pack): Card | undefined {
   return pickCover(named) ?? pickCover(inPack.filter((c) => c.card_type === 'pokémon')) ?? pickCover(inPack)
 }
 
-const covers = new Map<Pack, Card | undefined>()
-const cachedCover = (pack: Pack) => {
-  if (!covers.has(pack)) {
-    covers.set(pack, packCover(pack))
+// The cover card's Pokémon as the Pokédex draws it: its form's artwork when it has one (Mega Mewtwo X), else the species'
+function packArtwork(pack: Pack): string | undefined {
+  const card = packCover(pack)
+  const key = card && speciesKey(card)
+  const species = key ? allSpecies.find((s) => s.key === key) : undefined
+  // large: the 256px default would blur at the card's size on high-density screens
+  return card && species ? spriteUrl(formArtworkId(species, card.name), false, true) : undefined
+}
+
+const artworks = new Map<Pack, string | undefined>()
+const cachedArtwork = (pack: Pack) => {
+  if (!artworks.has(pack)) {
+    artworks.set(pack, packArtwork(pack))
   }
-  return covers.get(pack)
+  return artworks.get(pack)
 }
 
 interface Props {
@@ -50,24 +59,23 @@ interface Props {
 export function BestPackCard({ pack, pct, className, children }: Props) {
   const { t } = useTranslation(['gradient-card', 'common/packs'])
   const chancePercentage = Math.round(pct * 10) / 10
-  const cover = cachedCover(pack)
+  const artwork = cachedArtwork(pack)
 
   return (
     <div
       className={cn(className, 'relative isolate flex items-center overflow-hidden rounded-lg p-4 sm:p-8')}
       style={{ backgroundColor: pack.color, backgroundImage: 'radial-gradient(circle at 85% 50%, rgb(255 255 255 / 0.35), transparent 55%)' }}
     >
-      {cover && (
+      {artwork && (
         <img
-          src={getLocalizedImagePath(cover)}
+          src={artwork}
           alt=""
           decoding="async"
-          // tilted and partly off the edge on phones; the mask fades its left side into the pack colour
-          className="-z-10 -right-6 sm:right-4 md:right-6 absolute top-1/2 h-[125%] -translate-y-1/2 rotate-[8deg] rounded-lg shadow-2xl sm:h-[85%]"
-          style={{ maskImage: 'linear-gradient(to right, transparent, black 35%)' }}
+          // on the glow, partly off the edge on phones
+          className="-z-10 -right-4 sm:right-2 absolute top-1/2 h-[120%] -translate-y-1/2 drop-shadow-[0_8px_16px_rgb(0_0_0/0.3)] sm:h-[95%]"
         />
       )}
-      <div className={cn('flex flex-col items-start text-left', cover && 'pr-24 sm:pr-48 md:pr-52 lg:pr-56')}>
+      <div className={cn('flex flex-col items-start text-left', artwork && 'pr-28 sm:pr-60 lg:pr-72')}>
         <p className="mb-1 text-md text-slate-900 sm:text-xl">
           <Trans i18nKey="open" ns="gradient-card" />
         </p>
