@@ -1,5 +1,5 @@
 // Personal fork: shared types and wording for the packs page.
-import { type BoosterValue, matchesFilters, type PackFilters } from '@/lib/packValue'
+import { type BoosterValue, matchesFilters, type PackFilters, type PackRarity } from '@/lib/packValue'
 import { tierFor, tiers, twoStarPosition } from '@/lib/rankings'
 import { demandScore, getCardValue, kindLabel, type TwoStarKind } from '@/lib/ValueDB'
 import type { Card, Rarity } from '@/types'
@@ -35,7 +35,7 @@ export const raritySlug: Record<Rarity, string> = {
 export const showRarity = (r: Rarity) => (r === 'Crown Rare' ? 'Crown' : r)
 
 /** Which tier scale a rarity is judged by: ☆☆ by community vote Elo, every other rarity by trade demand. */
-export const scaleName = (r: Rarity) => (r === '☆☆' ? 'vote' : 'Most wanted')
+export const scaleName = (r: PackRarity) => (r === '☆☆' ? 'vote' : r === 'all' ? 'vote (☆☆) or Most wanted' : 'Most wanted')
 
 // Same names as the overview's Value filter; the tiers are the vote tiers for ☆☆ and Most wanted for the rest
 export const tierOptions = ['all', 'top', 'hot'] as const

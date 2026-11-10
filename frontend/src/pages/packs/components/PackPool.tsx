@@ -1,14 +1,14 @@
 // Personal fork: every card of the chosen rarity a booster can give, best first.
 import { Link } from 'react-router'
 import { CardThumb } from '@/components/CardThumb'
-import { ownsCard } from '@/lib/packValue'
+import { ownsCard, type PackRarity } from '@/lib/packValue'
 import { demandScore, getCardValue, isProvisional, kindLabel } from '@/lib/ValueDB'
 import { useSelectedCard } from '@/services/collection/useCollection'
 import { useMainWithAlt } from '@/services/profile/useProfileCollection'
-import type { Card, ExpansionId, Rarity } from '@/types'
+import type { Card, ExpansionId } from '@/types'
 import { CardTierBadge } from './CardTierBadge'
 
-export function PackPool({ cards, expansionId, rarity }: { cards: Card[]; expansionId: ExpansionId; rarity: Rarity }) {
+export function PackPool({ cards, expansionId, rarity }: { cards: Card[]; expansionId: ExpansionId; rarity: PackRarity }) {
   const { data: collection } = useMainWithAlt()
   const { setSelectedCardId } = useSelectedCard()
 

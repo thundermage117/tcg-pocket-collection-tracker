@@ -3,13 +3,12 @@ import { ChevronDown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { CardThumb, SetLogo } from '@/components/CardThumb'
 import { Progress } from '@/components/ui/progress'
-import { ownsCard } from '@/lib/packValue'
+import { ownsCard, type PackRarity } from '@/lib/packValue'
 import { type Tier, tiers } from '@/lib/rankings'
 import { cn } from '@/lib/utils'
 import { PROVISIONAL_VOTES } from '@/lib/ValueDB'
 import { useSelectedCard } from '@/services/collection/useCollection'
 import { useMainWithAlt } from '@/services/profile/useProfileCollection'
-import type { Rarity } from '@/types'
 import { fill, type PackRow, packStat, type Range, scaleName, type TargetFilters } from '../types'
 import { CardTierBadge } from './CardTierBadge'
 import { PackPool } from './PackPool'
@@ -108,7 +107,7 @@ export function PackCard({ pack, position, filters, range, expanded, onToggle }:
 const unranked: Tier = { name: '–', color: '#525252' }
 
 /** How the pack's cards split across tiers: one segment per tier, the owned part faded. */
-function TierMix({ pack, rarity, showOwned }: { pack: PackRow; rarity: Rarity; showOwned: boolean }) {
+function TierMix({ pack, rarity, showOwned }: { pack: PackRow; rarity: PackRarity; showOwned: boolean }) {
   const shown = [...tiers, unranked].map((tier, i) => ({ tier, ...pack.tierMix[i] })).filter((x) => x.total > 0)
   const label = shown
     .map(({ tier, total, owned }) => `${tier === unranked ? 'unranked' : tier.name}: ${total}${showOwned ? ` (${owned} owned)` : ''}`)

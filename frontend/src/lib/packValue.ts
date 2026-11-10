@@ -1,5 +1,5 @@
-// Personal fork: rank boosters by the chance one pack gives a card you want, one rarity at a time.
-// "Want" is a filter over the booster's cards of that rarity: at or above a tier (☆☆ by community vote Elo, every
+// Personal fork: rank boosters by the chance one pack gives a card you want, of one rarity or of all of them.
+// "Want" is a filter over the booster's cards of that rarity (or every card, each on its own scale): at or above a tier (☆☆ by community vote Elo, every
 // other rarity by Most wanted), of a style (☆☆ only: full art / trainer / rainbow), and optionally only the ones
 // you're missing. perPack uses the real pull odds (stats.ts), rare packs included.
 
@@ -7,10 +7,12 @@ import { allCards, expansions } from '@/lib/CardsDB'
 import { tierFor, tiers } from '@/lib/rankings'
 import { pullRate } from '@/lib/stats'
 import { getCardValue, type TwoStarKind, valueSortKey } from '@/lib/ValueDB'
-import type { Card, Collection, ExpansionId, Rarity } from '@/types'
+import { type Card, type Collection, type ExpansionId, type Rarity, rarities } from '@/types'
+
+export type PackRarity = Rarity | 'all'
 
 export interface PackFilters {
-  rarity: Rarity
+  rarity: PackRarity
   maxTier: number // lowest tier index that counts (0 = SSS); Infinity for every card, ranked or not
   kind?: TwoStarKind // ☆☆ only; undefined for every style
   onlyMissing: boolean
@@ -23,11 +25,11 @@ export interface BoosterValue {
   expansionName: string
   packName: string
   color: string
-  cards: Card[] // every card of the rarity, best first
+  cards: Card[] // every card of the rarity (or of every rarity), best first
   wanted: Card[] // the ones matching the filters, best first
   missing: number // every missing card of the rarity, whatever the filters
   tierMix: { total: number; owned: number }[] // per tier, index as in `tiers`, then one for unranked cards
-  minVotes: number // ☆☆ only: fewest votes behind any card's Elo; Infinity otherwise
+  minVotes: number // fewest votes behind any of its ☆☆'s Elo; Infinity without ☆☆
   best: Card
   perPack: number // chance one pack opened gives a card in `wanted`
 }
@@ -42,16 +44,30 @@ export const matchesFilters = (card: Card, collection: Collection | undefined, {
 // openable === false excludes the Deluxe packs (A4b, B4b) and promos
 const openableExpansions = expansions.filter((e) => e.openable && !e.promo)
 
-/** A rarity's cards in openable packs; ☆☆ only those with an Elo, since every ☆☆ stat on the page comes from it. */
-const poolOf = (rarity: Rarity) =>
+/** A rarity's cards in openable packs (every rarity's for 'all'); ☆☆ only those with an Elo, since every ☆☆ stat on the page comes from it. */
+const poolOf = (rarity: PackRarity) =>
   allCards.filter(
-    (c) => c.rarity === rarity && openableExpansions.some((e) => e.id === c.expansion) && (rarity !== '☆☆' || getCardValue(c.card_id)?.adj !== undefined),
+    (c) =>
+      (rarity === 'all' ? c.rarity !== 'P' : c.rarity === rarity) &&
+      openableExpansions.some((e) => e.id === c.expansion) &&
+      (c.rarity !== '☆☆' || getCardValue(c.card_id)?.adj !== undefined),
   )
 
-const bestTiers = new Map<Rarity, number | undefined>()
+const rarityRank = (card: Card) => rarities.indexOf(card.rarity)
+
+/**
+ * Best first. One rarity sorts by its own score (Elo for ☆☆, demand otherwise). Every rarity can't: the two scores
+ * aren't comparable, and valueSortKey would put each ☆☆ ahead of everything. So tier first, then the rarer card, then score.
+ */
+const bestFirst = (rarity: PackRarity) => (a: Card, b: Card) =>
+  rarity === 'all'
+    ? (tierFor(a) ?? tiers.length) - (tierFor(b) ?? tiers.length) || rarityRank(b) - rarityRank(a) || valueSortKey(b.card_id) - valueSortKey(a.card_id)
+    : valueSortKey(b.card_id) - valueSortKey(a.card_id)
+
+const bestTiers = new Map<PackRarity, number | undefined>()
 
 /** The best tier index any openable card of the rarity reaches, so tier choices it can't meet can be switched off. */
-export function bestTierOf(rarity: Rarity): number | undefined {
+export function bestTierOf(rarity: PackRarity): number | undefined {
   if (!bestTiers.has(rarity)) {
     const ranked = poolOf(rarity)
       .map(tierFor)
@@ -68,7 +84,7 @@ export function getBoosterValues(collection: Collection | undefined, filters: Pa
   for (const expansion of openableExpansions) {
     const inSet = pool.filter((c) => c.expansion === expansion.id)
     for (const pack of expansion.packs.filter((p) => p.name !== 'everypack')) {
-      const cards = inSet.filter((c) => c.pack === pack.name || c.pack === 'everypack').toSorted((a, b) => valueSortKey(b.card_id) - valueSortKey(a.card_id))
+      const cards = inSet.filter((c) => c.pack === pack.name || c.pack === 'everypack').toSorted(bestFirst(filters.rarity))
       if (cards.length === 0) {
         continue
       }
@@ -88,7 +104,7 @@ export function getBoosterValues(collection: Collection | undefined, filters: Pa
         wanted,
         missing: cards.filter((c) => !ownsCard(collection, c)).length,
         tierMix,
-        minVotes: filters.rarity === '☆☆' ? Math.min(...cards.map((c) => getCardValue(c.card_id)?.votes ?? 0)) : Number.POSITIVE_INFINITY,
+        minVotes: Math.min(...cards.filter((c) => c.rarity === '☆☆').map((c) => getCardValue(c.card_id)?.votes ?? 0)),
         best: cards[0],
         perPack: wanted.length && expansion.packStructure ? pullRate(wanted, expansion, pack, false) : 0,
       })
