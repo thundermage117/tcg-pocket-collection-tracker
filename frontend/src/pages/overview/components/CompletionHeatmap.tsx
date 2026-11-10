@@ -167,6 +167,9 @@ const rarityFamily = (r: Rarity) => ['◊', '☆', '✵'].find((f) => r.startsWi
 
 const rarityLabel = (r: Rarity | 'all') => (r === 'all' ? 'all rarities' : r)
 
+// One decimal, minus a trailing .0, so a column of 100% / 45% doesn't read as a wall of "100.0%"
+const formatChance = (pct: number) => `${pct.toFixed(1).replace(/\.0$/, '')}%`
+
 // The treemap view is built but hidden: flip this to bring back its Map toggle
 const mapEnabled = false
 
@@ -278,18 +281,22 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
         <div className="flex gap-1">
           {packs.map((c) => {
             const owned = packs.length > 1 ? ` · ${c.collected} / ${c.available} owned` : ''
+            // With a choice of packs, the best one glows in its pack colour and the rest step back
+            const isBest = c === best && c.pct > 0
+            const choice = packs.length > 1
             return (
               <button
                 key={c.pack.name}
                 type="button"
-                className={`flex items-center gap-1 rounded bg-neutral-700/50 px-1.5 py-1.5 text-xs tabular-nums whitespace-nowrap hover:bg-neutral-700 focus-visible:outline-2 focus-visible:outline-neutral-200 ${c === best && c.pct > 0 ? 'font-semibold' : ''}`}
+                className={`flex items-center gap-1 rounded bg-neutral-700/50 px-1.5 py-1.5 text-xs tabular-nums whitespace-nowrap hover:bg-neutral-700 focus-visible:outline-2 focus-visible:outline-neutral-200 ${isBest ? 'font-semibold' : ''} ${choice && !isBest ? 'text-neutral-400' : ''}`}
+                style={choice && isBest ? { boxShadow: `inset 0 0 0 1px ${c.pack.color}99, 0 0 10px -3px ${c.pack.color}` } : undefined}
                 onClick={() => openPack(row, c)}
                 data-tooltip-id="completion-heatmap"
-                data-tooltip-content={`${packName(c.pack)}: ${c.pct.toFixed(1)}% chance of a new card${owned}`}
-                aria-label={`${packName(c.pack)}: ${c.pct.toFixed(1)}% chance of a new card`}
+                data-tooltip-content={`${packName(c.pack)}: ${formatChance(c.pct)} chance of a new card${owned}`}
+                aria-label={`${packName(c.pack)}: ${formatChance(c.pct)} chance of a new card`}
               >
                 <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: c.pack.color }} />
-                <span>{c.pct.toFixed(1)}%</span>
+                <span>{formatChance(c.pct)}</span>
               </button>
             )
           })}
@@ -308,10 +315,10 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
             type="button"
             className={`flex min-h-10 w-full items-center justify-center gap-1 rounded bg-neutral-700/50 px-1.5 text-xs tabular-nums whitespace-nowrap ${isSelected(row, 'packs') ? selectedRing : ''}`}
             onClick={() => toggle({ row, col: 'packs' })}
-            aria-label={`${setName(row)}: best pack ${best.pct.toFixed(1)}% chance of a new card`}
+            aria-label={`${setName(row)}: best pack ${formatChance(best.pct)} chance of a new card`}
           >
             <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: best.pack.color }} />
-            <span>{best.pct.toFixed(1)}%</span>
+            <span>{formatChance(best.pct)}</span>
           </button>
         )}
       </td>
@@ -391,7 +398,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
                       {c.collected} / {c.available}
                     </span>
                   )}
-                  <span className="w-12 text-right tabular-nums">{c.pct.toFixed(1)}%</span>
+                  <span className="w-12 text-right tabular-nums">{formatChance(c.pct)}</span>
                   <ChevronRight className="size-4 shrink-0 text-neutral-500" />
                 </button>
               </li>
