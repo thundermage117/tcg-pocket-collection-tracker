@@ -3,13 +3,13 @@ import { ChevronDown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { CardThumb, SetLogo } from '@/components/CardThumb'
 import { Progress } from '@/components/ui/progress'
-import { ownsCard, type PackRarity } from '@/lib/packValue'
+import { multiRarity, ownsCard, type PackRarity } from '@/lib/packValue'
 import { type Tier, tiers } from '@/lib/rankings'
 import { cn } from '@/lib/utils'
 import { PROVISIONAL_VOTES } from '@/lib/ValueDB'
 import { useSelectedCard } from '@/services/collection/useCollection'
 import { useMainWithAlt } from '@/services/profile/useProfileCollection'
-import { fill, type PackRow, packStat, type Range, rarityCount, scaleName, type TargetFilters } from '../types'
+import { completionStat, fill, type Goal, type PackRow, packStat, type Range, rarityCount, scaleName, type TargetFilters } from '../types'
 import { CardTierBadge } from './CardTierBadge'
 import { PackPool } from './PackPool'
 
@@ -17,24 +17,28 @@ interface Props {
   pack: PackRow
   position: number
   filters: TargetFilters
+  goal: Goal
   range: Range
   expanded: boolean
   onToggle: () => void
 }
 
-export function PackCard({ pack, position, filters, range, expanded, onToggle }: Props) {
+export function PackCard({ pack, position, filters, goal, range, expanded, onToggle }: Props) {
   const { t } = useTranslation(['common/sets', 'common/packs'])
   const { data: collection } = useMainWithAlt()
   const { setSelectedCardId } = useSelectedCard()
   const provisional = pack.minVotes < PROVISIONAL_VOTES
   const complete = collection !== undefined && pack.missing === 0
-  const headline = packStat(pack, filters)
+  const completion = goal === 'complete'
+  const headline = completion ? completionStat(pack, filters.rarity) : packStat(pack, filters)
+  const score = completion ? pack.expectedNew : pack.perPack
   // the thumbnails show what you'd be chasing: the best matching cards, topped up with the rest of the pool
   const preview = [...pack.wanted, ...pack.cards.filter((c) => !pack.wanted.includes(c))].slice(0, 3)
   const poolCounts = [
     rarityCount(pack.cards.length, filters.rarity),
     collection && !complete && `${pack.missing} missing`,
-    `${pack.wanted.length} match${pack.wanted.length === 1 ? 'es' : ''}`,
+    // in completion every missing card counts, so "matches" would only repeat "missing"
+    !completion && `${pack.wanted.length} match${pack.wanted.length === 1 ? 'es' : ''}`,
   ].filter(Boolean)
 
   return (
@@ -49,7 +53,7 @@ export function PackCard({ pack, position, filters, range, expanded, onToggle }:
         <span
           className={cn(
             'mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums',
-            position === 1 && pack.perPack > 0 ? 'bg-amber-400 text-neutral-900' : 'bg-neutral-800 text-neutral-300',
+            position === 1 && score > 0 ? 'bg-amber-400 text-neutral-900' : 'bg-neutral-800 text-neutral-300',
           )}
         >
           {position}
@@ -83,11 +87,11 @@ export function PackCard({ pack, position, filters, range, expanded, onToggle }:
         <p className="text-sm">
           <span className="font-semibold tabular-nums text-neutral-100">{headline.stat}</span> <span className="text-neutral-400">{headline.caption}</span>
         </p>
-        <Progress value={pack.perPack > 0 ? Math.round(100 * fill(pack.perPack, range)) : 0} barColor={pack.color} className="h-1.5" />
+        <Progress value={score > 0 ? Math.round(100 * fill(score, range)) : 0} barColor={pack.color} className="h-1.5" />
         <p className="text-xs text-neutral-500">{poolCounts.join(' · ')}</p>
       </div>
 
-      <TierMix pack={pack} rarity={filters.rarity} showOwned={collection !== undefined} />
+      {completion ? <OwnedBar pack={pack} /> : <TierMix pack={pack} rarity={filters.rarity} showOwned={collection !== undefined} />}
 
       {expanded && <PackPool cards={pack.cards} wanted={pack.wanted} expansionId={pack.expansionId} rarity={filters.rarity} />}
 
@@ -98,12 +102,29 @@ export function PackCard({ pack, position, filters, range, expanded, onToggle }:
       >
         {expanded
           ? 'Show less'
-          : filters.rarity === 'all'
-            ? `Show the ${pack.wanted.length} that count`
+          : multiRarity(filters.rarity)
+            ? `Show the ${pack.wanted.length} ${completion ? 'missing' : 'that count'}`
             : `Show all ${rarityCount(pack.cards.length, filters.rarity)}`}
         <ChevronDown className={cn('size-4 transition-transform', expanded && 'rotate-180')} />
       </button>
     </article>
+  )
+}
+
+/** Completion progress for the pack: how many of its cards of the chosen scope you own. */
+function OwnedBar({ pack }: { pack: PackRow }) {
+  const total = pack.cards.length
+  const pct = total > 0 ? Math.round((100 * pack.owned) / total) : 0
+  return (
+    <div>
+      <div className="mb-1 flex justify-between text-[11px] text-neutral-400 tabular-nums">
+        <span>Owned</span>
+        <span>
+          {pack.owned} / {total} ({pct}%)
+        </span>
+      </div>
+      <Progress value={pct} barColor={pack.color} className="h-2" />
+    </div>
   )
 }
 
