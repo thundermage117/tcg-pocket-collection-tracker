@@ -464,14 +464,19 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
                 const name = setName(e.id)
                 return (
                   <tr key={e.id}>
-                    <th scope="row" className={`${stickyCol} py-0.5 pr-2 text-left font-normal text-sm md:max-w-36 md:truncate`} title={name}>
-                      {/* Mobile: set logo with the code underneath; desktop: code and full name */}
+                    <th scope="row" className={`${stickyCol} py-0.5 pr-2 text-left font-normal text-sm`} title={name}>
+                      {/* Mobile: set logo with the code underneath; desktop: logo, then code and full name */}
                       <span className="flex w-15 flex-col items-center md:hidden">
                         <SetLogo expansionId={e.id} className="h-7 w-full" />
                         <span className="text-[11px] text-neutral-400 leading-tight tabular-nums">{e.id}</span>
                       </span>
-                      <span className="hidden text-neutral-500 text-xs tabular-nums md:mr-1.5 md:inline">{e.id}</span>
-                      <span className="hidden text-neutral-200 md:inline">{name}</span>
+                      <span className="hidden items-center gap-2 md:flex">
+                        <SetLogo expansionId={e.id} className="h-7 w-16 shrink-0" />
+                        <span className="max-w-44 truncate">
+                          <span className="mr-1.5 text-neutral-500 text-xs tabular-nums">{e.id}</span>
+                          <span className="text-neutral-200">{name}</span>
+                        </span>
+                      </span>
                     </th>
                     {renderBestChance(e.id)}
                     {columns.map((r) => renderCell(e.id, r))}
