@@ -379,7 +379,7 @@ export default function AltHelper() {
                     {back ? (
                       <TradeImage card={back} />
                     ) : (
-                      <div className="flex aspect-[367/512] w-16 shrink-0 items-center justify-center rounded-md border border-dashed border-neutral-700 text-center text-[10px] text-neutral-500">
+                      <div className="flex aspect-[367/512] w-16 shrink-0 items-center justify-center rounded-md border border-dashed border-neutral-700 text-center text-[11px] text-neutral-400">
                         no spare
                       </div>
                     )}

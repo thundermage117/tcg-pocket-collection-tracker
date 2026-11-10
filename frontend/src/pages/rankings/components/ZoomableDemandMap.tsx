@@ -528,7 +528,7 @@ export function ZoomableDemandMap({ points, owned, onSelect }: Props) {
               <g key={label ?? 'average'}>
                 <line x1={MARGIN.left} x2={MARGIN.left + pw} y1={y} y2={y} stroke={dashed ? '#a3a3a3' : '#525252'} strokeDasharray={dashed ? '4 4' : '1 3'} />
                 {label && (
-                  <text x={MARGIN.left + pw - 4} y={y - 4} textAnchor="end" className="fill-neutral-500 text-[10px]">
+                  <text x={MARGIN.left + pw - 4} y={y - 4} textAnchor="end" className="fill-neutral-400 text-[11px]">
                     {label}
                   </text>
                 )}
@@ -565,10 +565,10 @@ export function ZoomableDemandMap({ points, owned, onSelect }: Props) {
         {/* only at full view: zoomed in, the average line is often off screen and the corners hold dots */}
         {zoomLevel <= 1.01 && (
           <>
-            <span className="pointer-events-none absolute text-[11px] text-neutral-500" style={{ top: MARGIN.top + 4, left: MARGIN.left + 6 }}>
+            <span className="pointer-events-none absolute text-xs text-neutral-400" style={{ top: MARGIN.top + 4, left: MARGIN.left + 6 }}>
               ↑ more wanted than average
             </span>
-            <span className="pointer-events-none absolute text-[11px] text-neutral-500" style={{ top: MARGIN.top + ph - 18, left: MARGIN.left + 6 }}>
+            <span className="pointer-events-none absolute text-xs text-neutral-400" style={{ top: MARGIN.top + ph - 18, left: MARGIN.left + 6 }}>
               ↓ more offered than average
             </span>
           </>
@@ -631,7 +631,7 @@ export function ZoomableDemandMap({ points, owned, onSelect }: Props) {
           )}
         </div>
       )}
-      <p className="mt-1 text-[11px] text-neutral-500">
+      <p className="mt-1 text-xs text-neutral-400">
         {coarse
           ? 'Pinch with two fingers to zoom and drag with two to move; one finger scrolls the page. '
           : '⌘/Ctrl + scroll or pinch to zoom, drag to move, shift-drag to zoom to a box, double-click to zoom in. '}

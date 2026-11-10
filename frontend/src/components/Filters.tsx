@@ -10,7 +10,7 @@ function FilterField({ label, children, className }: { label?: string; children:
   }
   return (
     <div className={cn('flex flex-col gap-1', className)}>
-      <span className="text-[10px] font-medium uppercase tracking-wider text-neutral-500 px-0.5">{label}</span>
+      <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-400 px-0.5">{label}</span>
       {children}
     </div>
   )

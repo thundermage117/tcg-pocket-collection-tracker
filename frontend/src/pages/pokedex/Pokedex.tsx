@@ -295,7 +295,7 @@ export default function Pokedex() {
                         aria-hidden
                         className="pointer-events-none absolute inset-0 -z-10 rounded-lg bg-linear-to-r from-neutral-900/90 via-neutral-900/55 to-transparent"
                       />
-                      <span className="text-[10px] text-neutral-500 uppercase tracking-wider">Gen {g.nr}</span>
+                      <span className="text-[11px] text-neutral-400 uppercase tracking-wider">Gen {g.nr}</span>
                       <span className="dex-display font-semibold text-sm leading-tight sm:text-[0.95rem]">{g.region}</span>
                       <Fraction value={ownedInGen} max={inGen.length} />
                       <ProgressBar value={ownedInGen} max={inGen.length} className="h-1" />
@@ -582,7 +582,7 @@ function GenBanner({ g, owned, total, unit }: { g: Generation; owned: number; to
         className="pointer-events-none absolute -right-2 -bottom-7 -z-10 size-24 opacity-30 sm:right-2 sm:size-28"
       />
       <span className="flex shrink-0 flex-col leading-tight">
-        <span className="font-normal text-[10px] text-neutral-500 uppercase tracking-wider">Gen {g.nr}</span>
+        <span className="font-normal text-[11px] text-neutral-400 uppercase tracking-wider">Gen {g.nr}</span>
         <span className="dex-display font-semibold text-[1.05rem]">{g.region}</span>
       </span>
       <ProgressBar value={owned} max={total} color={complete ? '#fcd34d' : undefined} className="h-1.5 grow" />
@@ -654,7 +654,7 @@ function Fraction({ value, max }: { value: number; max: number }) {
   return (
     <span className="text-xs tabular-nums leading-none sm:text-sm">
       <span className="font-semibold text-neutral-100">{value}</span>
-      <span className="text-[10px] text-neutral-500 sm:text-xs">/{max}</span>
+      <span className="text-[11px] text-neutral-400 sm:text-xs">/{max}</span>
     </span>
   )
 }

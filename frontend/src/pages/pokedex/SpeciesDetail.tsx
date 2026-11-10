@@ -652,7 +652,7 @@ function BestPack({ best, name }: { best: PackChance & { expansionId: ExpansionI
       className={cn('relative overflow-hidden rounded-xl p-3', surface)}
       style={{ backgroundImage: `linear-gradient(120deg, ${best.pack.color}33, transparent 65%)` }}
     >
-      <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-500">Best pack for a missing one</p>
+      <p className="text-[11px] font-medium uppercase tracking-wider text-neutral-400">Best pack for a missing one</p>
       <div className="mt-2 flex items-center gap-3">
         <img src={`/images/sets/en-US/${best.expansionId}.webp`} alt="" className="h-10 w-20 shrink-0 object-contain" />
         <div className="min-w-0">
@@ -675,7 +675,7 @@ function BestPack({ best, name }: { best: PackChance & { expansionId: ExpansionI
 function Stat({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={cn('rounded-xl px-3 py-2', surface, className)}>
-      <dt className="text-[10px] font-medium uppercase tracking-wider text-neutral-500">{label}</dt>
+      <dt className="text-[11px] font-medium uppercase tracking-wider text-neutral-400">{label}</dt>
       <dd className="text-neutral-200">{children}</dd>
     </div>
   )

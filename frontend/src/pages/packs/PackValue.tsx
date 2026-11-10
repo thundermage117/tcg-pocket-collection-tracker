@@ -76,7 +76,7 @@ export default function PackValue() {
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div className="flex flex-col gap-1">
-          <span className="px-0.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">I want…</span>
+          <span className="px-0.5 text-[11px] font-medium uppercase tracking-wider text-neutral-400">I want…</span>
           <ToggleGroup
             type="single"
             value={sortKey}
