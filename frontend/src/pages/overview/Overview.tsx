@@ -97,12 +97,16 @@ function Overview() {
           </Alert>
         )}
 
-        <div className="mb-4 flex items-center gap-2 flex-wrap">
-          <RarityFilter
-            rarityFilter={filters.rarity}
-            setRarityFilter={(rarity) => update({ rarity: rarity.join(',') || undefined })}
-            deckbuildingMode={filters.deckbuildingMode}
-          />
+        {/* Personal fork: on phones the rarities are one sideways-scrolling row and Value sits beside the deck-building
+            toggle, instead of four stacked rows of controls above the tiles */}
+        <div className="mb-4 flex flex-wrap items-center gap-2 max-sm:[&_label]:text-sm">
+          <div className="max-sm:-mx-4 max-sm:basis-full max-sm:overflow-x-auto max-sm:px-4 max-sm:[&_[role=toolbar]]:w-max max-sm:[&_[role=toolbar]]:flex-nowrap">
+            <RarityFilter
+              rarityFilter={filters.rarity}
+              setRarityFilter={(rarity) => update({ rarity: rarity.join(',') || undefined })}
+              deckbuildingMode={filters.deckbuildingMode}
+            />
+          </div>
           <DropdownFilter
             label="Value"
             options={valueOptions}
@@ -110,7 +114,7 @@ function Overview() {
             show={(v) => valueLabels[v]}
             onChange={(v: ValueOption) => update({ value: v === 'all' ? undefined : v })}
           />
-          <div className="grow" />
+          <div className="grow max-sm:hidden" />
           <CountAltSwitch id="overview-count-alt" />
           <DeckbuildingFilter
             deckbuildingMode={filters.deckbuildingMode}
