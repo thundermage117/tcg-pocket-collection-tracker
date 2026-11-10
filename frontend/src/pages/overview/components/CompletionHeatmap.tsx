@@ -10,6 +10,7 @@ import { expansions, getExpansionById } from '@/lib/CardsDB.ts'
 import { CompletionTreemap, type TreemapSet } from '@/pages/overview/components/CompletionTreemap'
 import { bestChance, type PackChance } from '@/pages/overview/packChances'
 import { type Card, type ExpansionId, type Pack, type Rarity, rarities, tradableRarities } from '@/types'
+import './heatmap.css'
 
 interface Props {
   availableCards: Card[]
@@ -276,12 +277,15 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
     }
     const missing = c.available - c.collected
     const label = col === 'all' ? setName(row) : `${setName(row)} ${col}`
+    const swatch = cellSwatch(c, cellMode)
+    // Finished cells get the foil; its sweeps run as a wave from the top-left corner down to the totals
+    const wave = (row === 'all' ? rows.length : rows.findIndex((e) => e.id === row)) + (col === 'all' ? columns.length : columns.indexOf(col))
     return (
       <td key={col} className={cellPad(col)}>
         <button
           type="button"
-          className={`relative min-h-10 w-full min-w-11 rounded text-xs tabular-nums transition-[filter] md:hover:brightness-125 focus-visible:outline-2 focus-visible:outline-neutral-200 md:min-h-0 md:py-1.5 ${isTotal ? 'font-semibold' : ''} ${isSelected(row, col) ? selectedRing : ''}`}
-          style={swatches[cellSwatch(c, cellMode)]}
+          className={`relative min-h-10 w-full min-w-11 rounded text-xs tabular-nums transition-[filter] md:hover:brightness-125 focus-visible:outline-2 focus-visible:outline-neutral-200 md:min-h-0 md:py-1.5 ${isTotal ? 'font-semibold' : ''} ${isSelected(row, col) ? selectedRing : ''} ${swatch === 'done' ? 'heat-foil' : ''}`}
+          style={{ ...swatches[swatch], ['--foil-delay' as string]: `${wave * 0.12}s` }}
           onClick={() => (isMobile ? toggle({ row, col }) : openCollection(row, col))}
           data-tooltip-id={isMobile ? undefined : 'completion-heatmap'}
           data-tooltip-content={`${label}: ${c.collected} / ${c.available}${missing > 0 ? ` · ${missing} missing` : ' · complete'}`}
