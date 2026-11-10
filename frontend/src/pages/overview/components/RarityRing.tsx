@@ -1,5 +1,6 @@
 // Personal fork: the Unique cards ring split by rarity family, so it shows what the collection is made of, not only
 // how far along it is. Each family's arc is its share of the cards in view; the bright part is what's owned.
+import { useEffect, useState } from 'react'
 import type { Card, Rarity } from '@/types'
 
 // Validated for the neutral-800 tile (dataviz validate_palette.js, dark mode: band, chroma, CVD and contrast pass).
@@ -40,11 +41,35 @@ const radius = (size - stroke) / 2
 const circumference = 2 * Math.PI * radius
 const gap = 3 // along the circle, between families
 
+// 0 → 1 over the first moment after mount (eased), so the ring grows and its number counts up once. Later changes
+// (filters, the alt switch) use the arcs' CSS transition instead.
+const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+function useIntro(duration = 800) {
+  const [t, setT] = useState(() => (reduced() ? 1 : 0))
+  useEffect(() => {
+    if (reduced()) {
+      return
+    }
+    const start = performance.now()
+    let frame = requestAnimationFrame(function step(now) {
+      const x = Math.min(1, (now - start) / duration)
+      setT(1 - (1 - x) ** 3)
+      if (x < 1) {
+        frame = requestAnimationFrame(step)
+      }
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [])
+  return t
+}
+
 export function RarityRing({ availableCards, collectedCards, className }: Props) {
   const available = countByFamily(availableCards)
   const collected = countByFamily(collectedCards)
   const total = new Set(availableCards.map((c) => c.internal_id)).size
   const owned = new Set(collectedCards.map((c) => c.internal_id)).size
+  const intro = useIntro()
 
   const shown = families.map((f) => ({ ...f, available: available(f.key), collected: collected(f.key) })).filter((f) => f.available > 0)
   const gapLen = shown.length > 1 ? gap : 0
@@ -52,7 +77,7 @@ export function RarityRing({ availableCards, collectedCards, className }: Props)
   let start = 0
   const arcs = shown.map((f) => {
     const len = (f.available / total) * circumference
-    const arc = { ...f, start, len: Math.max(0, len - gapLen), fill: Math.max(0, len - gapLen) * (f.collected / f.available) }
+    const arc = { ...f, start, len: Math.max(0, len - gapLen), fill: Math.max(0, len - gapLen) * (f.collected / f.available) * intro }
     start += len
     return arc
   })
@@ -82,13 +107,13 @@ export function RarityRing({ availableCards, collectedCards, className }: Props)
                 stroke={a.color}
                 strokeDasharray={`${a.fill} ${circumference - a.fill}`}
                 strokeDashoffset={-a.start}
-                style={{ transition: 'stroke-dasharray 0.5s' }}
+                style={{ transition: intro < 1 ? undefined : 'stroke-dasharray 0.5s' }}
               />
             </g>
           ))}
         </g>
         <text x="50%" y="45%" textAnchor="middle" dominantBaseline="central" className="font-semibold text-4xl" fill="#FFFFFF">
-          {owned}
+          {Math.round(owned * intro)}
         </text>
         <text x="50%" y="63%" textAnchor="middle" dominantBaseline="central" className="font-semibold text-sm" fill="#A3A3A3">
           / {total}

@@ -336,8 +336,8 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
       <td key={col} className={cellPad(col)}>
         <button
           type="button"
-          className={`relative min-h-10 w-full min-w-11 rounded text-xs tabular-nums transition-[filter] md:hover:brightness-125 focus-visible:outline-2 focus-visible:outline-neutral-200 md:min-h-0 md:py-1.5 ${isTotal ? 'font-semibold' : ''} ${isSelected(row, col) ? selectedRing : ''} ${swatch === 'done' ? 'heat-foil' : ''}`}
-          style={{ ...swatches[swatch], ['--foil-delay' as string]: `${wave * 0.12}s` }}
+          className={`relative min-h-10 w-full min-w-11 rounded text-xs tabular-nums transition-[filter] md:hover:brightness-125 focus-visible:outline-2 focus-visible:outline-neutral-200 md:min-h-0 md:py-1.5 ${isTotal ? 'font-semibold' : ''} ${isSelected(row, col) ? selectedRing : ''} ${swatch === 'done' ? 'heat-foil' : ''} heat-in`}
+          style={{ ...swatches[swatch], ['--foil-delay' as string]: `${wave * 0.12}s`, ['--in-delay' as string]: `${wave * 0.02}s` }}
           onClick={() => (isMobile ? toggle({ row, col }) : openCollection(row, col))}
           data-tooltip-id={isMobile ? undefined : 'completion-heatmap'}
           data-tooltip-content={`${label}: ${c.collected} / ${c.available}${missing > 0 ? ` · ${missing} missing` : ' · complete'}`}
