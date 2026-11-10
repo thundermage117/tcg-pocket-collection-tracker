@@ -1,4 +1,5 @@
 // Personal fork: which booster to open, ranked by the chance one pack gives a ☆☆ you want.
+
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
@@ -33,6 +34,9 @@ import {
   tierMax,
   tierOptions,
 } from './types'
+
+const countOptions = ['missing', 'any'] as const
+const countLabels = { missing: "I'm missing", any: 'Every card' }
 
 export default function PackValue() {
   const { data: user, isLoading: userLoading } = useQuery(userQuery)
@@ -94,6 +98,16 @@ export default function PackValue() {
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div className="flex flex-wrap items-end gap-4">
+          {/* what every number on the page counts, so it comes first */}
+          {hasCollection && (
+            <TabsFilter
+              label="Cards"
+              options={countOptions}
+              value={onlyMissing ? 'missing' : 'any'}
+              show={(x) => countLabels[x]}
+              onChange={(x) => update({ owned: x === 'missing' ? undefined : '1' })}
+            />
+          )}
           <TabsFilter
             label="Rarity"
             options={rarityOptions}
@@ -140,16 +154,10 @@ export default function PackValue() {
         <div className="flex flex-wrap items-end gap-4">
           <TabsFilter label="Series" options={seriesOptions} value={series} onChange={(x) => update({ series: x === 'All' ? undefined : x })} />
           {collection && (
-            <>
-              <label htmlFor="packs-only-missing" className="flex cursor-pointer items-center gap-2 pb-2 text-sm text-neutral-300">
-                <Switch id="packs-only-missing" checked={onlyMissing} onCheckedChange={(on) => update({ owned: on ? undefined : '1' })} />
-                Only cards I'm missing
-              </label>
-              <label htmlFor="packs-hide-complete" className="flex cursor-pointer items-center gap-2 pb-2 text-sm text-neutral-300">
-                <Switch id="packs-hide-complete" checked={hideComplete} onCheckedChange={(on) => update({ hide: on ? '1' : undefined })} />
-                Hide fully owned
-              </label>
-            </>
+            <label htmlFor="packs-hide-complete" className="flex cursor-pointer items-center gap-2 pb-2 text-sm text-neutral-300">
+              <Switch id="packs-hide-complete" checked={hideComplete} onCheckedChange={(on) => update({ hide: on ? '1' : undefined })} />
+              Hide fully owned
+            </label>
           )}
           <CountAltSwitch id="packs-count-alt" className="pb-2" />
         </div>
