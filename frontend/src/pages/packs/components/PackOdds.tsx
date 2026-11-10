@@ -1,15 +1,29 @@
 // Personal fork: "how many packs until…" — the chance of at least one hit within n packs, 1 − (1 − p)^n, for every
-// pack in the ranking. The best pick is the one coloured line; the rest are grey context behind it.
-import { useMemo } from 'react'
+// pack in the ranking. The best pick is the one coloured line; the rest are grey context behind it. A dashed vertical
+// line marks when the best pick's pack points (5 a pack, kept per expansion) buy the cheapest wanted card outright,
+// counting from the points you say you already have in that set.
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CartesianGrid, Line, LineChart, ReferenceDot, ReferenceLine, type TooltipContentProps, XAxis, YAxis } from 'recharts'
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent'
 import { type ChartConfig, ChartContainer, ChartTooltip } from '@/components/ui/chart'
+import { Input } from '@/components/ui/input'
+import { PACK_POINTS_PER_PACK, packPointCost } from '@/lib/tradeFairness'
 import { describeTarget, type PackRow, type TargetFilters } from '../types'
 
 const FREE_PACKS_PER_DAY = 2 // two pack hourglass refills a day
 const STEPS = 120
 const TOOLTIP_ROWS = 5
+const MAX_PACK_POINTS = 2500 // the game caps each expansion's balance
+const POINTS_KEY = 'packPointsBySet' // { [expansionId]: points }, this browser only
+
+function loadPoints(): Record<string, number> {
+  try {
+    return JSON.parse(localStorage.getItem(POINTS_KEY) ?? '{}')
+  } catch {
+    return {}
+  }
+}
 
 const chartConfig = {
   best: { label: 'Best pick', theme: { light: '#2a78d6', dark: '#3987e5' } },
@@ -33,6 +47,23 @@ type Row = { n: number } & Record<string, number>
 export function PackOdds({ packs, filters }: { packs: PackRow[]; filters: TargetFilters }) {
   const { t } = useTranslation('common/packs')
   const goal = describeTarget(filters)
+  const [pointsBySet, setPointsBySet] = useState(loadPoints)
+  const bestSet = packs.find((p) => p.perPack > 0)?.expansionId
+  const have = (bestSet && pointsBySet[bestSet]) || 0
+
+  const setHave = (value: string) => {
+    if (!bestSet) {
+      return
+    }
+    const points = Math.min(MAX_PACK_POINTS, Math.max(0, Math.floor(Number(value) || 0)))
+    const next = { ...pointsBySet, [bestSet]: points }
+    setPointsBySet(next)
+    try {
+      localStorage.setItem(POINTS_KEY, JSON.stringify(next))
+    } catch {
+      // storage blocked: the value still holds for this visit
+    }
+  }
 
   const chart = useMemo(() => {
     const live = packs.filter((p) => p.perPack > 0)
@@ -41,8 +72,12 @@ export function PackOdds({ packs, filters }: { packs: PackRow[]; filters: Target
     }
     const best = live[0]
     const p = best.perPack
-    // the axis runs until the best pick is all but certain; slower packs flatten out below it
-    const maxN = niceCeil(Math.max(packsFor(p, 0.95), 10))
+    // packs of the best pick's set until its pack points, on top of `have`, buy the cheapest wanted card; undefined if none has a price
+    const costs = best.wanted.map((c) => packPointCost[c.rarity]).filter((c) => c !== undefined)
+    const cost = costs.length > 0 ? Math.min(...costs) : undefined
+    const exchange = cost === undefined ? undefined : Math.ceil(Math.max(0, cost - have) / PACK_POINTS_PER_PACK)
+    // the axis runs until the best pick is all but certain, or to the pack points line if that comes later
+    const maxN = niceCeil(Math.max(packsFor(p, 0.95), 10, exchange ?? 0))
     const ns = [...new Set(Array.from({ length: STEPS + 1 }, (_, i) => Math.round((i * maxN) / STEPS)))]
     const rows: Row[] = ns.map((n) => {
       const row: Row = { n } as Row
@@ -51,14 +86,15 @@ export function PackOdds({ packs, filters }: { packs: PackRow[]; filters: Target
       }
       return row
     })
-    return { live, best, maxN, rows, half: packsFor(p, 0.5), most: packsFor(p, 0.9) }
-  }, [packs])
+    return { live, best, maxN, rows, half: packsFor(p, 0.5), most: packsFor(p, 0.9), cost, exchange }
+  }, [packs, have])
 
   // a pull nearly every pack (◊ you're missing, say) is a flat line at 100%: nothing to chart
   if (!chart || chart.most <= 2) {
     return null
   }
-  const { live, best, maxN, rows, half, most } = chart
+  const { live, best, maxN, rows, half, most, cost, exchange } = chart
+  const setName = t(best.expansionName, { ns: 'common/sets' })
   const name = (pack: PackRow) => t(pack.packName)
   const rest = live.slice(1)
 
@@ -95,7 +131,33 @@ export function PackOdds({ packs, filters }: { packs: PackRow[]; filters: Target
         <span className="font-medium">{name(best)}</span>: a 50% chance within <span className="font-semibold tabular-nums">{half.toLocaleString()}</span> packs
         (≈ {days(half).toLocaleString()} {days(half) === 1 ? 'day' : 'days'} of free packs), 90% within{' '}
         <span className="font-semibold tabular-nums">{most.toLocaleString()}</span>.
+        {exchange !== undefined &&
+          (exchange === 0 ? (
+            <> You already have the {cost?.toLocaleString()} pack points to exchange for one.</>
+          ) : (
+            <>
+              {' '}
+              Pack points make it certain at <span className="font-semibold tabular-nums">{exchange.toLocaleString()}</span> packs (≈{' '}
+              {days(exchange).toLocaleString()} {days(exchange) === 1 ? 'day' : 'days'}).
+            </>
+          ))}
       </p>
+      {cost !== undefined && (
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-neutral-300">
+          <Input
+            aria-label={`Pack points you have in ${setName}`}
+            type="number"
+            inputMode="numeric"
+            min={0}
+            max={MAX_PACK_POINTS}
+            step={5}
+            value={have || ''}
+            placeholder="Pack points"
+            onChange={(e) => setHave(e.target.value)}
+            className="h-8 w-32 tabular-nums"
+          />
+        </div>
+      )}
       <div className="mt-2 mb-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-400">
         <span className="flex items-center gap-1.5">
           <span aria-hidden className="w-4 border-t-2" style={{ borderColor: chartConfig.best.theme.dark }} />
@@ -105,6 +167,12 @@ export function PackOdds({ packs, filters }: { packs: PackRow[]; filters: Target
           <span className="flex items-center gap-1.5">
             <span aria-hidden className="w-4 border-t opacity-70" style={{ borderColor: chartConfig.rest.theme.dark }} />
             Other packs · {rest.length}
+          </span>
+        )}
+        {exchange !== undefined && (
+          <span className="flex items-center gap-1.5">
+            <span aria-hidden className="h-3 border-l border-dashed border-amber-400" />
+            Pack points exchange
           </span>
         )}
       </div>
@@ -136,6 +204,20 @@ export function PackOdds({ packs, filters }: { packs: PackRow[]; filters: Target
             width={40}
           />
           <ReferenceLine y={0.5} stroke="#737373" strokeDasharray="4 4" strokeWidth={1} />
+          {exchange !== undefined && (
+            <ReferenceLine
+              x={exchange}
+              stroke="#fbbf24"
+              strokeDasharray="4 4"
+              strokeWidth={1.5}
+              label={{
+                value: exchange === 0 ? `${cost?.toLocaleString()} pts · now` : `${cost?.toLocaleString()} pts · ${exchange} packs`,
+                position: exchange > 0.7 * maxN ? 'insideTopRight' : 'insideTopLeft',
+                offset: 6,
+                className: 'fill-amber-400 text-[11px]',
+              }}
+            />
+          )}
           <ChartTooltip content={tooltip} cursor={{ stroke: '#737373', strokeWidth: 1 }} isAnimationActive={false} />
           {/* grey context first, the best pick last so it draws on top */}
           {rest.map((pack) => (
@@ -187,7 +269,9 @@ export function PackOdds({ packs, filters }: { packs: PackRow[]; filters: Target
       </ChartContainer>
       <p className="mt-1 text-[11px] text-neutral-500">
         Chance of at least one {goal.replace(/^an? /, '')} within that many packs, from each pack's real pull odds. It assumes the odds stay put
-        {filters.onlyMissing ? '; in practice they dip slightly after each new card you pull' : ''}. Days count two free packs a day.
+        {filters.onlyMissing ? '; in practice they dip slightly after each new card you pull' : ''}. Days count two free packs a day. The pack points line
+        counts from the points you entered for {setName}: every pack earns 5, points stay with their expansion (capped at 2,500), and the cheapest wanted card
+        costs {cost?.toLocaleString() ?? '–'}.
       </p>
     </section>
   )
