@@ -12,7 +12,6 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { PackRarity } from '@/lib/packValue'
 import { tiers } from '@/lib/rankings'
 import {
-  completionRarityOptions,
   type Goal,
   goalLabels,
   goalOptions,
@@ -95,7 +94,7 @@ export function PackControls(props: PackControlsProps) {
         <div className="w-full min-w-0 overflow-x-auto [scrollbar-width:none] sm:w-auto">
           <TabsFilter
             label="Rarity"
-            options={goal === 'complete' ? completionRarityOptions : rarityOptions}
+            options={rarityOptions}
             value={rarity}
             show={showRarity}
             onChange={(r) => update({ rarity: r === defaultRarity ? undefined : raritySlug[r] })}

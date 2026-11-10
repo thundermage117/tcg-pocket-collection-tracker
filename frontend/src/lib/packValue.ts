@@ -10,13 +10,7 @@ import { pullRate, pullRateForSpecificCard } from '@/lib/stats'
 import { getCardValue, type TwoStarKind, valueSortKey } from '@/lib/ValueDB'
 import { type Card, type Collection, type ExpansionId, type Rarity, rarities } from '@/types'
 
-// 'diamonds' is ◊–◊◊◊◊ together, the usual completion target
-export type PackRarity = Rarity | 'all' | 'diamonds'
-
-const diamonds: Rarity[] = ['◊', '◊◊', '◊◊◊', '◊◊◊◊']
-
-/** Scopes that span several rarities, each card on its own scale. */
-export const multiRarity = (rarity: PackRarity) => rarity === 'all' || rarity === 'diamonds'
+export type PackRarity = Rarity | 'all'
 
 export interface PackFilters {
   rarity: PackRarity
@@ -58,7 +52,7 @@ const openableExpansions = expansions.filter((e) => e.openable && !e.promo)
 const poolOf = (rarity: PackRarity, everyCard = false) =>
   allCards.filter(
     (c) =>
-      (rarity === 'all' ? c.rarity !== 'P' : rarity === 'diamonds' ? diamonds.includes(c.rarity) : c.rarity === rarity) &&
+      (rarity === 'all' ? c.rarity !== 'P' : c.rarity === rarity) &&
       openableExpansions.some((e) => e.id === c.expansion) &&
       (everyCard || c.rarity !== '☆☆' || getCardValue(c.card_id)?.adj !== undefined),
   )
@@ -70,7 +64,7 @@ const rarityRank = (card: Card) => rarities.indexOf(card.rarity)
  * aren't comparable, and valueSortKey would put each ☆☆ ahead of everything. So tier first, then the rarer card, then score.
  */
 const bestFirst = (rarity: PackRarity) => (a: Card, b: Card) =>
-  multiRarity(rarity)
+  rarity === 'all'
     ? (tierFor(a) ?? tiers.length) - (tierFor(b) ?? tiers.length) || rarityRank(b) - rarityRank(a) || valueSortKey(b.card_id) - valueSortKey(a.card_id)
     : valueSortKey(b.card_id) - valueSortKey(a.card_id)
 

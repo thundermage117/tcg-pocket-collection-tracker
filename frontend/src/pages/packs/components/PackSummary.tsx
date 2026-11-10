@@ -26,7 +26,8 @@ export function PackSummary({ pack, filters, goal }: { pack: PackRow; filters: T
     >
       <div className="min-w-0 flex-1">
         <p className="mb-1 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-amber-400">
-          <Trophy className="size-3.5" /> {completion ? `Best pack to complete ${showRarity(filters.rarity)}` : 'Best pick'}
+          <Trophy className="size-3.5" />{' '}
+          {completion ? `Best pack to complete ${filters.rarity === 'all' ? 'your collection' : `your ${showRarity(filters.rarity)}`}` : 'Best pick'}
         </p>
         <div className="flex items-center gap-3">
           <SetLogo expansionId={pack.expansionId} className="hidden h-10 max-w-[90px] sm:block" />

@@ -17,7 +17,6 @@ import { PackControls } from './components/PackControls'
 import { PackOdds } from './components/PackOdds'
 import { PackSummary } from './components/PackSummary'
 import {
-  completionRarityOptions,
   describeTarget,
   goalOptions,
   kindOptions,
@@ -43,9 +42,9 @@ export default function PackValue() {
   const { get, update } = useUrlFilters('packs-view', ['goal', 'rarity', 'tier', 'kind'])
   const goal = goalOptions.find((x) => x === get('goal')) ?? 'value'
   const completion = goal === 'complete'
-  // each goal has its own default rarity, so switching goal drops the rarity back to it
-  const defaultRarity = completion ? 'diamonds' : '☆☆'
-  const rarity = (completion ? completionRarityOptions : rarityOptions).find((r) => raritySlug[r] === get('rarity')) ?? defaultRarity
+  // each goal has its own default rarity (completion: every card), so switching goal drops the rarity back to it
+  const defaultRarity = completion ? 'all' : '☆☆'
+  const rarity = rarityOptions.find((r) => raritySlug[r] === get('rarity')) ?? defaultRarity
   // global tiers: a rarity can't be Top or Hot when none of its cards reach them (no ◊ is above B)
   const bestTier = bestTierOf(rarity)
   const reachable = (key: (typeof tierOptions)[number]) => key === 'all' || (bestTier !== undefined && bestTier <= tierMax[key])
@@ -170,9 +169,9 @@ export default function PackValue() {
                 odds of every slot, rare packs included. A pack where you miss 40 cards beats one where you miss 3, even if both nearly always give something
                 new.
               </Faq>
-              <Faq q="Why does it start on ◊–◊◊◊◊?">
-                That's what "complete" usually means. Pick one rarity to chase it alone, or All to count ☆ and up too (they barely move the number: a pack gives
-                one so rarely).
+              <Faq q="Why does it start on All?">
+                It ranks almost exactly as ◊–◊◊◊◊ alone would: ☆ and up come so rarely they barely move the number. They do count toward "Complete" and the
+                owned bar, though. Pick one rarity to chase it alone.
               </Faq>
               <Faq q="What's the bar under each pack?">How much of that pack you already own. Count alt's cards adds what your alt can give you.</Faq>
             </>

@@ -1,5 +1,5 @@
 // Personal fork: shared types and wording for the packs page.
-import { type BoosterValue, matchesFilters, multiRarity, type PackFilters, type PackRarity } from '@/lib/packValue'
+import { type BoosterValue, matchesFilters, type PackFilters, type PackRarity } from '@/lib/packValue'
 import { tierFor, tiers, twoStarPosition } from '@/lib/rankings'
 import { demandScore, getCardValue, kindLabel, type TwoStarKind } from '@/lib/ValueDB'
 import type { Card } from '@/types'
@@ -22,13 +22,9 @@ export const goalOptions = ['value', 'complete'] as const
 export type Goal = (typeof goalOptions)[number]
 export const goalLabels: Record<Goal, string> = { value: 'Value', complete: 'Completion' }
 
-// Completion starts on ◊–◊◊◊◊, what "complete" usually means; ☆ and up are rare enough to swamp any ranking
-export const completionRarityOptions: PackRarity[] = ['diamonds', ...rarityOptions]
-
 // ?rarity= values, readable in a URL where the symbols would be percent-escaped
 export const raritySlug: Record<PackRarity, string> = {
   all: 'all',
-  diamonds: 'diamonds',
   '◊': '1d',
   '◊◊': '2d',
   '◊◊◊': '3d',
@@ -42,11 +38,11 @@ export const raritySlug: Record<PackRarity, string> = {
   P: 'promo',
 }
 
-export const showRarity = (r: PackRarity) => (r === 'all' ? 'All' : r === 'diamonds' ? '◊–◊◊◊◊' : r === 'Crown Rare' ? 'Crown' : r)
+export const showRarity = (r: PackRarity) => (r === 'all' ? 'All' : r === 'Crown Rare' ? 'Crown' : r)
 
 /** The rarity as a noun in a sentence: "a Hot ◊◊◊", "a top-tier card", "12 ☆☆", "40 cards". */
-export const rarityNoun = (r: PackRarity) => (r === 'all' ? 'card' : r === 'diamonds' ? '◊–◊◊◊◊ card' : r)
-export const rarityCount = (n: number, r: PackRarity) => (multiRarity(r) ? `${n} ${rarityNoun(r)}${n === 1 ? '' : 's'}` : `${n} ${r}`)
+export const rarityNoun = (r: PackRarity) => (r === 'all' ? 'card' : r)
+export const rarityCount = (n: number, r: PackRarity) => (r === 'all' ? `${n} card${n === 1 ? '' : 's'}` : `${n} ${r}`)
 
 /** Which tier scale a rarity is judged by: ☆☆ by community vote Elo, every other rarity by trade demand. */
 export const scaleName = (r: PackRarity) => (r === '☆☆' ? 'vote' : r === 'all' ? 'vote (☆☆) or Most wanted' : 'Most wanted')
@@ -56,7 +52,7 @@ export const tierOptions = ['all', 'top', 'hot'] as const
 export type TierOption = (typeof tierOptions)[number]
 
 export const tierLabel = (key: TierOption, r: PackRarity) =>
-  key === 'all' ? `Any ${multiRarity(r) ? rarityNoun(r) : showRarity(r)}` : `${key === 'hot' ? 'Hot (SSS–S)' : 'Top tiers (SSS–A)'} by ${scaleName(r)} tier`
+  key === 'all' ? `Any ${r === 'all' ? 'card' : showRarity(r)}` : `${key === 'hot' ? 'Hot (SSS–S)' : 'Top tiers (SSS–A)'} by ${scaleName(r)} tier`
 
 // Lowest tier each option keeps, as an index into `tiers` (0 = SSS, 3 = A)
 export const tierMax: Record<TierOption, number> = { all: Number.POSITIVE_INFINITY, top: 3, hot: 2 }
@@ -109,7 +105,7 @@ export function packStat(pack: PackRow, filters: TargetFilters) {
   }
   return filters.onlyMissing && pack.cards.some((c) => matchesFilters(c, undefined, filters))
     ? { stat: 'None left', caption: `you own every ${rarityNoun(filters.rarity)} here that matches` }
-    : { stat: 'None', caption: `no ${rarityNoun(filters.rarity)} here match${multiRarity(filters.rarity) ? 'es' : ''}` }
+    : { stat: 'None', caption: `no ${rarityNoun(filters.rarity)} here match${filters.rarity === 'all' ? 'es' : ''}` }
 }
 
 /** Missing cards one pack gives on average: "≈1.8 new cards per pack" above one, "1 new card every 6 packs" below. */

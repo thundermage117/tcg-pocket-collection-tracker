@@ -3,7 +3,7 @@ import { ChevronDown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { CardThumb, SetLogo } from '@/components/CardThumb'
 import { Progress } from '@/components/ui/progress'
-import { multiRarity, ownsCard, type PackRarity } from '@/lib/packValue'
+import { ownsCard, type PackRarity } from '@/lib/packValue'
 import { type Tier, tiers } from '@/lib/rankings'
 import { cn } from '@/lib/utils'
 import { PROVISIONAL_VOTES } from '@/lib/ValueDB'
@@ -112,7 +112,7 @@ export function PackCard({ pack, position, filters, goal, range, expanded, onTog
       >
         {expanded
           ? 'Show less'
-          : multiRarity(filters.rarity)
+          : filters.rarity === 'all'
             ? `Show the ${pack.wanted.length} ${completion ? 'missing' : 'that count'}`
             : `Show all ${rarityCount(pack.cards.length, filters.rarity)}`}
         <ChevronDown className={cn('size-4 transition-transform', expanded && 'rotate-180')} />
