@@ -8,8 +8,8 @@ export type ValueOption = (typeof valueOptions)[number]
 
 export const valueLabels: Record<ValueOption, string> = {
   all: 'All cards',
-  top: 'Top tiers (SSS–A)',
-  hot: 'Hot (SSS–S)',
+  top: 'A+ (SSS–A)',
+  hot: 'S+ (SSS–S)',
 }
 
 // Lowest tier each option keeps, as an index into `tiers` (0 = SSS, 3 = A)

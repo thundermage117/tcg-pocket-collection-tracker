@@ -45,11 +45,11 @@ export default function PackValue() {
   // each goal has its own default rarity (completion: every card), so switching goal drops the rarity back to it
   const defaultRarity = completion ? 'all' : '☆☆'
   const rarity = rarityOptions.find((r) => raritySlug[r] === get('rarity')) ?? defaultRarity
-  // global tiers: a rarity can't be Top or Hot when none of its cards reach them (no ◊ is above B)
+  // global tiers: a rarity can't be A+ or S+ when none of its cards reach them (no ◊ is above B)
   const bestTier = bestTierOf(rarity)
   const reachable = (key: (typeof tierOptions)[number]) => key === 'all' || (bestTier !== undefined && bestTier <= tierMax[key])
   // every pack of a set gives a rarity at the same rate, so "any" only ranks anything once owned cards drop out; across
-  // every rarity it hardly ranks even then (a pack nearly always has some common you're missing), so All starts on Top
+  // every rarity it hardly ranks even then (a pack nearly always has some common you're missing), so All starts on A+
   const defaultTier = rarity === 'all' || (!hasCollection && reachable('top')) ? 'top' : 'all'
   const wantedTier = tierOptions.find((x) => x === get('tier')) ?? defaultTier
   const tier = reachable(wantedTier) ? wantedTier : 'all'
@@ -181,15 +181,15 @@ export default function PackValue() {
                 On average, one pack in 59 gives at least one card that counts: the chosen rarity, tier and style, and only ones you're missing unless you turn
                 that off. It uses the real pull odds of every slot, rare packs included.
               </Faq>
-              <Faq q="What are Top and Hot?">
+              <Faq q="What are A+ and S+?">
                 Value tiers, as on{' '}
                 <Link to="/rankings" className="underline underline-offset-2 hover:text-neutral-200">
                   Rankings
                 </Link>
-                . Hot is SSS–S, Top is SSS–A. ☆☆ are tiered by community votes (an Elo score from pokemontcglivetrade); every other rarity by trade demand
-                (wishlists per trade offer, eleet). Under All, each card uses its own scale.
+                . S+ is SSS–S (S or better), A+ is SSS–A (A or better). ☆☆ are tiered by community votes (an Elo score from pokemontcglivetrade); every other
+                rarity by trade demand (wishlists per trade offer, eleet). Under All, each card uses its own scale.
               </Faq>
-              <Faq q="Why are Top or Hot greyed out?">
+              <Faq q="Why are A+ or S+ greyed out?">
                 No card of that rarity reaches those tiers: commons aren't in demand enough (no ◊ is above B, no ◊◊ above A), and ☆☆☆ and Crown Rare can't be
                 traded, so they have no tier.
               </Faq>

@@ -55,7 +55,7 @@ function activeFilters({ goal, rarity, tier, defaultTier, kind, onlyMissing, ser
       chips.push({ key: 'owned', label: 'Owned cards count too', reset: { owned: undefined } })
     }
     if (tier !== defaultTier) {
-      chips.push({ key: 'tier', label: tier === 'all' ? tierLabel('all', rarity) : `${tier === 'hot' ? 'Hot' : 'Top'} only`, reset: { tier: undefined } })
+      chips.push({ key: 'tier', label: tier === 'all' ? tierLabel('all', rarity) : `${tier === 'hot' ? 'S+' : 'A+'} only`, reset: { tier: undefined } })
     }
     if (kind !== 'all') {
       chips.push({ key: 'kind', label: showKind(kind), reset: { kind: undefined } })
@@ -191,7 +191,7 @@ function MoreFilters({
                         ))}
                       </span>
                     )}
-                    {key === 'hot' ? 'Hot' : 'Top'}
+                    {key === 'hot' ? 'S+' : 'A+'}
                   </>
                 )}
               </ToggleGroupItem>

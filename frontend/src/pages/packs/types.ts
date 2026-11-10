@@ -40,7 +40,7 @@ export const raritySlug: Record<PackRarity, string> = {
 
 export const showRarity = (r: PackRarity) => (r === 'all' ? 'All' : r === 'Crown Rare' ? 'Crown' : r)
 
-/** The rarity as a noun in a sentence: "a Hot ◊◊◊", "a top-tier card", "12 ☆☆", "40 cards". */
+/** The rarity as a noun in a sentence: "an S+ ◊◊◊", "an A+ card", "12 ☆☆", "40 cards". */
 export const rarityNoun = (r: PackRarity) => (r === 'all' ? 'card' : r)
 export const rarityCount = (n: number, r: PackRarity) => (r === 'all' ? `${n} card${n === 1 ? '' : 's'}` : `${n} ${r}`)
 
@@ -52,7 +52,7 @@ export const tierOptions = ['all', 'top', 'hot'] as const
 export type TierOption = (typeof tierOptions)[number]
 
 export const tierLabel = (key: TierOption, r: PackRarity) =>
-  key === 'all' ? `Any ${r === 'all' ? 'card' : showRarity(r)}` : `${key === 'hot' ? 'Hot (SSS–S)' : 'Top tiers (SSS–A)'} by ${scaleName(r)} tier`
+  key === 'all' ? `Any ${r === 'all' ? 'card' : showRarity(r)}` : `${key === 'hot' ? 'S+ (SSS–S)' : 'A+ (SSS–A)'} by ${scaleName(r)} tier`
 
 // Lowest tier each option keeps, as an index into `tiers` (0 = SSS, 3 = A)
 export const tierMax: Record<TierOption, number> = { all: Number.POSITIVE_INFINITY, top: 3, hot: 2 }
@@ -88,11 +88,11 @@ export interface TargetFilters extends PackFilters {
   tier: TierOption
 }
 
-/** What a pack is ranked on, e.g. "a Hot trainer ☆☆ you're missing" or "a top-tier ◊◊◊"; shared by the cards, the banner and the chart. */
+/** What a pack is ranked on, e.g. "an S+ trainer ☆☆ you're missing" or "an A+ ◊◊◊"; shared by the cards, the banner and the chart. */
 export function describeTarget({ rarity, tier, kind, onlyMissing }: TargetFilters) {
-  const words = [tier === 'hot' ? 'Hot' : tier === 'top' ? 'top-tier' : '', kind ? kindLabel[kind as TwoStarKind].toLowerCase() : '', rarityNoun(rarity)]
+  const words = [tier === 'hot' ? 'S+' : tier === 'top' ? 'A+' : '', kind ? kindLabel[kind as TwoStarKind].toLowerCase() : '', rarityNoun(rarity)]
   const phrase = words.filter(Boolean).join(' ')
-  return `a ${phrase}${onlyMissing ? " you're missing" : ''}`
+  return `${tier === 'all' ? 'a' : 'an'} ${phrase}${onlyMissing ? " you're missing" : ''}`
 }
 
 /** The headline for a pack: the odds and what they're for, or why there are none. */
@@ -109,8 +109,8 @@ export function packStat(pack: PackRow, filters: TargetFilters) {
 }
 
 /**
- * A value card's count line in plain words: "4 of your 11 missing ☆☆ are top-tier", "11 of 13 ☆☆ missing",
- * "2 of 13 ☆☆ are Hot trainers", "You own all 13 ☆☆".
+ * A value card's count line in plain words: "4 of your 11 missing ☆☆ are A+", "11 of 13 ☆☆ missing",
+ * "2 of 13 ☆☆ are S+ trainers", "You own all 13 ☆☆".
  */
 export function poolLine(pack: PackRow, { rarity, tier, kind, onlyMissing }: TargetFilters, hasCollection: boolean) {
   const total = rarityCount(pack.cards.length, rarity)
@@ -118,10 +118,7 @@ export function poolLine(pack: PackRow, { rarity, tier, kind, onlyMissing }: Tar
     return `You own all ${total}`
   }
   const n = pack.wanted.length
-  const quality = [
-    tier === 'hot' ? 'Hot' : tier === 'top' ? 'top-tier' : '',
-    kind ? `${kindLabel[kind as TwoStarKind].toLowerCase()}${n === 1 ? '' : 's'}` : '',
-  ]
+  const quality = [tier === 'hot' ? 'S+' : tier === 'top' ? 'A+' : '', kind ? `${kindLabel[kind as TwoStarKind].toLowerCase()}${n === 1 ? '' : 's'}` : '']
     .filter(Boolean)
     .join(' ')
   const are = n === 1 ? 'is' : 'are'
