@@ -172,6 +172,7 @@ function Overview() {
           chances={chances}
           cellMode={get('cells') === 'left' ? 'left' : 'pct'}
           sortByValue={filters.value !== 'all'}
+          rarity={filters.rarity}
           setCellMode={(mode) => update({ cells: mode === 'left' ? 'left' : undefined })}
         />
       </article>

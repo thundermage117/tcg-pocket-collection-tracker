@@ -27,7 +27,8 @@ interface Props {
   focusTier?: number // the key's highlighted tier: other tiers' blocks fade back
   fadeLow: boolean // Value shows every card: D, E and unranked blocks step back so the top tiers carry the map
   packName: (pack: Pack) => string
-  onOpen: (expansion: ExpansionId, pack: Pack) => void
+  onOpen: (expansion: ExpansionId, pack: Pack) => void // a pack's missing cards
+  onOpenTier: (expansion: ExpansionId, tier: number) => void // a set's missing cards of one tier
 }
 
 // cards nobody ranks (☆☆☆, Crown Rare) sit after E, as on the packs page
@@ -68,7 +69,7 @@ function useSize() {
   return [ref, size] as const
 }
 
-export function PackValueMap({ sets, chances, best, focusTier, fadeLow, packName, onOpen }: Props) {
+export function PackValueMap({ sets, chances, best, focusTier, fadeLow, packName, onOpen, onOpenTier }: Props) {
   const [ref, size] = useSize()
   // Tiles glide to their new place when the filters change, but only once the first layout is down: before the box is
   // measured every rect is empty, and growing them all out of the corner on first paint would just be noise
@@ -147,7 +148,8 @@ export function PackValueMap({ sets, chances, best, focusTier, fadeLow, packName
                   color: tier === unrankedTier ? '#e5e5e5' : '#171717',
                   ['--foil-delay' as string]: `${(index + item.tier) * 0.15}s`,
                 }}
-                onClick={() => onOpen(set.id, pack)}
+                // a ranked tier opens on Rankings, which lists exactly those cards; unranked ones have no tier there
+                onClick={() => (tierOf(item.tier) === unrankedTier ? onOpen(set.id, pack) : onOpenTier(set.id, item.tier))}
                 data-tooltip-id="pack-value-map"
                 data-tooltip-content={`${set.name} · ${name} — ${tier === unrankedTier ? 'unranked' : tier.name}: ${n} missing`}
                 data-gap={`${set.id}|${pack.name}|${item.tier}`}

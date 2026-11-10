@@ -8,6 +8,7 @@ import { SetLogo } from '@/components/CardThumb'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { formatRarity } from '@/components/utils'
 import { expansions, getExpansionById } from '@/lib/CardsDB.ts'
+import { tiers } from '@/lib/rankings'
 import { MissingThumbs, previewCount } from '@/pages/overview/components/MissingThumbs'
 import { type MapSet, PackValueMap, tierOf } from '@/pages/overview/components/PackValueMap'
 import { bestChance, type PackChance } from '@/pages/overview/packChances'
@@ -22,6 +23,7 @@ interface Props {
   cellMode: CellMode
   setCellMode: (mode: CellMode) => void
   sortByValue: boolean // the overview's Value filter is on: the collection can't filter by tier, so most valuable go first
+  rarity: Rarity[] // the overview's rarity filter, carried to Rankings when a pack map block opens its tier
 }
 
 // What a cell shows: completion %, or how many cards are still missing
@@ -145,7 +147,7 @@ const rarityLabel = (r: Rarity | 'all') => (r === 'all' ? 'all rarities' : r)
 // One decimal, minus a trailing .0, so a column of 100% / 45% doesn't read as a wall of "100.0%"
 const formatChance = (pct: number) => `${pct.toFixed(1).replace(/\.0$/, '')}%`
 
-export function CompletionHeatmap({ availableCards, collectedCards, chances, cellMode, setCellMode, sortByValue }: Props) {
+export function CompletionHeatmap({ availableCards, collectedCards, chances, cellMode, setCellMode, sortByValue, rarity }: Props) {
   const { t } = useTranslation(['common/sets', 'common/packs'])
   const navigate = useNavigate()
   const isMobile = useMediaQuery({ query: '(max-width: 767px)' }) // tailwind "md"
@@ -235,6 +237,14 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
       params.set('sortBy', 'value')
     }
     navigate(`/collection?${params}`)
+  }
+  // Rankings has no pack filter, so a tier block opens the set's missing cards of that tier (like the Value tiers tile)
+  const openTier = (expansion: ExpansionId, tier: number) => {
+    const params = new URLSearchParams({ tab: 'wanted', missing: '1', set: expansion, tier: tiers[tier].name })
+    if (rarity.length > 0) {
+      params.set('rarity', rarity.join(','))
+    }
+    navigate(`/rankings?${params}`)
   }
   const openPack = (row: ExpansionId, c: PackChance) => openCollection(row, 'all', (chances.get(row)?.length ?? 0) > 1 ? c.pack.name : undefined)
 
@@ -455,7 +465,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
         </div>
         <p className="text-neutral-400 text-xs">
           {showMap ? (
-            "A pack's size is how many cards you're missing from it, coloured by value tier. Point at a tier below to find it in every pack."
+            "A pack's size is how many cards you're missing from it, coloured by value tier. Click a block to open that tier on Rankings; point at a tier below to find it in every pack."
           ) : (
             <>
               "New card" is the chance one pack gives a card you're missing. <span className="md:hidden">Tap for details.</span>
@@ -508,6 +518,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
           fadeLow={!sortByValue}
           packName={packName}
           onOpen={(expansion, pack) => openCollection(expansion, 'all', (chances.get(expansion)?.length ?? 0) > 1 ? pack.name : undefined)}
+          onOpenTier={openTier}
         />
       )}
       {/* Hidden rather than unmounted under the map, so the scroll observer keeps watching the same element */}
