@@ -2,14 +2,21 @@
 // "Want" is a filter over the booster's cards of that rarity (or every card, each on its own scale): at or above a tier (☆☆ by community vote Elo, every
 // other rarity by Most wanted), of a style (☆☆ only: full art / trainer / rainbow), and optionally only the ones
 // you're missing. perPack uses the real pull odds (stats.ts), rare packs included.
+// expectedNew is the completion side: how many cards you're missing one pack gives on average.
 
 import { allCards, expansions } from '@/lib/CardsDB'
 import { tierFor, tiers } from '@/lib/rankings'
-import { pullRate } from '@/lib/stats'
+import { pullRate, pullRateForSpecificCard } from '@/lib/stats'
 import { getCardValue, type TwoStarKind, valueSortKey } from '@/lib/ValueDB'
 import { type Card, type Collection, type ExpansionId, type Rarity, rarities } from '@/types'
 
-export type PackRarity = Rarity | 'all'
+// 'diamonds' is ◊–◊◊◊◊ together, the usual completion target
+export type PackRarity = Rarity | 'all' | 'diamonds'
+
+const diamonds: Rarity[] = ['◊', '◊◊', '◊◊◊', '◊◊◊◊']
+
+/** Scopes that span several rarities, each card on its own scale. */
+export const multiRarity = (rarity: PackRarity) => rarity === 'all' || rarity === 'diamonds'
 
 export interface PackFilters {
   rarity: PackRarity
@@ -28,10 +35,12 @@ export interface BoosterValue {
   cards: Card[] // every card of the rarity (or of every rarity), best first
   wanted: Card[] // the ones matching the filters, best first
   missing: number // every missing card of the rarity, whatever the filters
+  owned: number // cards.length - missing
   tierMix: { total: number; owned: number }[] // per tier, index as in `tiers`, then one for unranked cards
   minVotes: number // fewest votes behind any of its ☆☆'s Elo; Infinity without ☆☆
   best: Card
   perPack: number // chance one pack opened gives a card in `wanted`
+  expectedNew: number // missing cards one pack gives on average: the sum of each one's chance to be in it
 }
 
 export const ownsCard = (collection: Collection | undefined, card: Card) => (collection?.get(card.internal_id)?.amount_owned ?? 0) > 0
@@ -48,7 +57,7 @@ const openableExpansions = expansions.filter((e) => e.openable && !e.promo)
 const poolOf = (rarity: PackRarity) =>
   allCards.filter(
     (c) =>
-      (rarity === 'all' ? c.rarity !== 'P' : c.rarity === rarity) &&
+      (rarity === 'all' ? c.rarity !== 'P' : rarity === 'diamonds' ? diamonds.includes(c.rarity) : c.rarity === rarity) &&
       openableExpansions.some((e) => e.id === c.expansion) &&
       (c.rarity !== '☆☆' || getCardValue(c.card_id)?.adj !== undefined),
   )
@@ -60,7 +69,7 @@ const rarityRank = (card: Card) => rarities.indexOf(card.rarity)
  * aren't comparable, and valueSortKey would put each ☆☆ ahead of everything. So tier first, then the rarer card, then score.
  */
 const bestFirst = (rarity: PackRarity) => (a: Card, b: Card) =>
-  rarity === 'all'
+  multiRarity(rarity)
     ? (tierFor(a) ?? tiers.length) - (tierFor(b) ?? tiers.length) || rarityRank(b) - rarityRank(a) || valueSortKey(b.card_id) - valueSortKey(a.card_id)
     : valueSortKey(b.card_id) - valueSortKey(a.card_id)
 
@@ -89,6 +98,7 @@ export function getBoosterValues(collection: Collection | undefined, filters: Pa
         continue
       }
       const wanted = cards.filter((c) => matchesFilters(c, collection, filters))
+      const missing = cards.filter((c) => !ownsCard(collection, c))
       const tierMix = [...tiers, undefined].map(() => ({ total: 0, owned: 0 }))
       for (const c of cards) {
         const mix = tierMix[tierFor(c) ?? tiers.length]
@@ -102,11 +112,14 @@ export function getBoosterValues(collection: Collection | undefined, filters: Pa
         color: pack.color,
         cards,
         wanted,
-        missing: cards.filter((c) => !ownsCard(collection, c)).length,
+        missing: missing.length,
+        owned: cards.length - missing.length,
         tierMix,
         minVotes: Math.min(...cards.filter((c) => c.rarity === '☆☆').map((c) => getCardValue(c.card_id)?.votes ?? 0)),
         best: cards[0],
         perPack: wanted.length && expansion.packStructure ? pullRate(wanted, expansion, pack, false) : 0,
+        // by linearity, the expected number of distinct missing cards in one pack (pullRateForSpecificCard is a percent)
+        expectedNew: expansion.packStructure ? missing.reduce((sum, c) => sum + pullRateForSpecificCard(expansion, pack.name, c) / 100, 0) : 0,
       })
     }
   }

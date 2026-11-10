@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { CardThumb } from '@/components/CardThumb'
-import { ownsCard, type PackRarity } from '@/lib/packValue'
+import { multiRarity, ownsCard, type PackRarity } from '@/lib/packValue'
 import { demandScore, getCardValue, isProvisional, kindLabel } from '@/lib/ValueDB'
 import { useSelectedCard } from '@/services/collection/useCollection'
 import { useMainWithAlt } from '@/services/profile/useProfileCollection'
@@ -20,14 +20,15 @@ interface Props {
 
 export function PackPool({ cards, wanted, expansionId, rarity }: Props) {
   const [showAll, setShowAll] = useState(false)
-  const shown = rarity === 'all' && !showAll ? wanted : cards
+  const shown = multiRarity(rarity) && !showAll ? wanted : cards
   // rarest first; the cards keep their best-first order within each group
-  const groups =
-    rarity === 'all' ? rarities.toReversed().flatMap((r) => (shown.some((c) => c.rarity === r) ? [[r, shown.filter((c) => c.rarity === r)] as const] : [])) : []
+  const groups = multiRarity(rarity)
+    ? rarities.toReversed().flatMap((r) => (shown.some((c) => c.rarity === r) ? [[r, shown.filter((c) => c.rarity === r)] as const] : []))
+    : []
 
   return (
     <div className="border-t border-neutral-800 pt-4">
-      {rarity === 'all' ? (
+      {multiRarity(rarity) ? (
         <>
           <p className="mb-3 text-xs text-neutral-400">
             {showAll ? `All ${cards.length} cards` : `The ${wanted.length} cards that count`} ·{' '}
@@ -53,7 +54,7 @@ export function PackPool({ cards, wanted, expansionId, rarity }: Props) {
         to={
           rarity === '☆☆'
             ? `/rankings?set=${expansionId}`
-            : `/rankings?tab=wanted&set=${expansionId}${rarity === 'all' ? '' : `&rarity=${encodeURIComponent(rarity)}`}`
+            : `/rankings?tab=wanted&set=${expansionId}${multiRarity(rarity) ? '' : `&rarity=${encodeURIComponent(rarity)}`}`
         }
         className="mt-3 inline-block text-xs text-neutral-400 underline-offset-2 hover:text-neutral-200 hover:underline"
       >
