@@ -34,12 +34,13 @@ export function PackCard({ pack, position, filters, goal, range, expanded, onTog
   const score = completion ? pack.expectedNew : pack.perPack
   // the thumbnails show what you'd be chasing: the best matching cards, topped up with the rest of the pool
   const preview = [...pack.wanted, ...pack.cards.filter((c) => !pack.wanted.includes(c))].slice(0, 3)
-  const poolCounts = [
-    rarityCount(pack.cards.length, filters.rarity),
-    collection && !complete && `${pack.missing} missing`,
-    // in completion every missing card counts, so "matches" would only repeat "missing"
-    !completion && `${pack.wanted.length} match${pack.wanted.length === 1 ? 'es' : ''}`,
-  ].filter(Boolean)
+  // completion's Owned bar already says how many are left; value says how many count, and how many are missing when that differs
+  const poolCounts = completion
+    ? []
+    : [
+        `${pack.wanted.length} of ${rarityCount(pack.cards.length, filters.rarity)} count`,
+        collection && !complete && pack.missing !== pack.wanted.length && `${pack.missing} missing`,
+      ].filter(Boolean)
 
   return (
     <article
@@ -62,7 +63,14 @@ export function PackCard({ pack, position, filters, goal, range, expanded, onTog
           <h2 className="truncate font-semibold leading-tight">{t(pack.packName, { ns: 'common/packs' })}</h2>
           <p className="truncate text-xs text-neutral-400">{t(pack.expansionName, { ns: 'common/sets' })}</p>
           <div className="mt-1 flex flex-wrap gap-1">
-            {provisional && <span className="rounded bg-amber-400/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">provisional</span>}
+            {provisional && (
+              <span
+                title={`New set: some ☆☆ have fewer than ${PROVISIONAL_VOTES} votes, so their tiers may still move`}
+                className="rounded bg-amber-400/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-400"
+              >
+                new set
+              </span>
+            )}
             {complete && <span className="rounded bg-green-500/15 px-1.5 py-0.5 text-[10px] font-medium text-green-400">all owned</span>}
           </div>
         </div>
@@ -88,10 +96,12 @@ export function PackCard({ pack, position, filters, goal, range, expanded, onTog
           <span className="font-semibold tabular-nums text-neutral-100">{headline.stat}</span> <span className="text-neutral-400">{headline.caption}</span>
         </p>
         <Progress value={score > 0 ? Math.round(100 * fill(score, range)) : 0} barColor={pack.color} className="h-1.5" />
-        <p className="text-xs text-neutral-500">{poolCounts.join(' · ')}</p>
+        {poolCounts.length > 0 && <p className="text-xs text-neutral-500">{poolCounts.join(' · ')}</p>}
       </div>
 
-      {completion ? <OwnedBar pack={pack} /> : <TierMix pack={pack} rarity={filters.rarity} showOwned={collection !== undefined} />}
+      {completion && <OwnedBar pack={pack} />}
+      {/* how the pack splits across tiers is detail, not what you pick on, so it waits for the expanded view */}
+      {expanded && !completion && <TierMix pack={pack} rarity={filters.rarity} showOwned={collection !== undefined} />}
 
       {expanded && <PackPool cards={pack.cards} wanted={pack.wanted} expansionId={pack.expansionId} rarity={filters.rarity} />}
 
