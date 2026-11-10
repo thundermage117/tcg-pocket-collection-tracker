@@ -178,6 +178,9 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
   const navigate = useNavigate()
   const isMobile = useMediaQuery({ query: '(max-width: 767px)' }) // tailwind "md"
   const [selected, setSelected] = useState<Selection | null>(null)
+  // Desktop: the hovered cell lights up its set and rarity headers, so a cell 15 columns in is easy to place
+  const [hovered, setHovered] = useState<{ row: string; col: string } | null>(null)
+  const headerLit = 'rounded bg-neutral-600/70 text-white'
   // The treemap view is local: Overview owns cellMode (it lives in the URL) and only knows 'pct' | 'left'. Phones keep
   // the grid, where a dozen-plus sets would shrink the smaller sets' tiles to slivers below a usable tap target.
   const [mapOn, setMapOn] = useState(false)
@@ -347,6 +350,8 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
           className={`relative min-h-10 w-full min-w-11 rounded text-xs tabular-nums transition-[filter] md:hover:brightness-125 focus-visible:outline-2 focus-visible:outline-neutral-200 md:min-h-0 md:py-1.5 ${isTotal ? 'font-semibold' : ''} ${isSelected(row, col) ? selectedRing : ''} ${swatch === 'done' ? 'heat-foil' : ''} heat-in`}
           style={{ ...swatches[swatch], ['--foil-delay' as string]: `${wave * 0.12}s`, ['--in-delay' as string]: `${wave * 0.02}s` }}
           onClick={() => (isMobile ? toggle({ row, col }) : openCollection(row, col))}
+          onMouseEnter={isMobile ? undefined : () => setHovered({ row, col })}
+          onMouseLeave={isMobile ? undefined : () => setHovered(null)}
           data-tooltip-id={isMobile ? undefined : 'completion-heatmap'}
           data-tooltip-content={`${label}: ${c.collected} / ${c.available}${missing > 0 ? ` · ${missing} missing` : ' · complete'}`}
           data-cell={`${row}|${col}`}
@@ -517,11 +522,13 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
                     className={`${familyStarts.has(r) ? 'pr-0.5 pl-2' : 'px-0.5'} pb-1 text-center font-normal text-neutral-300 text-xs whitespace-nowrap`}
                   >
                     {/* coloured like the rarity filter above, so ◊ / ☆ / ✵ read as groups */}
-                    {formatRarity(r)}
+                    <span className={`px-1.5 py-0.5 transition-colors ${hovered?.col === r ? headerLit : ''}`}>{formatRarity(r)}</span>
                   </th>
                 ))}
                 <th />
-                <th className="px-0.5 pb-1 text-center font-semibold text-neutral-400 text-xs uppercase tracking-wider">All</th>
+                <th className="px-0.5 pb-1 text-center font-semibold text-neutral-400 text-xs uppercase tracking-wider">
+                  <span className={`px-1.5 py-0.5 transition-colors ${hovered?.col === 'all' ? headerLit : ''}`}>All</span>
+                </th>
                 <th className="hidden pl-2 pb-1 text-left font-semibold text-neutral-400 text-xs uppercase tracking-wider whitespace-nowrap md:table-cell">
                   New card
                 </th>
@@ -538,7 +545,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
                         <SetLogo expansionId={e.id} className="h-7 w-full" />
                         <span className="text-[11px] text-neutral-400 leading-tight tabular-nums">{e.id}</span>
                       </span>
-                      <span className="hidden items-center gap-2 md:flex">
+                      <span className={`-mx-1 hidden items-center gap-2 px-1 transition-colors md:flex ${hovered?.row === e.id ? headerLit : ''}`}>
                         <SetLogo expansionId={e.id} className="h-7 w-16 shrink-0" />
                         <span className="max-w-44 truncate">
                           <span className="mr-1.5 text-neutral-500 text-xs tabular-nums">{e.id}</span>
@@ -557,7 +564,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
               <tr>
                 <th scope="row" className={`${stickyCol} pt-2 pr-2 text-left font-semibold text-neutral-400 text-xs uppercase tracking-wider`}>
                   <span className="md:hidden">All</span>
-                  <span className="hidden md:inline">All sets</span>
+                  <span className={`-mx-1 hidden px-1 py-0.5 transition-colors md:inline ${hovered?.row === 'all' ? headerLit : ''}`}>All sets</span>
                 </th>
                 <td className="md:hidden" />
                 {columns.map((r) => renderCell('all', r, true))}
