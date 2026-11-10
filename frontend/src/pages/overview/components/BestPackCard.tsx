@@ -12,8 +12,17 @@ const coverRarities: Rarity[] = ['☆☆☆', '☆☆', '✵✵', '✵', '☆']
 
 const pickCover = (cards: Card[]) => coverRarities.flatMap((r) => cards.filter((c) => c.rarity === r))[0]
 
+// Packs named after their set, pinned to the Pokémon that fronts them (by card name in that set). The shiny Mega Gengar
+// artwork is the one form shiny in sprites/large/shiny/ (10038, from PokéAPI's official artwork, same size and quality).
+const pinned: Partial<Record<string, { card: string; shiny?: boolean }>> = {
+  megashinepack: { card: 'Mega Gengar ex', shiny: true },
+  pulsingaurapack: { card: 'Mega Lucario ex' },
+  paradoxdrivepack: { card: 'Miraidon ex' },
+  ruleroftheskiespack: { card: 'Mega Rayquaza ex' },
+}
+
 // Pack names are "<pokemon>pack" (mewtwopack, megagardevoirpack), so the cover is that Pokémon's showiest card in the
-// pack's set. Packs named after their set (ruleroftheskiespack) fall back to the showiest Pokémon the pack can give.
+// pack's set. Other packs named after their set (crimsonblazepack) fall back to the showiest Pokémon the pack can give.
 function packCover(pack: Pack): Card | undefined {
   // pack names repeat across sets (pikachupack), so find the set by the pack object itself
   const expansion = expansions.find((e) => e.packs.includes(pack))
@@ -21,6 +30,10 @@ function packCover(pack: Pack): Card | undefined {
     return undefined
   }
   const inPack = allCards.filter((c) => c.expansion === expansion.id && (c.pack === pack.name || c.pack === 'everypack'))
+  const pin = pinned[pack.name]
+  if (pin) {
+    return inPack.find((c) => c.name === pin.card)
+  }
   const pokemon = pack.name.replace(/pack$/, '')
   const named = inPack.filter((c) =>
     c.name
@@ -38,7 +51,7 @@ function packArtwork(pack: Pack): string | undefined {
   const key = card && speciesKey(card)
   const species = key ? allSpecies.find((s) => s.key === key) : undefined
   // large: the 256px default would blur at the card's size on high-density screens
-  return card && species ? spriteUrl(formArtworkId(species, card.name), false, true) : undefined
+  return card && species ? spriteUrl(formArtworkId(species, card.name), pinned[pack.name]?.shiny, true) : undefined
 }
 
 const artworks = new Map<Pack, string | undefined>()
