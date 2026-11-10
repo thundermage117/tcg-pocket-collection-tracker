@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import { PROVISIONAL_VOTES } from '@/lib/ValueDB'
 import { useSelectedCard } from '@/services/collection/useCollection'
 import { useMainWithAlt } from '@/services/profile/useProfileCollection'
-import { completionStat, fill, type Goal, type PackRow, packStat, type Range, rarityCount, scaleName, type TargetFilters } from '../types'
+import { completionStat, fill, type Goal, type PackRow, packStat, poolLine, type Range, rarityCount, scaleName, type TargetFilters } from '../types'
 import { CardTierBadge } from './CardTierBadge'
 import { PackPool } from './PackPool'
 
@@ -34,13 +34,8 @@ export function PackCard({ pack, position, filters, goal, range, expanded, onTog
   const score = completion ? pack.expectedNew : pack.perPack
   // the thumbnails show what you'd be chasing: the best matching cards, topped up with the rest of the pool
   const preview = [...pack.wanted, ...pack.cards.filter((c) => !pack.wanted.includes(c))].slice(0, 3)
-  // completion's Owned bar already says how many are left; value says how many count, and how many are missing when that differs
-  const poolCounts = completion
-    ? []
-    : [
-        `${pack.wanted.length} of ${rarityCount(pack.cards.length, filters.rarity)} count`,
-        collection && !complete && pack.missing !== pack.wanted.length && `${pack.missing} missing`,
-      ].filter(Boolean)
+  // completion's Owned bar already says how many are left
+  const countLine = completion ? undefined : poolLine(pack, filters, collection !== undefined)
 
   return (
     <article
@@ -97,7 +92,7 @@ export function PackCard({ pack, position, filters, goal, range, expanded, onTog
         </p>
         {/* value's tier strip below says what the odds are made of, so only completion keeps a plain bar */}
         {completion && <Progress value={score > 0 ? Math.round(100 * fill(score, range)) : 0} barColor={pack.color} className="h-1.5" />}
-        {poolCounts.length > 0 && <p className="text-xs text-neutral-500">{poolCounts.join(' · ')}</p>}
+        {countLine && <p className="text-xs text-neutral-500">{countLine}</p>}
       </div>
 
       {completion && <OwnedBar pack={pack} />}

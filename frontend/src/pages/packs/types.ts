@@ -108,6 +108,34 @@ export function packStat(pack: PackRow, filters: TargetFilters) {
     : { stat: 'None', caption: `no ${rarityNoun(filters.rarity)} here match${filters.rarity === 'all' ? 'es' : ''}` }
 }
 
+/**
+ * A value card's count line in plain words: "4 of your 11 missing ☆☆ are top-tier", "11 of 13 ☆☆ missing",
+ * "2 of 13 ☆☆ are Hot trainers", "You own all 13 ☆☆".
+ */
+export function poolLine(pack: PackRow, { rarity, tier, kind, onlyMissing }: TargetFilters, hasCollection: boolean) {
+  const total = rarityCount(pack.cards.length, rarity)
+  if (hasCollection && pack.missing === 0) {
+    return `You own all ${total}`
+  }
+  const n = pack.wanted.length
+  const quality = [
+    tier === 'hot' ? 'Hot' : tier === 'top' ? 'top-tier' : '',
+    kind ? `${kindLabel[kind as TwoStarKind].toLowerCase()}${n === 1 ? '' : 's'}` : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+  const are = n === 1 ? 'is' : 'are'
+  const missing = `${pack.missing} of ${total} missing`
+  if (hasCollection && onlyMissing) {
+    const noun = rarity === 'all' ? `card${pack.missing === 1 ? '' : 's'}` : rarity
+    return quality ? `${n} of your ${pack.missing} missing ${noun} ${are} ${quality}` : missing
+  }
+  if (quality) {
+    return `${n} of ${total} ${are} ${quality}`
+  }
+  return hasCollection ? missing : total
+}
+
 /** Missing cards one pack gives on average: "≈1.8 new cards per pack" above one, "1 new card every 6 packs" below. */
 export function newPerPack(x: number) {
   if (x <= 0) {
