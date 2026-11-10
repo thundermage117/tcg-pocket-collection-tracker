@@ -40,7 +40,7 @@ export default function PackValue() {
   const [expanded, setExpanded] = useState<string | undefined>()
 
   const filters: TargetFilters = useMemo(
-    () => ({ tier, maxTier: tierMax[tier], kind: kind === 'all' ? undefined : kind, onlyMissing }),
+    () => ({ rarity: '☆☆', tier, maxTier: tierMax[tier], kind: kind === 'all' ? undefined : kind, onlyMissing }),
     [tier, kind, onlyMissing],
   )
 

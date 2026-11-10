@@ -155,6 +155,17 @@ export function twoStarTier(cardId: string): number | undefined {
   return twoStarTiers.get(cardId)
 }
 
+let mostWantedTiers: Map<number, number> | undefined
+
+/** Most wanted tier index (0 = SSS) by internal_id, deluxe foils excluded as on Rankings; reprints share their original's id. */
+export function mostWantedTier(internalId: number): number | undefined {
+  mostWantedTiers ??= new Map(getMostWanted().map((e) => [e.card.internal_id, e.tier]))
+  return mostWantedTiers.get(internalId)
+}
+
+/** The tier a card is judged by: ☆☆ by community vote Elo, every other rarity by Most wanted (trade demand). */
+export const tierFor = (card: Card) => (card.rarity === '☆☆' ? twoStarTier(card.card_id) : mostWantedTier(card.internal_id))
+
 let tierLookup: { elo: Map<string, Tier>; wanted: Map<string, Tier>; wantedWithFoils: Map<string, Tier> } | undefined
 
 const tiersOf = (ranking: RankedCard[]) => new Map(ranking.map((e) => [e.card.card_id, tiers[e.tier]]))
