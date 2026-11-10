@@ -184,21 +184,22 @@ export default function PackValue() {
         <summary className="cursor-pointer font-medium text-neutral-300">How this works</summary>
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>
-            Every ☆☆ has an Elo score from community votes on pokemontcglivetrade. Cards with few votes are pulled toward the average so a handful of votes
-            can't make them look great or terrible.
+            Two scales, as on Rankings. ☆☆ use the vote tiers: an Elo score from community votes on pokemontcglivetrade, with few-vote cards pulled toward the
+            average, split where the Elo jumps. Every other rarity uses the Most wanted tiers: wishlists per trade-list offer (eleet), split by share (SSS is
+            the top 1% of every traded card).
           </li>
           <li>
-            Tiers (SSS–E) are the ones on the Rankings ☆☆ tab: they split where the Elo jumps, so near-equal cards share a tier. Hot is SSS–S, Top is SSS–A. The
-            Overview page's Hot and Top use trade demand instead, so they can differ.
+            Most wanted tiers are shared by every rarity, so a common rarity can't reach the top ones: no ◊ is above B and no ◊◊ above A, so Top or Hot is
+            switched off there. ☆☆☆ and Crown Rare can't be traded and have no tier. Hot is SSS–S, Top is SSS–A.
           </li>
           <li>
-            "1 in N packs" uses the real pull odds of every slot, rare packs included, for the ☆☆ that match the tier, style and "only missing" choice. The more
-            ☆☆ a pack shares its slots with, the rarer each one is.
+            "1 in N packs" uses the real pull odds of every slot, rare packs included, for the cards that match the rarity, tier, style and "only missing"
+            choice. The more cards of a rarity a pack shares its slots with, the rarer each one is.
           </li>
-          <li>The strip on each pack shows how many of its ☆☆ fall in each tier; the faded part is what you already own.</li>
+          <li>The strip on each pack shows how many of its cards fall in each tier (grey: no tier); the faded part is what you already own.</li>
           <li>
-            "provisional" means at least one card has fewer than {PROVISIONAL_VOTES} votes, so its value and tier may still move (usual in a set's first month).
-            Packs that can no longer be opened (Deluxe Pack: ex) are left out.
+            "provisional" (☆☆ only) means at least one card has fewer than {PROVISIONAL_VOTES} votes, so its value and tier may still move (usual in a set's
+            first month). Packs that can no longer be opened (Deluxe Pack: ex) are left out.
           </li>
         </ul>
       </details>

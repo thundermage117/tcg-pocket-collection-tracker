@@ -135,9 +135,9 @@ function Overview() {
               backgroundColor={bestPack.pack.color}
             >
               {showTwoStarPick && bestTwoStarPack && bestTwoStarPack.perPack > 0 && (
-                // explicit tier and style: a bare /packs reopens whatever was last picked there, which may not be the pick named here
+                // explicit rarity, tier and style: a bare /packs reopens whatever was last picked there, which may not be the pick named here
                 <Link
-                  to="/packs?tier=all&kind=all"
+                  to="/packs?rarity=2s&tier=all&kind=all"
                   // inline, not flex: flex made each text run its own column, which wrapped word by word on phones
                   className="mt-3 text-balance rounded-full bg-white/35 px-3 py-1 text-center text-sm text-slate-900 transition-colors hover:bg-white/55"
                 >
