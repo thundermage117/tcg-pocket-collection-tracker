@@ -505,6 +505,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
           chances={chances}
           best={bestChance([...chances.values()].flat())?.pack}
           focusTier={focusTier}
+          fadeLow={!sortByValue}
           packName={packName}
           onOpen={(expansion, pack) => openCollection(expansion, 'all', (chances.get(expansion)?.length ?? 0) > 1 ? pack.name : undefined)}
         />

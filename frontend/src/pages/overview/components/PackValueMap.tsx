@@ -25,6 +25,7 @@ interface Props {
   chances: Map<ExpansionId, PackChance[]>
   best?: Pack // the overview's pick, ringed in its pack colour
   focusTier?: number // the key's highlighted tier: other tiers' blocks fade back
+  fadeLow: boolean // Value shows every card: D, E and unranked blocks step back so the top tiers carry the map
   packName: (pack: Pack) => string
   onOpen: (expansion: ExpansionId, pack: Pack) => void
 }
@@ -33,6 +34,7 @@ interface Props {
 export const unrankedTier: Tier = { name: 'Unranked', color: '#525252' }
 export const tierOf = (i: number) => tiers[i] ?? unrankedTier
 
+const LOW_TIER = 6 // D: it and everything below fade back under fadeLow
 const GAP = 3 // between trays
 const RIM = 3 // a tray's rim around its packs
 const SET_HEAD = 22 // a tray's header strip, when it's big enough to carry one
@@ -66,7 +68,7 @@ function useSize() {
   return [ref, size] as const
 }
 
-export function PackValueMap({ sets, chances, best, focusTier, packName, onOpen }: Props) {
+export function PackValueMap({ sets, chances, best, focusTier, fadeLow, packName, onOpen }: Props) {
   const [ref, size] = useSize()
   // Tiles glide to their new place when the filters change, but only once the first layout is down: before the box is
   // measured every rect is empty, and growing them all out of the corner on first paint would just be noise
@@ -130,11 +132,13 @@ export function PackValueMap({ sets, chances, best, focusTier, packName, onOpen 
             const label = r.h >= 15 ? (fits(full, r.w) ? full : fits(String(n), r.w) ? String(n) : '') : ''
             const foil = item.tier <= 1
             const dimmed = focusTier !== undefined && item.tier !== focusTier
+            // a picked-out tier wins over the low-tier fade, so highlighting E still shows E at full strength
+            const faded = !dimmed && focusTier === undefined && fadeLow && item.tier >= LOW_TIER
             return (
               <button
                 key={item.tier}
                 type="button"
-                className={`pm-move absolute flex items-start justify-start rounded-[3px] px-1 pt-0.5 font-semibold text-[11px] tabular-nums leading-tight hover:brightness-115 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-white ${foil ? 'heat-foil' : ''} ${dimmed ? 'opacity-15 saturate-50' : ''}`}
+                className={`pm-move absolute flex items-start justify-start rounded-[3px] px-1 pt-0.5 font-semibold text-[11px] tabular-nums leading-tight hover:brightness-115 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-white ${foil ? 'heat-foil' : ''} ${dimmed ? 'opacity-15 saturate-50' : faded ? 'opacity-45' : ''}`}
                 style={{
                   ...box(inset(r, 0.5)),
                   backgroundColor: tier.color,
