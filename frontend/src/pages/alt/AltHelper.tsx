@@ -9,6 +9,7 @@ import { CardThumb } from '@/components/CardThumb'
 import { Spinner } from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
+import { useUndoTransferToast } from '@/hooks/useUndoToast'
 import {
   altCovers,
   bestUnlockPack,
@@ -186,6 +187,7 @@ export default function AltHelper() {
   const { data: main } = useProfileCollection('main')
   const { data: alt } = useProfileCollection('alt')
   const transfer = useTransferCards()
+  const undoToast = useUndoTransferToast()
   const [giftDates, setGiftDates] = useState({ main: readGiftDate('main'), alt: readGiftDate('alt') })
   const name = (card: Card) => getCardNameByLang(card, i18n.language)
 
@@ -233,18 +235,29 @@ export default function AltHelper() {
     }
   }, [main, alt, mainAccount])
 
-  const gift = (card: Card, to: Profile) =>
+  const setGiftDate = (to: Profile, date: string | null) => {
+    setGiftDates((dates) => ({ ...dates, [to]: date }))
+    try {
+      if (date) {
+        localStorage.setItem(giftKey(to), date)
+      } else {
+        localStorage.removeItem(giftKey(to))
+      }
+    } catch {
+      // only a reminder
+    }
+  }
+
+  // one tap moves the card, so the toast offers Undo rather than asking first
+  const gift = (card: Card, to: Profile) => {
+    const previousDate = giftDates[to]
     transfer.mutate([{ internal_id: card.internal_id, from: to === 'main' ? 'alt' : 'main', to }], {
-      onSuccess: () => {
-        const date = today()
-        setGiftDates((dates) => ({ ...dates, [to]: date }))
-        try {
-          localStorage.setItem(giftKey(to), date)
-        } catch {
-          // only a reminder
-        }
+      onSuccess: ({ before }) => {
+        setGiftDate(to, today())
+        undoToast(`Gifted ${name(card)} to ${to}`, `Moved one copy from ${to === 'main' ? 'the alt' : 'main'}.`, before, () => setGiftDate(to, previousDate))
       },
     })
+  }
 
   if (!mainAccount && !isLoadingAccount) {
     return (
