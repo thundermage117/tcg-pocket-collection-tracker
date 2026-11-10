@@ -1,21 +1,20 @@
-// Personal fork: "best pick" banner — the answer for the current sort without scanning the grid.
+// Personal fork: "best pick" banner — the answer for the current filters without scanning the grid.
 import { Trophy } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { CardThumb, SetLogo } from '@/components/CardThumb'
+import { TierChip } from '@/components/TierChip'
 import { ownsCard } from '@/lib/packValue'
-import { twoStarPosition } from '@/lib/rankings'
 import { getCardNameByLang } from '@/lib/utils'
 import { useSelectedCard } from '@/services/collection/useCollection'
 import { useMainWithAlt } from '@/services/profile/useProfileCollection'
-import { goals, type PackRow, personalSorts, type SortKey } from '../types'
+import { cardTier, describeTarget, oneIn, type PackRow, type TargetFilters } from '../types'
 
-export function PackSummary({ pack, sortKey, total }: { pack: PackRow; sortKey: SortKey; total: number }) {
+export function PackSummary({ pack, filters }: { pack: PackRow; filters: TargetFilters }) {
   const { t, i18n } = useTranslation(['common/sets', 'common/packs'])
   const { data: collection } = useMainWithAlt()
   const { setSelectedCardId } = useSelectedCard()
-  // for personal sorts, highlight the best card you're still missing
-  const highlight = (personalSorts.includes(sortKey) && pack.cards.find((c) => !ownsCard(collection, c))) || pack.best
-  const goal = goals[sortKey]
+  // the best card that counts for these filters; the pack's top card when none does
+  const highlight = pack.wanted[0] ?? pack.best
 
   return (
     <section
@@ -34,12 +33,21 @@ export function PackSummary({ pack, sortKey, total }: { pack: PackRow; sortKey: 
           </div>
         </div>
         <p className="mt-3 text-sm text-neutral-200">
-          <span className="font-semibold">{goal.stat(pack, total)}</span> {goal.caption(pack, total)}
-          {sortKey === 'perPackNew' && pack.missing > 0 && <span className="text-neutral-400"> ({pack.missing} left)</span>}
+          {pack.perPack > 0 ? (
+            <>
+              <span className="font-semibold">{oneIn(pack.perPack)} packs</span> gives {describeTarget(filters)}
+              <span className="text-neutral-400"> ({pack.wanted.length} in this pack)</span>
+            </>
+          ) : (
+            `No pack here gives ${describeTarget(filters)}. Try a lower tier, another style or series.`
+          )}
         </p>
-        <p className="mt-1 text-xs text-neutral-400">
-          {highlight === pack.best ? 'Top card' : "Best card you're missing"}: {getCardNameByLang(highlight, i18n.language)}{' '}
-          {`(#${twoStarPosition(highlight.card_id)} of all ☆☆)`}
+        <p className="mt-1 flex items-center gap-1.5 text-xs text-neutral-400">
+          <span className="truncate">
+            {highlight === pack.wanted[0] ? (filters.onlyMissing ? "Best card you're missing" : 'Best matching card') : 'Top card'}:{' '}
+            {getCardNameByLang(highlight, i18n.language)}
+          </span>
+          <TierChip tier={cardTier(highlight)} className="shrink-0" />
         </p>
       </div>
       <CardThumb

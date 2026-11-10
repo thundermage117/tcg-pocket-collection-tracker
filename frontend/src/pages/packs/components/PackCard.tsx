@@ -1,41 +1,40 @@
-// Personal fork: one booster on the packs page — top ☆☆ cards, the stat for the chosen goal, expandable pool.
+// Personal fork: one booster on the packs page — top ☆☆ cards, the chance for the chosen filters, tier mix, expandable pool.
 import { ChevronDown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { CardThumb, SetLogo } from '@/components/CardThumb'
+import { TierChip } from '@/components/TierChip'
 import { Progress } from '@/components/ui/progress'
 import { ownsCard } from '@/lib/packValue'
-import { twoStarPosition } from '@/lib/rankings'
+import { tiers } from '@/lib/rankings'
 import { cn } from '@/lib/utils'
 import { PROVISIONAL_VOTES } from '@/lib/ValueDB'
 import { useSelectedCard } from '@/services/collection/useCollection'
 import { useMainWithAlt } from '@/services/profile/useProfileCollection'
-import { fill, goals, type PackRow, type Ranges, type SortKey, sortOrder } from '../types'
+import { cardTier, fill, type PackRow, packStat, type Range, type TargetFilters, tierChipTitle } from '../types'
 import { PackPool } from './PackPool'
 
 interface Props {
   pack: PackRow
   position: number
-  sortKey: SortKey
-  ranges: Ranges
-  total: number
+  filters: TargetFilters
+  range: Range
   expanded: boolean
   onToggle: () => void
 }
 
-export function PackCard({ pack, position, sortKey, ranges, total, expanded, onToggle }: Props) {
+export function PackCard({ pack, position, filters, range, expanded, onToggle }: Props) {
   const { t } = useTranslation(['common/sets', 'common/packs'])
   const { data: collection } = useMainWithAlt()
   const { setSelectedCardId } = useSelectedCard()
   const provisional = pack.minVotes < PROVISIONAL_VOTES
-  const complete = collection !== undefined && pack.pNew === 0
-  const goal = goals[sortKey]
-  const value = pack[sortKey]
-  const otherGoals = sortOrder.filter((key) => key !== sortKey && (collection || key !== 'perPackNew'))
+  const complete = collection !== undefined && pack.missing === 0
+  const headline = packStat(pack, filters)
+  // the thumbnails show what you'd be chasing: the best matching cards, topped up with the rest of the pool
+  const preview = [...pack.wanted, ...pack.cards.filter((c) => !pack.wanted.includes(c))].slice(0, 3)
   const poolCounts = [
     `${pack.cards.length} ☆☆`,
     collection && !complete && `${pack.missing} missing`,
-    `${pack.top50Count} top-50`,
-    `${pack.trainerOrRainbowCount} trainer/rainbow`,
+    `${pack.wanted.length} match${pack.wanted.length === 1 ? 'es' : ''}`,
   ].filter(Boolean)
 
   return (
@@ -50,7 +49,7 @@ export function PackCard({ pack, position, sortKey, ranges, total, expanded, onT
         <span
           className={cn(
             'mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums',
-            position === 1 ? 'bg-amber-400 text-neutral-900' : 'bg-neutral-800 text-neutral-300',
+            position === 1 && pack.perPack > 0 ? 'bg-amber-400 text-neutral-900' : 'bg-neutral-800 text-neutral-300',
           )}
         >
           {position}
@@ -68,13 +67,16 @@ export function PackCard({ pack, position, sortKey, ranges, total, expanded, onT
 
       {!expanded && (
         <div className="grid grid-cols-3 gap-2">
-          {pack.cards.slice(0, 3).map((card) => (
+          {preview.map((card) => (
             <CardThumb
               key={card.card_id}
               card={card}
               owned={ownsCard(collection, card)}
-              label={`#${twoStarPosition(card.card_id)}`}
-              labelTitle={`#${twoStarPosition(card.card_id)} of all ☆☆ in the community ranking`}
+              badge={
+                <span title={tierChipTitle(card)}>
+                  <TierChip tier={cardTier(card)} className="shadow" />
+                </span>
+              }
               onClick={() => setSelectedCardId(card.internal_id)}
             />
           ))}
@@ -83,25 +85,13 @@ export function PackCard({ pack, position, sortKey, ranges, total, expanded, onT
 
       <div className="space-y-1.5">
         <p className="text-sm">
-          <span className="font-semibold tabular-nums text-neutral-100">{goal.stat(pack, total)}</span>{' '}
-          <span className="text-neutral-400">{goal.caption(pack, total)}</span>
+          <span className="font-semibold tabular-nums text-neutral-100">{headline.stat}</span> <span className="text-neutral-400">{headline.caption}</span>
         </p>
-        <Progress value={value > 0 ? Math.round(100 * fill(value, ranges[sortKey])) : 0} barColor={pack.color} className="h-1.5" />
+        <Progress value={pack.perPack > 0 ? Math.round(100 * fill(pack.perPack, range)) : 0} barColor={pack.color} className="h-1.5" />
         <p className="text-xs text-neutral-500">{poolCounts.join(' · ')}</p>
       </div>
 
-      {expanded && (
-        <dl className="grid gap-x-6 gap-y-1 border-t border-neutral-800 pt-3 text-xs sm:grid-cols-2 lg:grid-cols-3">
-          {otherGoals.map((key) => (
-            <div key={key} className="flex justify-between gap-2">
-              <dt className="text-neutral-400">{goals[key].label}</dt>
-              <dd className="text-right tabular-nums text-neutral-200">
-                {goals[key].stat(pack, total)} <span className="text-neutral-500">{goals[key].caption(pack, total)}</span>
-              </dd>
-            </div>
-          ))}
-        </dl>
-      )}
+      <TierMix pack={pack} showOwned={collection !== undefined} />
 
       {expanded && <PackPool cards={pack.cards} expansionId={pack.expansionId} />}
 
@@ -114,5 +104,30 @@ export function PackCard({ pack, position, sortKey, ranges, total, expanded, onT
         <ChevronDown className={cn('size-4 transition-transform', expanded && 'rotate-180')} />
       </button>
     </article>
+  )
+}
+
+/** How the pack's ☆☆ split across tiers: one segment per tier, the owned part faded. */
+function TierMix({ pack, showOwned }: { pack: PackRow; showOwned: boolean }) {
+  const shown = tiers.map((tier, i) => ({ tier, ...pack.tierMix[i] })).filter((x) => x.total > 0)
+  const label = shown.map(({ tier, total, owned }) => `${tier.name}: ${total}${showOwned ? ` (${owned} owned)` : ''}`).join(', ')
+  return (
+    <div title={label} role="img" aria-label={`☆☆ per tier: ${label}`}>
+      <div className="flex h-2 gap-px overflow-hidden rounded-full">
+        {shown.map(({ tier, total, owned }) => (
+          <div key={tier.name} className="flex h-full" style={{ flexGrow: total }}>
+            <span className="h-full opacity-30" style={{ flexGrow: showOwned ? owned : 0, backgroundColor: tier.color }} />
+            <span className="h-full" style={{ flexGrow: showOwned ? total - owned : total, backgroundColor: tier.color }} />
+          </div>
+        ))}
+      </div>
+      <div className="mt-1 flex gap-px text-[10px] font-semibold text-neutral-500">
+        {shown.map(({ tier, total }) => (
+          <span key={tier.name} className="truncate text-center" style={{ flexGrow: total, flexBasis: 0 }}>
+            {tier.name}
+          </span>
+        ))}
+      </div>
+    </div>
   )
 }

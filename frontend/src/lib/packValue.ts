@@ -1,42 +1,46 @@
-// Personal fork: rank boosters by the value of their ☆☆ pool.
-// Every ☆☆ in a booster has equal odds (slot 4: 0.5% / N, slot 5: 2% / N), so a guaranteed ☆☆
-// is a uniform draw from the booster's pool and every stat below is a plain average over it.
-// The perPack* stats instead use the real pull odds (stats.ts), rare packs included.
+// Personal fork: rank boosters by the chance one pack gives a ☆☆ you want.
+// "Want" is a filter over the booster's ☆☆ pool: at or above a ☆☆ Elo tier, of a style (full art / trainer /
+// rainbow), and optionally only the ones you're missing. perPack uses the real pull odds (stats.ts), rare packs included.
 
 import { allCards, expansions } from '@/lib/CardsDB'
-import { twoStarPosition } from '@/lib/rankings'
+import { tiers, twoStarTier } from '@/lib/rankings'
 import { pullRate } from '@/lib/stats'
-import { getCardValue } from '@/lib/ValueDB'
+import { getCardValue, type TwoStarKind } from '@/lib/ValueDB'
 import type { Card, Collection, ExpansionId } from '@/types'
+
+export interface PackFilters {
+  maxTier: number // lowest tier index that counts (0 = SSS); Infinity for every ☆☆
+  kind?: TwoStarKind // undefined for every style
+  onlyMissing: boolean
+}
 
 export interface BoosterValue {
   expansionId: ExpansionId
   expansionName: string
   packName: string
   color: string
-  cards: Card[]
-  meanAdj: number
-  top50Count: number
-  trainerOrRainbowCount: number
-  pTrainerOrRainbow: number
+  cards: Card[] // every ☆☆, best first
+  wanted: Card[] // the ones matching the filters, best first
+  missing: number // every missing ☆☆, whatever the filters
+  tierMix: { total: number; owned: number }[] // per tier, index as in `tiers`
   minVotes: number
   best: Card
-  // personalised
-  pNew: number
-  missing: number
-  // chance per pack actually opened
-  perPackTop50: number
-  perPackNew: number
+  perPack: number // chance one pack opened gives a card in `wanted`
 }
-
-const TOP_N = 50
 
 const adjOf = (card: Card) => getCardValue(card.card_id)?.adj ?? 0
 
 export const ownsCard = (collection: Collection | undefined, card: Card) => (collection?.get(card.internal_id)?.amount_owned ?? 0) > 0
 
-export function getBoosterValues(collection: Collection | undefined): BoosterValue[] {
-  const owned = (card: Card) => ownsCard(collection, card)
+export const matchesFilters = (card: Card, collection: Collection | undefined, { maxTier, kind, onlyMissing }: PackFilters) =>
+  (twoStarTier(card.card_id) ?? Number.POSITIVE_INFINITY) <= maxTier &&
+  (!kind || getCardValue(card.card_id)?.kind === kind) &&
+  !(onlyMissing && ownsCard(collection, card))
+
+export function getBoosterValues(
+  collection: Collection | undefined,
+  filters: PackFilters = { maxTier: Number.POSITIVE_INFINITY, onlyMissing: true },
+): BoosterValue[] {
   const result: BoosterValue[] = []
 
   for (const expansion of expansions) {
@@ -46,37 +50,31 @@ export function getBoosterValues(collection: Collection | undefined): BoosterVal
     }
     const twoStars = allCards.filter((c) => c.expansion === expansion.id && c.rarity === '☆☆' && getCardValue(c.card_id)?.adj !== undefined)
     for (const pack of expansion.packs.filter((p) => p.name !== 'everypack')) {
-      const cards = twoStars.filter((c) => c.pack === pack.name || c.pack === 'everypack')
+      const cards = twoStars.filter((c) => c.pack === pack.name || c.pack === 'everypack').toSorted((a, b) => adjOf(b) - adjOf(a))
       if (cards.length === 0) {
         continue
       }
-      const missing = cards.filter((c) => !owned(c))
-      const top50 = cards.filter((c) => (twoStarPosition(c.card_id) ?? Infinity) <= TOP_N)
-      const perPack = (subset: Card[]) => (subset.length && expansion.packStructure ? pullRate(subset, expansion, pack, false) : 0)
-      const values = cards.map((c) => getCardValue(c.card_id) ?? {})
-      const trainerOrRainbowCount = values.filter((v) => v.kind === 'trainer' || v.kind === 'rainbow').length
+      const wanted = cards.filter((c) => matchesFilters(c, collection, filters))
+      const tierMix = tiers.map(() => ({ total: 0, owned: 0 }))
+      for (const c of cards) {
+        const mix = tierMix[twoStarTier(c.card_id) ?? tiers.length - 1]
+        mix.total++
+        mix.owned += ownsCard(collection, c) ? 1 : 0
+      }
       result.push({
         expansionId: expansion.id,
         expansionName: expansion.name,
         packName: pack.name,
         color: pack.color,
-        cards: cards.toSorted((a, b) => adjOf(b) - adjOf(a)),
-        meanAdj: mean(cards.map(adjOf)),
-        top50Count: top50.length,
-        trainerOrRainbowCount,
-        pTrainerOrRainbow: trainerOrRainbowCount / cards.length,
-        minVotes: Math.min(...values.map((v) => v.votes ?? 0)),
-        best: cards.reduce((a, b) => (adjOf(b) > adjOf(a) ? b : a)),
-        pNew: missing.length / cards.length,
-        missing: missing.length,
-        perPackTop50: perPack(top50),
-        perPackNew: perPack(missing),
+        cards,
+        wanted,
+        missing: cards.filter((c) => !ownsCard(collection, c)).length,
+        tierMix,
+        minVotes: Math.min(...cards.map((c) => getCardValue(c.card_id)?.votes ?? 0)),
+        best: cards[0],
+        perPack: wanted.length && expansion.packStructure ? pullRate(wanted, expansion, pack, false) : 0,
       })
     }
   }
   return result
-}
-
-function mean(xs: number[]) {
-  return xs.reduce((a, b) => a + b, 0) / xs.length
 }

@@ -69,9 +69,9 @@ function Overview() {
   // The ☆☆ pick ignores the filters, so only show it when ☆☆ cards are in view (deckbuilding mode hides alternate arts like ☆☆)
   const showTwoStarPick = !filters.deckbuildingMode && filters.value === 'all' && (filters.rarity.length === 0 || filters.rarity.includes('☆☆'))
 
-  // same ranking as the packs page's "Cards I'm missing" goal
+  // same ranking as the packs page by default: any ☆☆ you are missing
   const bestTwoStarPack = useMemo(
-    () => (ownedCards.size === 0 ? undefined : getBoosterValues(ownedCards).toSorted((a, b) => b.perPackNew - a.perPackNew)[0]),
+    () => (ownedCards.size === 0 ? undefined : getBoosterValues(ownedCards).toSorted((a, b) => b.perPack - a.perPack)[0]),
     [ownedCards],
   )
 
@@ -130,11 +130,11 @@ function Overview() {
           {bestPack && bestPack.pct > 0 ? (
             <Link to="/packs" className="order-last col-span-8 md:order-none md:col-span-4 md:col-start-3 flex rounded-lg transition-opacity hover:opacity-90">
               <GradientCard title={bestPack.pack.name} percentage={bestPack.pct / 100} className="w-full" backgroundColor={bestPack.pack.color}>
-                {showTwoStarPick && bestTwoStarPack && bestTwoStarPack.perPackNew > 0 && (
+                {showTwoStarPick && bestTwoStarPack && bestTwoStarPack.perPack > 0 && (
                   // inline, not flex: flex made each text run its own column, which wrapped word by word on phones
                   <p className="mt-3 text-balance text-center text-sm text-slate-900/80">
                     For ☆☆ you're missing: <span className="font-semibold">{t(bestTwoStarPack.packName, { ns: 'common/packs' })}</span> ·{' '}
-                    {oneIn(bestTwoStarPack.perPackNew)} packs
+                    {oneIn(bestTwoStarPack.perPack)} packs
                     <ChevronRight className="ml-0.5 inline size-4 align-text-bottom" />
                   </p>
                 )}

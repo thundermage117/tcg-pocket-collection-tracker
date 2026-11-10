@@ -147,6 +147,14 @@ export function twoStarPosition(cardId: string): number | undefined {
   return twoStarPositions.get(cardId)
 }
 
+let twoStarTiers: Map<string, number> | undefined
+
+/** Tier index (0 = SSS) in the ☆☆ Elo ranking, as the Rankings page shows it. */
+export function twoStarTier(cardId: string): number | undefined {
+  twoStarTiers ??= new Map(getTwoStarRanking().map((e) => [e.card.card_id, e.tier]))
+  return twoStarTiers.get(cardId)
+}
+
 let tierLookup: { elo: Map<string, Tier>; wanted: Map<string, Tier>; wantedWithFoils: Map<string, Tier> } | undefined
 
 const tiersOf = (ranking: RankedCard[]) => new Map(ranking.map((e) => [e.card.card_id, tiers[e.tier]]))

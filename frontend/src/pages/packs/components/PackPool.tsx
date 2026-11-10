@@ -1,12 +1,13 @@
 // Personal fork: every ☆☆ a booster can give, best first.
 import { Link } from 'react-router'
 import { CardThumb } from '@/components/CardThumb'
+import { TierChip } from '@/components/TierChip'
 import { ownsCard } from '@/lib/packValue'
-import { twoStarPosition } from '@/lib/rankings'
 import { getCardValue, isProvisional, kindLabel } from '@/lib/ValueDB'
 import { useSelectedCard } from '@/services/collection/useCollection'
 import { useMainWithAlt } from '@/services/profile/useProfileCollection'
 import type { Card, ExpansionId } from '@/types'
+import { cardTier, tierChipTitle } from '../types'
 
 export function PackPool({ cards, expansionId }: { cards: Card[]; expansionId: ExpansionId }) {
   const { data: collection } = useMainWithAlt()
@@ -22,12 +23,19 @@ export function PackPool({ cards, expansionId }: { cards: Card[]; expansionId: E
               <CardThumb
                 card={card}
                 owned={ownsCard(collection, card)}
-                label={`#${twoStarPosition(card.card_id)}${isProvisional(v) ? '*' : ''}`}
+                badge={
+                  <span title={tierChipTitle(card)}>
+                    <TierChip tier={cardTier(card)} className="shadow" />
+                  </span>
+                }
                 onClick={() => setSelectedCardId(card.internal_id)}
               />
               <div className="flex justify-between text-[11px] text-neutral-400 tabular-nums">
                 <span>{v?.kind ? kindLabel[v.kind] : ''}</span>
-                <span>{v?.adj}</span>
+                <span title="Elo, adjusted for votes; * = few votes so far">
+                  {v?.adj}
+                  {isProvisional(v) ? '*' : ''}
+                </span>
               </div>
             </div>
           )

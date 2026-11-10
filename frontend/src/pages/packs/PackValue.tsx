@@ -1,14 +1,17 @@
-// Personal fork: which booster to open if the pull were a guaranteed ☆☆.
+// Personal fork: which booster to open, ranked by the chance one pack gives a ☆☆ you want.
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router'
 import { CountAltSwitch } from '@/components/CountAltSwitch'
 import { TabsFilter } from '@/components/Filters'
 import { Spinner } from '@/components/Spinner'
+import { TierChip } from '@/components/TierChip'
 import { Switch } from '@/components/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { ValueDataAge } from '@/components/ValueDataAge'
 import { useUrlFilters } from '@/hooks/useUrlFilters'
 import { getBoosterValues } from '@/lib/packValue'
+import { tiers } from '@/lib/rankings'
 import { PROVISIONAL_VOTES } from '@/lib/ValueDB'
 import { useAccount } from '@/services/account/useAccount'
 import { userQuery } from '@/services/auth/useAuth'
@@ -16,99 +19,109 @@ import { useMainWithAlt } from '@/services/profile/useProfileCollection'
 import { PackCard } from './components/PackCard'
 import { PackOdds } from './components/PackOdds'
 import { PackSummary } from './components/PackSummary'
-import { goals, type PackRow, personalSorts, type Range, type Ranges, type SortKey, sortOrder } from './types'
-
-const rangeOf = (xs: number[]): Range => ({ min: Math.min(...xs), max: Math.max(...xs) })
+import { kindOptions, type PackRow, type Range, showKind, type TargetFilters, tierLabels, tierMax, tierOptions } from './types'
 
 export default function PackValue() {
   const { data: user, isLoading: userLoading } = useQuery(userQuery)
   const { isLoading: accountLoading } = useAccount()
   const { data: collection, isLoading: collectionLoading } = useMainWithAlt()
-  // logged in, collection on its way: only the personal goal has to wait for it, the page renders now
+  // logged in, collection on its way: "only missing" has to wait for it
   const collectionPending = userLoading || (Boolean(user) && (accountLoading || collectionLoading))
-  // filters live in the URL (?goal=meanAdj&series=B&hide=1); the goal is remembered for the next visit
-  const { get, update } = useUrlFilters('packs-view', ['goal'])
-  const savedSort = sortOrder.find((key) => key === get('goal'))
+  const hasCollection = Boolean(collection) || collectionPending
+  // filters live in the URL (?tier=hot&kind=trainer&owned=1&series=B&hide=1); tier and style are remembered for the next visit
+  const { get, update } = useUrlFilters('packs-view', ['tier', 'kind'])
+  // every pack gives some ☆☆ at the same rate, so "any ☆☆" only ranks anything once owned cards drop out
+  const defaultTier = hasCollection ? 'all' : 'top'
+  const tier = tierOptions.find((x) => x === get('tier')) ?? defaultTier
+  const kind = kindOptions.find((x) => x === get('kind')) ?? 'all'
+  const onlyMissing = hasCollection && get('owned') !== '1'
   const hideComplete = get('hide') === '1'
+  const waiting = collectionPending && onlyMissing
   const [expanded, setExpanded] = useState<string | undefined>()
 
-  // missing cards is the most useful goal once we know the collection; personal goals need one,
-  // so fall back without forgetting the saved choice
-  const hasCollection = Boolean(collection) || collectionPending
-  const fallback: SortKey = hasCollection ? 'perPackNew' : 'perPackTop50'
-  const sortKey: SortKey = !savedSort || (!hasCollection && personalSorts.includes(savedSort)) ? fallback : savedSort
-  const waiting = collectionPending && personalSorts.includes(sortKey)
-
-  const all: PackRow[] = useMemo(() => {
-    const boosters = getBoosterValues(collection)
-    const byValue = boosters.toSorted((a, b) => b.meanAdj - a.meanAdj)
-    return boosters.map((b) => ({ ...b, id: `${b.expansionId}-${b.packName}`, valueRank: byValue.indexOf(b) + 1 }))
-  }, [collection])
-
-  const ranges: Ranges = useMemo(
-    () => ({
-      meanAdj: rangeOf(all.map((b) => b.meanAdj)),
-      // odds and counts start at zero so "twice as likely" looks twice as long
-      perPackTop50: rangeOf([0, ...all.map((b) => b.perPackTop50)]),
-      perPackNew: rangeOf([0, ...all.map((b) => b.perPackNew)]),
-      pTrainerOrRainbow: rangeOf([0, ...all.map((b) => b.pTrainerOrRainbow)]),
-    }),
-    [all],
+  const filters: TargetFilters = useMemo(
+    () => ({ tier, maxTier: tierMax[tier], kind: kind === 'all' ? undefined : kind, onlyMissing }),
+    [tier, kind, onlyMissing],
   )
+
+  const all: PackRow[] = useMemo(
+    () => getBoosterValues(collection, filters).map((b) => ({ ...b, id: `${b.expansionId}-${b.packName}` })),
+    [collection, filters],
+  )
+  // odds start at zero so "twice as likely" looks twice as long
+  const range: Range = useMemo(() => ({ min: 0, max: Math.max(0, ...all.map((b) => b.perPack)) }), [all])
   const seriesOptions = useMemo(() => ['All', ...new Set(all.map((b) => b.expansionId[0]))], [all])
   const series = seriesOptions.find((x) => x === get('series')) ?? 'All'
 
   const packs = all
     .filter((b) => series === 'All' || b.expansionId.startsWith(series))
-    .filter((b) => !(hideComplete && collection && b.pNew === 0))
-    .toSorted((a, b) => b[sortKey] - a[sortKey])
+    .filter((b) => !(hideComplete && collection && b.missing === 0))
+    .toSorted((a, b) => b.perPack - a.perPack)
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-12">
       <header className="mb-5">
         <h1 className="text-2xl font-semibold sm:text-3xl">Best packs</h1>
         <p className="mt-1 text-sm text-neutral-400">
-          Which pack should you open? Pick what you're after and packs are ranked by how well they deliver it.
-          {!hasCollection && ' Log in to rank packs by the ☆☆ you are still missing.'}
+          Packs ranked by how often one pack gives a ☆☆ you want. Tiers are the ☆☆ vote tiers from{' '}
+          <Link to="/rankings" className="underline underline-offset-2 hover:text-neutral-200">
+            Rankings
+          </Link>
+          .{!hasCollection && ' Log in to count only the ☆☆ you are still missing.'}
         </p>
         <ValueDataAge className="mt-2" />
       </header>
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-        <div className="flex flex-col gap-1">
-          <span className="px-0.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">I want…</span>
-          <ToggleGroup
-            type="single"
-            value={sortKey}
-            onValueChange={(v) => v && update({ goal: v === fallback ? undefined : v })}
-            className="rounded-md border-1 border-neutral-700 bg-neutral-800"
-          >
-            {sortOrder.map((key) => (
-              <ToggleGroupItem
-                key={key}
-                value={key}
-                disabled={!hasCollection && personalSorts.includes(key)}
-                title={!hasCollection && personalSorts.includes(key) ? 'Log in to use this' : undefined}
-              >
-                {goals[key].label}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="flex flex-col gap-1">
+            <span className="px-0.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Rank by chance of pulling…</span>
+            <ToggleGroup
+              type="single"
+              value={tier}
+              onValueChange={(v) => v && update({ tier: v === defaultTier ? undefined : v })}
+              className="rounded-md border-1 border-neutral-700 bg-neutral-800"
+            >
+              {tierOptions.map((key) => (
+                <ToggleGroupItem key={key} value={key} title={tierLabels[key]} className="gap-1.5 px-3">
+                  {key === 'all' ? (
+                    'Any ☆☆'
+                  ) : (
+                    <>
+                      <span className="flex gap-0.5">
+                        {tiers.slice(0, tierMax[key] + 1).map((t) => (
+                          <TierChip key={t.name} tier={t} />
+                        ))}
+                      </span>
+                      {key === 'hot' ? 'Hot' : 'Top'}
+                    </>
+                  )}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </div>
+          <TabsFilter label="Style" options={kindOptions} value={kind} show={showKind} onChange={(x) => update({ kind: x === 'all' ? undefined : x })} />
         </div>
         <div className="flex flex-wrap items-end gap-4">
           <TabsFilter label="Series" options={seriesOptions} value={series} onChange={(x) => update({ series: x === 'All' ? undefined : x })} />
           {collection && (
-            <label htmlFor="packs-hide-complete" className="flex cursor-pointer items-center gap-2 pb-2 text-sm text-neutral-300">
-              <Switch id="packs-hide-complete" checked={hideComplete} onCheckedChange={(on) => update({ hide: on ? '1' : undefined })} />
-              Hide fully owned
-            </label>
+            <>
+              <label htmlFor="packs-only-missing" className="flex cursor-pointer items-center gap-2 pb-2 text-sm text-neutral-300">
+                <Switch id="packs-only-missing" checked={onlyMissing} onCheckedChange={(on) => update({ owned: on ? undefined : '1' })} />
+                Only cards I'm missing
+              </label>
+              <label htmlFor="packs-hide-complete" className="flex cursor-pointer items-center gap-2 pb-2 text-sm text-neutral-300">
+                <Switch id="packs-hide-complete" checked={hideComplete} onCheckedChange={(on) => update({ hide: on ? '1' : undefined })} />
+                Hide fully owned
+              </label>
+            </>
           )}
           <CountAltSwitch id="packs-count-alt" className="pb-2" />
         </div>
       </div>
 
-      {!waiting && packs.length > 0 && <PackSummary pack={packs[0]} sortKey={sortKey} total={all.length} />}
-      {!waiting && <PackOdds packs={packs} sortKey={sortKey} />}
+      {!waiting && packs.length > 0 && <PackSummary pack={packs[0]} filters={filters} />}
+      {!waiting && <PackOdds packs={packs} filters={filters} />}
 
       {waiting ? (
         <div className="flex justify-center py-16">
@@ -123,9 +136,8 @@ export default function PackValue() {
               key={pack.id}
               pack={pack}
               position={i + 1}
-              sortKey={sortKey}
-              ranges={ranges}
-              total={all.length}
+              filters={filters}
+              range={range}
               expanded={expanded === pack.id}
               onToggle={() => setExpanded(expanded === pack.id ? undefined : pack.id)}
             />
@@ -137,14 +149,21 @@ export default function PackValue() {
         <summary className="cursor-pointer font-medium text-neutral-300">How this works</summary>
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>
-            Card value is an Elo score from community votes on pokemontcglivetrade. Cards with few votes are pulled toward the average so a handful of votes
+            Every ☆☆ has an Elo score from community votes on pokemontcglivetrade. Cards with few votes are pulled toward the average so a handful of votes
             can't make them look great or terrible.
           </li>
-          <li>"1 in N packs" uses the real pull odds of every slot, rare packs included. The more ☆☆ a pack shares its slots with, the rarer each one is.</li>
-          <li>Counts like "12 top-50" are out of that pack's ☆☆ list. Every ☆☆ in a pack is equally likely to be pulled.</li>
           <li>
-            "provisional" means at least one card has fewer than {PROVISIONAL_VOTES} votes, so its value may still move (usual in a set's first month). Packs
-            that can no longer be opened (Deluxe Pack: ex) are left out.
+            Tiers (SSS–E) are the ones on the Rankings ☆☆ tab: they split where the Elo jumps, so near-equal cards share a tier. Hot is SSS–S, Top is SSS–A. The
+            Overview page's Hot and Top use trade demand instead, so they can differ.
+          </li>
+          <li>
+            "1 in N packs" uses the real pull odds of every slot, rare packs included, for the ☆☆ that match the tier, style and "only missing" choice. The more
+            ☆☆ a pack shares its slots with, the rarer each one is.
+          </li>
+          <li>The strip on each pack shows how many of its ☆☆ fall in each tier; the faded part is what you already own.</li>
+          <li>
+            "provisional" means at least one card has fewer than {PROVISIONAL_VOTES} votes, so its value and tier may still move (usual in a set's first month).
+            Packs that can no longer be opened (Deluxe Pack: ex) are left out.
           </li>
         </ul>
       </details>

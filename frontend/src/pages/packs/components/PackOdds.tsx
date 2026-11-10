@@ -5,13 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { CartesianGrid, Line, LineChart, ReferenceDot, ReferenceLine, type TooltipContentProps, XAxis, YAxis } from 'recharts'
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent'
 import { type ChartConfig, ChartContainer, ChartTooltip } from '@/components/ui/chart'
-import type { PackRow, SortKey } from '../types'
-
-// Only goals with a per-pack chance have a curve; "best average card" and the trainer share are properties of the pool
-const curveGoals: Partial<Record<SortKey, string>> = {
-  perPackNew: "a ☆☆ you're missing",
-  perPackTop50: 'a top-50 ☆☆',
-}
+import { describeTarget, type PackRow, type TargetFilters } from '../types'
 
 const FREE_PACKS_PER_DAY = 2 // two pack hourglass refills a day
 const STEPS = 120
@@ -36,31 +30,31 @@ function niceCeil(x: number) {
 
 type Row = { n: number } & Record<string, number>
 
-export function PackOdds({ packs, sortKey }: { packs: PackRow[]; sortKey: SortKey }) {
+export function PackOdds({ packs, filters }: { packs: PackRow[]; filters: TargetFilters }) {
   const { t } = useTranslation('common/packs')
-  const goal = curveGoals[sortKey]
+  const goal = describeTarget(filters)
 
   const chart = useMemo(() => {
-    const live = goal ? packs.filter((p) => p[sortKey] > 0) : []
+    const live = packs.filter((p) => p.perPack > 0)
     if (live.length === 0) {
       return undefined
     }
     const best = live[0]
-    const p = best[sortKey]
+    const p = best.perPack
     // the axis runs until the best pick is all but certain; slower packs flatten out below it
     const maxN = niceCeil(Math.max(packsFor(p, 0.95), 10))
     const ns = [...new Set(Array.from({ length: STEPS + 1 }, (_, i) => Math.round((i * maxN) / STEPS)))]
     const rows: Row[] = ns.map((n) => {
       const row: Row = { n } as Row
       for (const pack of live) {
-        row[pack.id] = chanceWithin(pack[sortKey], n)
+        row[pack.id] = chanceWithin(pack.perPack, n)
       }
       return row
     })
     return { live, best, maxN, rows, half: packsFor(p, 0.5), most: packsFor(p, 0.9) }
-  }, [packs, sortKey, goal])
+  }, [packs])
 
-  if (!goal || !chart) {
+  if (!chart) {
     return null
   }
   const { live, best, maxN, rows, half, most } = chart
@@ -85,7 +79,7 @@ export function PackOdds({ packs, sortKey }: { packs: PackRow[]; sortKey: SortKe
               <span className="min-w-0 flex-1 truncate text-neutral-300">
                 {name(pack)} <span className="text-neutral-500">{pack.expansionId}</span>
               </span>
-              <span className="font-medium text-neutral-100 tabular-nums">{pct(chanceWithin(pack[sortKey], n))}</span>
+              <span className="font-medium text-neutral-100 tabular-nums">{pct(chanceWithin(pack.perPack, n))}</span>
             </li>
           ))}
         </ul>
@@ -172,7 +166,7 @@ export function PackOdds({ packs, sortKey }: { packs: PackRow[]; sortKey: SortKe
               <ReferenceDot
                 key={target}
                 x={n}
-                y={chanceWithin(best[sortKey], n)}
+                y={chanceWithin(best.perPack, n)}
                 r={4}
                 fill="var(--color-best)"
                 stroke="#1a1a1a"
@@ -191,7 +185,7 @@ export function PackOdds({ packs, sortKey }: { packs: PackRow[]; sortKey: SortKe
       </ChartContainer>
       <p className="mt-1 text-[11px] text-neutral-500">
         Chance of at least one {goal.replace(/^an? /, '')} within that many packs, from each pack's real pull odds. It assumes the odds stay put
-        {sortKey === 'perPackNew' ? '; in practice they dip slightly after each new card you pull' : ''}. Days count two free packs a day.
+        {filters.onlyMissing ? '; in practice they dip slightly after each new card you pull' : ''}. Days count two free packs a day.
       </p>
     </section>
   )
