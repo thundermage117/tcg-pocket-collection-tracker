@@ -1,4 +1,4 @@
-/* Personal fork: the overview's foil and motion (heatmap cells, Value tiers columns). Its own file so upstream's index.css stays untouched. */
+/* Personal fork: the overview's foil and motion (heatmap cells, Value tiers columns, pack map). Its own file so upstream's index.css stays untouched. */
 
 /* A holo sheen sweeps across finished cells now and then. --foil-delay (set per cell) staggers the sweeps into a
    diagonal wave. It sits under the label (z-index -1 inside the isolated cell), so the 100% / ✓ stays readable. */
@@ -55,5 +55,20 @@
 @media (prefers-reduced-motion: reduce) {
   .heat-in {
     animation: none;
+  }
+}
+
+/* The pack value map's trays, packs and tier blocks glide to their new rects when the filters change (PackValueMap
+   adds .pack-map-moving after its first layout); opacity and filter are the tier key's highlight */
+.pack-map-moving .pm-move {
+  transition-property: left, top, width, height, opacity, filter;
+  transition-duration: 0.55s, 0.55s, 0.55s, 0.55s, 0.2s, 0.2s;
+  transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pack-map-moving .pm-move {
+    transition-property: opacity, filter;
+    transition-duration: 0.2s;
   }
 }

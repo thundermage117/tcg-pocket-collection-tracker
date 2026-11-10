@@ -68,6 +68,15 @@ function useSize() {
 
 export function PackValueMap({ sets, chances, best, focusTier, packName, onOpen }: Props) {
   const [ref, size] = useSize()
+  // Tiles glide to their new place when the filters change, but only once the first layout is down: before the box is
+  // measured every rect is empty, and growing them all out of the corner on first paint would just be noise
+  const [moving, setMoving] = useState(false)
+  useEffect(() => {
+    if (size.w > 0 && !moving) {
+      const frame = requestAnimationFrame(() => setMoving(true))
+      return () => cancelAnimationFrame(frame)
+    }
+  }, [size.w, moving])
   const trays = layout(sets, (s) => s.packs.reduce((sum, p) => sum + p.missing, 0), { x: 0, y: 0, ...size })
   // nothing missing out of something in view: a pack with no cards under the filters isn't "complete"
   const inView = (set: MapSet, pack: Pack) => (chances.get(set.id)?.find((c) => c.pack === pack)?.available ?? 0) > 0
@@ -88,7 +97,7 @@ export function PackValueMap({ sets, chances, best, focusTier, packName, onOpen 
     return (
       <div
         key={pack.name}
-        className={`heat-in absolute overflow-hidden rounded-md bg-neutral-900 transition-opacity duration-200 ${lacksFocus ? 'opacity-40' : ''}`}
+        className={`heat-in pm-move absolute overflow-hidden rounded-md bg-neutral-900 ${lacksFocus ? 'opacity-40' : ''}`}
         style={{
           ...box(rect),
           boxShadow: isBest ? `inset 0 0 0 1.5px ${pack.color}, 0 0 14px -2px ${pack.color}` : `inset 0 0 0 1px ${pack.color}66`,
@@ -125,7 +134,7 @@ export function PackValueMap({ sets, chances, best, focusTier, packName, onOpen 
               <button
                 key={item.tier}
                 type="button"
-                className={`absolute flex items-start justify-start rounded-[3px] px-1 pt-0.5 font-semibold text-[11px] tabular-nums leading-tight transition-[filter,opacity] duration-200 hover:brightness-115 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-white ${foil ? 'heat-foil' : ''} ${dimmed ? 'opacity-15 saturate-50' : ''}`}
+                className={`pm-move absolute flex items-start justify-start rounded-[3px] px-1 pt-0.5 font-semibold text-[11px] tabular-nums leading-tight hover:brightness-115 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-white ${foil ? 'heat-foil' : ''} ${dimmed ? 'opacity-15 saturate-50' : ''}`}
                 style={{
                   ...box(inset(r, 0.5)),
                   backgroundColor: tier.color,
@@ -160,7 +169,7 @@ export function PackValueMap({ sets, chances, best, focusTier, packName, onOpen 
   let packIndex = 0
   return (
     <div>
-      <div ref={ref} className="relative h-[34rem] lg:h-[38rem]">
+      <div ref={ref} className={`relative h-[34rem] lg:h-[38rem] ${moving ? 'pack-map-moving' : ''}`}>
         {trays.map(({ item: set, rect }) => {
           const tray = inset(rect, GAP / 2)
           const missing = set.packs.reduce((sum, p) => sum + p.missing, 0)
@@ -169,7 +178,7 @@ export function PackValueMap({ sets, chances, best, focusTier, packName, onOpen 
           return (
             <section
               key={set.id}
-              className="absolute rounded-lg bg-neutral-950/70 ring-1 ring-neutral-700/70"
+              className="pm-move absolute rounded-lg bg-neutral-950/70 ring-1 ring-neutral-700/70"
               style={box(tray)}
               aria-label={`${set.name}: ${missing} missing`}
             >
