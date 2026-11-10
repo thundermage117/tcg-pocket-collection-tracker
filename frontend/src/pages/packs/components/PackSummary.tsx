@@ -7,7 +7,7 @@ import { ownsCard } from '@/lib/packValue'
 import { getCardNameByLang } from '@/lib/utils'
 import { useSelectedCard } from '@/services/collection/useCollection'
 import { useMainWithAlt } from '@/services/profile/useProfileCollection'
-import { cardTier, describeTarget, oneIn, type PackRow, type TargetFilters } from '../types'
+import { cardTier, describeTarget, gives, type PackRow, packOdds, type TargetFilters } from '../types'
 
 export function PackSummary({ pack, filters }: { pack: PackRow; filters: TargetFilters }) {
   const { t, i18n } = useTranslation(['common/sets', 'common/packs'])
@@ -15,6 +15,7 @@ export function PackSummary({ pack, filters }: { pack: PackRow; filters: TargetF
   const { setSelectedCardId } = useSelectedCard()
   // the best card that counts for these filters; the pack's top card when none does
   const highlight = pack.wanted[0] ?? pack.best
+  const highlightTier = cardTier(highlight)
 
   return (
     <section
@@ -35,7 +36,7 @@ export function PackSummary({ pack, filters }: { pack: PackRow; filters: TargetF
         <p className="mt-3 text-sm text-neutral-200">
           {pack.perPack > 0 ? (
             <>
-              <span className="font-semibold">{oneIn(pack.perPack)} packs</span> gives {describeTarget(filters)}
+              <span className="font-semibold">{packOdds(pack.perPack)}</span> {gives(pack.perPack)} {describeTarget(filters)}
               <span className="text-neutral-400"> ({pack.wanted.length} in this pack)</span>
             </>
           ) : (
@@ -47,7 +48,7 @@ export function PackSummary({ pack, filters }: { pack: PackRow; filters: TargetF
             {highlight === pack.wanted[0] ? (filters.onlyMissing ? "Best card you're missing" : 'Best matching card') : 'Top card'}:{' '}
             {getCardNameByLang(highlight, i18n.language)}
           </span>
-          <TierChip tier={cardTier(highlight)} className="shrink-0" />
+          {highlightTier && <TierChip tier={highlightTier} className="shrink-0" />}
         </p>
       </div>
       <CardThumb

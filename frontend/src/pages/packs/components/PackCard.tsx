@@ -1,16 +1,17 @@
-// Personal fork: one booster on the packs page — top ☆☆ cards, the chance for the chosen filters, tier mix, expandable pool.
+// Personal fork: one booster on the packs page — its best cards of the chosen rarity, the chance for the chosen filters, tier mix, expandable pool.
 import { ChevronDown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { CardThumb, SetLogo } from '@/components/CardThumb'
-import { TierChip } from '@/components/TierChip'
 import { Progress } from '@/components/ui/progress'
 import { ownsCard } from '@/lib/packValue'
-import { tiers } from '@/lib/rankings'
+import { type Tier, tiers } from '@/lib/rankings'
 import { cn } from '@/lib/utils'
 import { PROVISIONAL_VOTES } from '@/lib/ValueDB'
 import { useSelectedCard } from '@/services/collection/useCollection'
 import { useMainWithAlt } from '@/services/profile/useProfileCollection'
-import { cardTier, fill, type PackRow, packStat, type Range, type TargetFilters, tierChipTitle } from '../types'
+import type { Rarity } from '@/types'
+import { fill, type PackRow, packStat, type Range, scaleName, type TargetFilters } from '../types'
+import { CardTierBadge } from './CardTierBadge'
 import { PackPool } from './PackPool'
 
 interface Props {
@@ -32,7 +33,7 @@ export function PackCard({ pack, position, filters, range, expanded, onToggle }:
   // the thumbnails show what you'd be chasing: the best matching cards, topped up with the rest of the pool
   const preview = [...pack.wanted, ...pack.cards.filter((c) => !pack.wanted.includes(c))].slice(0, 3)
   const poolCounts = [
-    `${pack.cards.length} ☆☆`,
+    `${pack.cards.length} ${filters.rarity}`,
     collection && !complete && `${pack.missing} missing`,
     `${pack.wanted.length} match${pack.wanted.length === 1 ? 'es' : ''}`,
   ].filter(Boolean)
@@ -72,11 +73,7 @@ export function PackCard({ pack, position, filters, range, expanded, onToggle }:
               key={card.card_id}
               card={card}
               owned={ownsCard(collection, card)}
-              badge={
-                <span title={tierChipTitle(card)}>
-                  <TierChip tier={cardTier(card)} className="shadow" />
-                </span>
-              }
+              badge={<CardTierBadge card={card} />}
               onClick={() => setSelectedCardId(card.internal_id)}
             />
           ))}
@@ -91,28 +88,33 @@ export function PackCard({ pack, position, filters, range, expanded, onToggle }:
         <p className="text-xs text-neutral-500">{poolCounts.join(' · ')}</p>
       </div>
 
-      <TierMix pack={pack} showOwned={collection !== undefined} />
+      <TierMix pack={pack} rarity={filters.rarity} showOwned={collection !== undefined} />
 
-      {expanded && <PackPool cards={pack.cards} expansionId={pack.expansionId} />}
+      {expanded && <PackPool cards={pack.cards} expansionId={pack.expansionId} rarity={filters.rarity} />}
 
       <button
         type="button"
         onClick={onToggle}
         className="mt-auto flex cursor-pointer items-center justify-center gap-1 rounded-md py-1.5 text-xs text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200"
       >
-        {expanded ? 'Show less' : `Show all ${pack.cards.length} ☆☆`}
+        {expanded ? 'Show less' : `Show all ${pack.cards.length} ${filters.rarity}`}
         <ChevronDown className={cn('size-4 transition-transform', expanded && 'rotate-180')} />
       </button>
     </article>
   )
 }
 
-/** How the pack's ☆☆ split across tiers: one segment per tier, the owned part faded. */
-function TierMix({ pack, showOwned }: { pack: PackRow; showOwned: boolean }) {
-  const shown = tiers.map((tier, i) => ({ tier, ...pack.tierMix[i] })).filter((x) => x.total > 0)
-  const label = shown.map(({ tier, total, owned }) => `${tier.name}: ${total}${showOwned ? ` (${owned} owned)` : ''}`).join(', ')
+// cards nobody trades (☆☆☆, Crown Rare) have no tier: a grey segment after E
+const unranked: Tier = { name: '–', color: '#525252' }
+
+/** How the pack's cards split across tiers: one segment per tier, the owned part faded. */
+function TierMix({ pack, rarity, showOwned }: { pack: PackRow; rarity: Rarity; showOwned: boolean }) {
+  const shown = [...tiers, unranked].map((tier, i) => ({ tier, ...pack.tierMix[i] })).filter((x) => x.total > 0)
+  const label = shown
+    .map(({ tier, total, owned }) => `${tier === unranked ? 'unranked' : tier.name}: ${total}${showOwned ? ` (${owned} owned)` : ''}`)
+    .join(', ')
   return (
-    <div title={label} role="img" aria-label={`☆☆ per tier: ${label}`}>
+    <div title={`${scaleName(rarity)} tiers · ${label}`} role="img" aria-label={`${rarity} per ${scaleName(rarity)} tier: ${label}`}>
       <div className="flex h-2 gap-px overflow-hidden rounded-full">
         {shown.map(({ tier, total, owned }) => (
           <div key={tier.name} className="flex h-full" style={{ flexGrow: total }}>

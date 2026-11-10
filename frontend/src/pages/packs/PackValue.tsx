@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { ValueDataAge } from '@/components/ValueDataAge'
 import { useUrlFilters } from '@/hooks/useUrlFilters'
-import { getBoosterValues } from '@/lib/packValue'
+import { bestTierOf, getBoosterValues } from '@/lib/packValue'
 import { tiers } from '@/lib/rankings'
 import { PROVISIONAL_VOTES } from '@/lib/ValueDB'
 import { useAccount } from '@/services/account/useAccount'
@@ -19,7 +19,20 @@ import { useMainWithAlt } from '@/services/profile/useProfileCollection'
 import { PackCard } from './components/PackCard'
 import { PackOdds } from './components/PackOdds'
 import { PackSummary } from './components/PackSummary'
-import { kindOptions, type PackRow, type Range, showKind, type TargetFilters, tierLabels, tierMax, tierOptions } from './types'
+import {
+  kindOptions,
+  type PackRow,
+  type Range,
+  rarityOptions,
+  raritySlug,
+  scaleName,
+  showKind,
+  showRarity,
+  type TargetFilters,
+  tierLabel,
+  tierMax,
+  tierOptions,
+} from './types'
 
 export default function PackValue() {
   const { data: user, isLoading: userLoading } = useQuery(userQuery)
@@ -28,20 +41,27 @@ export default function PackValue() {
   // logged in, collection on its way: "only missing" has to wait for it
   const collectionPending = userLoading || (Boolean(user) && (accountLoading || collectionLoading))
   const hasCollection = Boolean(collection) || collectionPending
-  // filters live in the URL (?tier=hot&kind=trainer&owned=1&series=B&hide=1); tier and style are remembered for the next visit
-  const { get, update } = useUrlFilters('packs-view', ['tier', 'kind'])
-  // every pack gives some ☆☆ at the same rate, so "any ☆☆" only ranks anything once owned cards drop out
-  const defaultTier = hasCollection ? 'all' : 'top'
-  const tier = tierOptions.find((x) => x === get('tier')) ?? defaultTier
-  const kind = kindOptions.find((x) => x === get('kind')) ?? 'all'
+  // filters live in the URL (?rarity=3d&tier=hot&kind=trainer&owned=1&series=B&hide=1); rarity, tier and style are
+  // remembered for the next visit
+  const { get, update } = useUrlFilters('packs-view', ['rarity', 'tier', 'kind'])
+  const rarity = rarityOptions.find((r) => raritySlug[r] === get('rarity')) ?? '☆☆'
+  // global tiers: a rarity can't be Top or Hot when none of its cards reach them (no ◊ is above B)
+  const bestTier = bestTierOf(rarity)
+  const reachable = (key: (typeof tierOptions)[number]) => key === 'all' || (bestTier !== undefined && bestTier <= tierMax[key])
+  // every pack of a set gives a rarity at the same rate, so "any" only ranks anything once owned cards drop out
+  const defaultTier = hasCollection || !reachable('top') ? 'all' : 'top'
+  const wantedTier = tierOptions.find((x) => x === get('tier')) ?? defaultTier
+  const tier = reachable(wantedTier) ? wantedTier : 'all'
+  // styles are a ☆☆ thing (full art / trainer / rainbow)
+  const kind = rarity === '☆☆' ? (kindOptions.find((x) => x === get('kind')) ?? 'all') : 'all'
   const onlyMissing = hasCollection && get('owned') !== '1'
   const hideComplete = get('hide') === '1'
   const waiting = collectionPending && onlyMissing
   const [expanded, setExpanded] = useState<string | undefined>()
 
   const filters: TargetFilters = useMemo(
-    () => ({ rarity: '☆☆', tier, maxTier: tierMax[tier], kind: kind === 'all' ? undefined : kind, onlyMissing }),
-    [tier, kind, onlyMissing],
+    () => ({ rarity, tier, maxTier: tierMax[tier], kind: kind === 'all' ? undefined : kind, onlyMissing }),
+    [rarity, tier, kind, onlyMissing],
   )
 
   const all: PackRow[] = useMemo(
@@ -63,17 +83,24 @@ export default function PackValue() {
       <header className="mb-5">
         <h1 className="text-2xl font-semibold sm:text-3xl">Best packs</h1>
         <p className="mt-1 text-sm text-neutral-400">
-          Packs ranked by how often one pack gives a ☆☆ you want. Tiers are the ☆☆ vote tiers from{' '}
+          Packs ranked by how often one pack gives a card you want. ☆☆ use the vote tiers, every other rarity the Most wanted (trade demand) tiers, as on{' '}
           <Link to="/rankings" className="underline underline-offset-2 hover:text-neutral-200">
             Rankings
           </Link>
-          .{!hasCollection && ' Log in to count only the ☆☆ you are still missing.'}
+          .{!hasCollection && ' Log in to count only the cards you are still missing.'}
         </p>
         <ValueDataAge className="mt-2" />
       </header>
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div className="flex flex-wrap items-end gap-4">
+          <TabsFilter
+            label="Rarity"
+            options={rarityOptions}
+            value={rarity}
+            show={showRarity}
+            onChange={(r) => update({ rarity: r === '☆☆' ? undefined : raritySlug[r] })}
+          />
           <div className="flex flex-col gap-1">
             <span className="px-0.5 text-[10px] font-medium uppercase tracking-wider text-neutral-500">Rank by chance of pulling…</span>
             <ToggleGroup
@@ -83,9 +110,15 @@ export default function PackValue() {
               className="rounded-md border-1 border-neutral-700 bg-neutral-800"
             >
               {tierOptions.map((key) => (
-                <ToggleGroupItem key={key} value={key} title={tierLabels[key]} className="gap-1.5 px-3">
+                <ToggleGroupItem
+                  key={key}
+                  value={key}
+                  disabled={!reachable(key)}
+                  title={reachable(key) ? tierLabel(key, rarity) : `No ${rarity} is in ${key === 'hot' ? 'SSS–S' : 'SSS–A'} (${scaleName(rarity)} tiers)`}
+                  className="gap-1.5 px-3"
+                >
                   {key === 'all' ? (
-                    'Any ☆☆'
+                    `Any ${showRarity(rarity)}`
                   ) : (
                     <>
                       <span className="flex gap-0.5">
@@ -100,7 +133,9 @@ export default function PackValue() {
               ))}
             </ToggleGroup>
           </div>
-          <TabsFilter label="Style" options={kindOptions} value={kind} show={showKind} onChange={(x) => update({ kind: x === 'all' ? undefined : x })} />
+          {rarity === '☆☆' && (
+            <TabsFilter label="Style" options={kindOptions} value={kind} show={showKind} onChange={(x) => update({ kind: x === 'all' ? undefined : x })} />
+          )}
         </div>
         <div className="flex flex-wrap items-end gap-4">
           <TabsFilter label="Series" options={seriesOptions} value={series} onChange={(x) => update({ series: x === 'All' ? undefined : x })} />

@@ -54,7 +54,8 @@ export function PackOdds({ packs, filters }: { packs: PackRow[]; filters: Target
     return { live, best, maxN, rows, half: packsFor(p, 0.5), most: packsFor(p, 0.9) }
   }, [packs])
 
-  if (!chart) {
+  // a pull nearly every pack (◊ you're missing, say) is a flat line at 100%: nothing to chart
+  if (!chart || chart.most <= 2) {
     return null
   }
   const { live, best, maxN, rows, half, most } = chart
@@ -92,7 +93,8 @@ export function PackOdds({ packs, filters }: { packs: PackRow[]; filters: Target
       <h2 className="font-semibold text-base sm:text-lg">How many packs until you get {goal}?</h2>
       <p className="mt-1 text-sm text-neutral-300">
         <span className="font-medium">{name(best)}</span>: a 50% chance within <span className="font-semibold tabular-nums">{half.toLocaleString()}</span> packs
-        (≈ {days(half).toLocaleString()} days of free packs), 90% within <span className="font-semibold tabular-nums">{most.toLocaleString()}</span>.
+        (≈ {days(half).toLocaleString()} {days(half) === 1 ? 'day' : 'days'} of free packs), 90% within{' '}
+        <span className="font-semibold tabular-nums">{most.toLocaleString()}</span>.
       </p>
       <div className="mt-2 mb-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-400">
         <span className="flex items-center gap-1.5">
