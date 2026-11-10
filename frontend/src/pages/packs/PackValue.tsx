@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { CountAltSwitch } from '@/components/CountAltSwitch'
 import { TabsFilter } from '@/components/Filters'
-import { Spinner } from '@/components/Spinner'
+import { Skeleton, SkeletonGrid } from '@/components/Skeleton'
 import { Switch } from '@/components/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { ValueDataAge } from '@/components/ValueDataAge'
@@ -111,9 +111,10 @@ export default function PackValue() {
       {!waiting && <PackOdds packs={packs} sortKey={sortKey} />}
 
       {waiting ? (
-        <div className="flex justify-center py-16">
-          <Spinner size="lg" />
-        </div>
+        <>
+          <Skeleton className="mb-6 h-36" />
+          <SkeletonGrid count={6} className="gap-4 sm:grid-cols-2 lg:grid-cols-3" itemClassName="h-80" />
+        </>
       ) : packs.length === 0 ? (
         <p className="py-12 text-center text-neutral-400">No packs match these filters.</p>
       ) : (

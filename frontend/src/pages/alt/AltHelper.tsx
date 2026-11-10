@@ -6,7 +6,7 @@ import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { CardThumb } from '@/components/CardThumb'
-import { Spinner } from '@/components/Spinner'
+import { CardGridSkeleton, SkeletonGrid } from '@/components/Skeleton'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { useUndoTransferToast } from '@/hooks/useUndoToast'
@@ -294,7 +294,10 @@ export default function AltHelper() {
       </header>
 
       {!data ? (
-        <Spinner size="md" />
+        <div role="status" aria-label="Loading">
+          <SkeletonGrid count={3} className="mb-6 gap-3 sm:grid-cols-3" itemClassName="h-20" />
+          <CardGridSkeleton count={16} className="grid-cols-4 gap-x-2 gap-y-3 sm:grid-cols-6 md:grid-cols-8" />
+        </div>
       ) : (
         <>
           <Section

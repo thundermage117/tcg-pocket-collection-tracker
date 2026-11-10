@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate, useParams } from 'react-router'
+import { CardGridSkeleton } from '@/components/Skeleton'
 import { Spinner } from '@/components/Spinner'
 import { FriendIdDisplay } from '@/components/ui/friend-id-display'
 import { publicAccountQuery, useAccount } from '@/services/account/useAccount.ts'
@@ -9,11 +10,13 @@ import { publicCollectionQuery, useCollection } from '@/services/collection/useC
 import type { CollectionRow } from '@/types'
 import CollectionCards from './CollectionCards'
 
+const CollectionSkeleton = () => <CardGridSkeleton className="mx-auto max-w-[900px] px-1 pt-12" />
+
 function OwnCollection() {
   const { data: account, isLoading: isLoadingAccount } = useAccount()
   const { data: cards = new Map<number, CollectionRow>(), isLoading: isLoadingCards } = useCollection()
   if (isLoadingAccount || isLoadingCards) {
-    return <Spinner size="lg" overlay />
+    return <CollectionSkeleton /> // personal fork: was a spinner
   }
   return <CollectionCards cards={cards} account={account} />
 }
@@ -71,7 +74,7 @@ export default function Collection() {
   }, [isLoadingAccount, rawFriendId, account?.friend_id, navigate, search])
 
   if (isLoadingAccount) {
-    return <Spinner size="lg" overlay />
+    return <CollectionSkeleton /> // personal fork: was a spinner
   }
 
   const friendId = rawFriendId ?? account?.friend_id

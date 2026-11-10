@@ -6,7 +6,7 @@ import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigationType, useSearchParams } from 'react-router'
 import { DropdownFilter, TabsFilter } from '@/components/Filters'
-import { Spinner } from '@/components/Spinner'
+import { Skeleton, SkeletonGrid } from '@/components/Skeleton'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { getExpansionById } from '@/lib/CardsDB'
@@ -154,7 +154,14 @@ export default function Pokedex() {
   }
 
   if (isLoading) {
-    return <Spinner size="lg" overlay />
+    // the hero, the bar and a screen of tiles, in the grid's own columns
+    return (
+      <main role="status" aria-label="Loading" className="mx-auto max-w-7xl px-4 pb-12">
+        <Skeleton className="mb-6 h-80 rounded-2xl sm:h-[30rem]" />
+        <Skeleton className="mb-3 h-10" />
+        <SkeletonGrid count={24} className="grid-cols-4 gap-2 sm:grid-cols-5 sm:gap-3 md:grid-cols-6 lg:grid-cols-8" itemClassName="aspect-[3/4] rounded-lg" />
+      </main>
+    )
   }
 
   const { list, ownedOf, matches, filtered, forms } = dexMatcher(filters, collection)
