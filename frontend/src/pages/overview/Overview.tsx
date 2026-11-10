@@ -128,7 +128,11 @@ function Overview() {
           </div>
           {/* Personal fork: links to the packs page, and names its ☆☆ pick so the two answers can't silently disagree */}
           {bestPack && bestPack.pct > 0 ? (
-            <Link to="/packs" className="order-last col-span-8 md:order-none md:col-span-4 md:col-start-3 flex rounded-lg transition-opacity hover:opacity-90">
+            // explicit tier and style: a bare /packs reopens whatever was last picked there, which may not be the pick named here
+            <Link
+              to="/packs?tier=all&kind=all"
+              className="order-last col-span-8 md:order-none md:col-span-4 md:col-start-3 flex rounded-lg transition-opacity hover:opacity-90"
+            >
               <GradientCard title={bestPack.pack.name} percentage={bestPack.pct / 100} className="w-full" backgroundColor={bestPack.pack.color}>
                 {showTwoStarPick && bestTwoStarPack && bestTwoStarPack.perPack > 0 && (
                   // inline, not flex: flex made each text run its own column, which wrapped word by word on phones
