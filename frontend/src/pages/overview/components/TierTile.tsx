@@ -24,7 +24,7 @@ export function TierTile({ counts, value, rarity, className }: Props) {
   return (
     <div className={`flex flex-col rounded-lg border-1 border-neutral-700 border-solid bg-neutral-800 p-3 sm:p-5 ${className ?? ''}`}>
       <Link to={`/rankings?${params}`} className="mb-2 text-center font-bold text-base transition-colors hover:text-white sm:mb-3 sm:text-lg md:text-xl">
-        Wanted tiers
+        Value tiers
         <ChevronRight className="ml-0.5 inline size-4 align-middle text-neutral-400" />
       </Link>
       {shown.length === 0 ? (
