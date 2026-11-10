@@ -126,24 +126,27 @@ function Overview() {
             <h2 className="mt-2 text-balance text-center text-neutral-300 text-xs sm:mt-6 sm:text-sm sm:text-white">{t('numberOfCopies-single')}</h2>
             {filters.value !== 'all' && <p className="mt-1 text-center text-neutral-400 text-xs">{valueLabels[filters.value]}</p>}
           </div>
-          {/* Personal fork: links to the packs page, and names its ☆☆ pick so the two answers can't silently disagree */}
+          {/* Personal fork: the card is upstream's every-rarity pick; the ☆☆ pick is its own link to the packs page, which ranks only ☆☆ */}
           {bestPack && bestPack.pct > 0 ? (
-            // explicit tier and style: a bare /packs reopens whatever was last picked there, which may not be the pick named here
-            <Link
-              to="/packs?tier=all&kind=all"
-              className="order-last col-span-8 md:order-none md:col-span-4 md:col-start-3 flex rounded-lg transition-opacity hover:opacity-90"
+            <GradientCard
+              title={bestPack.pack.name}
+              percentage={bestPack.pct / 100}
+              className="order-last col-span-8 md:order-none md:col-span-4 md:col-start-3"
+              backgroundColor={bestPack.pack.color}
             >
-              <GradientCard title={bestPack.pack.name} percentage={bestPack.pct / 100} className="w-full" backgroundColor={bestPack.pack.color}>
-                {showTwoStarPick && bestTwoStarPack && bestTwoStarPack.perPack > 0 && (
+              {showTwoStarPick && bestTwoStarPack && bestTwoStarPack.perPack > 0 && (
+                // explicit tier and style: a bare /packs reopens whatever was last picked there, which may not be the pick named here
+                <Link
+                  to="/packs?tier=all&kind=all"
                   // inline, not flex: flex made each text run its own column, which wrapped word by word on phones
-                  <p className="mt-3 text-balance text-center text-sm text-slate-900/80">
-                    For ☆☆ you're missing: <span className="font-semibold">{t(bestTwoStarPack.packName, { ns: 'common/packs' })}</span> ·{' '}
-                    {oneIn(bestTwoStarPack.perPack)} packs
-                    <ChevronRight className="ml-0.5 inline size-4 align-text-bottom" />
-                  </p>
-                )}
-              </GradientCard>
-            </Link>
+                  className="mt-3 text-balance rounded-full bg-white/35 px-3 py-1 text-center text-sm text-slate-900 transition-colors hover:bg-white/55"
+                >
+                  Best pack for ☆☆ you're missing: <span className="font-semibold">{t(bestTwoStarPack.packName, { ns: 'common/packs' })}</span> ·{' '}
+                  {oneIn(bestTwoStarPack.perPack)} packs
+                  <ChevronRight className="ml-0.5 inline size-4 align-text-bottom" />
+                </Link>
+              )}
+            </GradientCard>
           ) : (
             // Nothing missing in any openable pack: no pick to make
             <div className="order-last col-span-8 md:order-none md:col-span-4 md:col-start-3 flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 bg-neutral-800 border-solid p-4 sm:p-8">
