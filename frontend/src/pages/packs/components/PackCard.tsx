@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import { PROVISIONAL_VOTES } from '@/lib/ValueDB'
 import { useSelectedCard } from '@/services/collection/useCollection'
 import { useMainWithAlt } from '@/services/profile/useProfileCollection'
-import { fill, type PackRow, packStat, type Range, scaleName, type TargetFilters } from '../types'
+import { fill, type PackRow, packStat, type Range, rarityCount, scaleName, type TargetFilters } from '../types'
 import { CardTierBadge } from './CardTierBadge'
 import { PackPool } from './PackPool'
 
@@ -32,7 +32,7 @@ export function PackCard({ pack, position, filters, range, expanded, onToggle }:
   // the thumbnails show what you'd be chasing: the best matching cards, topped up with the rest of the pool
   const preview = [...pack.wanted, ...pack.cards.filter((c) => !pack.wanted.includes(c))].slice(0, 3)
   const poolCounts = [
-    `${pack.cards.length} ${filters.rarity}`,
+    rarityCount(pack.cards.length, filters.rarity),
     collection && !complete && `${pack.missing} missing`,
     `${pack.wanted.length} match${pack.wanted.length === 1 ? 'es' : ''}`,
   ].filter(Boolean)
@@ -89,14 +89,18 @@ export function PackCard({ pack, position, filters, range, expanded, onToggle }:
 
       <TierMix pack={pack} rarity={filters.rarity} showOwned={collection !== undefined} />
 
-      {expanded && <PackPool cards={pack.cards} expansionId={pack.expansionId} rarity={filters.rarity} />}
+      {expanded && <PackPool cards={pack.cards} wanted={pack.wanted} expansionId={pack.expansionId} rarity={filters.rarity} />}
 
       <button
         type="button"
         onClick={onToggle}
         className="mt-auto flex cursor-pointer items-center justify-center gap-1 rounded-md py-1.5 text-xs text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200"
       >
-        {expanded ? 'Show less' : `Show all ${pack.cards.length} ${filters.rarity}`}
+        {expanded
+          ? 'Show less'
+          : filters.rarity === 'all'
+            ? `Show the ${pack.wanted.length} that count`
+            : `Show all ${rarityCount(pack.cards.length, filters.rarity)}`}
         <ChevronDown className={cn('size-4 transition-transform', expanded && 'rotate-180')} />
       </button>
     </article>
@@ -109,6 +113,7 @@ const unranked: Tier = { name: '–', color: '#525252' }
 /** How the pack's cards split across tiers: one segment per tier, the owned part faded. */
 function TierMix({ pack, rarity, showOwned }: { pack: PackRow; rarity: PackRarity; showOwned: boolean }) {
   const shown = [...tiers, unranked].map((tier, i) => ({ tier, ...pack.tierMix[i] })).filter((x) => x.total > 0)
+  const cardCount = shown.reduce((sum, x) => sum + x.total, 0)
   const label = shown
     .map(({ tier, total, owned }) => `${tier === unranked ? 'unranked' : tier.name}: ${total}${showOwned ? ` (${owned} owned)` : ''}`)
     .join(', ')
@@ -125,7 +130,8 @@ function TierMix({ pack, rarity, showOwned }: { pack: PackRow; rarity: PackRarit
       <div className="mt-1 flex gap-px text-[10px] font-semibold text-neutral-500">
         {shown.map(({ tier, total }) => (
           <span key={tier.name} className="truncate text-center" style={{ flexGrow: total, flexBasis: 0 }}>
-            {tier.name}
+            {/* a sliver can't fit its name, which would only collide with its neighbour's; the hover text lists every tier */}
+            {total / cardCount >= 0.07 ? tier.name : ''}
           </span>
         ))}
       </div>

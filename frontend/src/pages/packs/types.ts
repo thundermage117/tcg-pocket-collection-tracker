@@ -2,7 +2,7 @@
 import { type BoosterValue, matchesFilters, type PackFilters, type PackRarity } from '@/lib/packValue'
 import { tierFor, tiers, twoStarPosition } from '@/lib/rankings'
 import { demandScore, getCardValue, kindLabel, type TwoStarKind } from '@/lib/ValueDB'
-import type { Card, Rarity } from '@/types'
+import type { Card } from '@/types'
 
 export interface PackRow extends BoosterValue {
   id: string
@@ -14,11 +14,12 @@ export interface Range {
   max: number
 }
 
-// Every rarity a booster can give, in the order the game lists them; promos never come from a booster
-export const rarityOptions: Rarity[] = ['◊', '◊◊', '◊◊◊', '◊◊◊◊', '☆', '☆☆', '☆☆☆', '✵', '✵✵', 'Crown Rare']
+// Every rarity a booster can give, in the order the game lists them, after 'all'; promos never come from a booster
+export const rarityOptions: PackRarity[] = ['all', '◊', '◊◊', '◊◊◊', '◊◊◊◊', '☆', '☆☆', '☆☆☆', '✵', '✵✵', 'Crown Rare']
 
 // ?rarity= values, readable in a URL where the symbols would be percent-escaped
-export const raritySlug: Record<Rarity, string> = {
+export const raritySlug: Record<PackRarity, string> = {
+  all: 'all',
   '◊': '1d',
   '◊◊': '2d',
   '◊◊◊': '3d',
@@ -32,7 +33,11 @@ export const raritySlug: Record<Rarity, string> = {
   P: 'promo',
 }
 
-export const showRarity = (r: Rarity) => (r === 'Crown Rare' ? 'Crown' : r)
+export const showRarity = (r: PackRarity) => (r === 'all' ? 'All' : r === 'Crown Rare' ? 'Crown' : r)
+
+/** The rarity as a noun in a sentence: "a Hot ◊◊◊", "a top-tier card", "12 ☆☆", "40 cards". */
+export const rarityNoun = (r: PackRarity) => (r === 'all' ? 'card' : r)
+export const rarityCount = (n: number, r: PackRarity) => (r === 'all' ? `${n} card${n === 1 ? '' : 's'}` : `${n} ${r}`)
 
 /** Which tier scale a rarity is judged by: ☆☆ by community vote Elo, every other rarity by trade demand. */
 export const scaleName = (r: PackRarity) => (r === '☆☆' ? 'vote' : r === 'all' ? 'vote (☆☆) or Most wanted' : 'Most wanted')
@@ -41,8 +46,8 @@ export const scaleName = (r: PackRarity) => (r === '☆☆' ? 'vote' : r === 'al
 export const tierOptions = ['all', 'top', 'hot'] as const
 export type TierOption = (typeof tierOptions)[number]
 
-export const tierLabel = (key: TierOption, r: Rarity) =>
-  key === 'all' ? `Any ${showRarity(r)}` : `${key === 'hot' ? 'Hot (SSS–S)' : 'Top tiers (SSS–A)'} by ${scaleName(r)} tier`
+export const tierLabel = (key: TierOption, r: PackRarity) =>
+  key === 'all' ? `Any ${r === 'all' ? 'card' : showRarity(r)}` : `${key === 'hot' ? 'Hot (SSS–S)' : 'Top tiers (SSS–A)'} by ${scaleName(r)} tier`
 
 // Lowest tier each option keeps, as an index into `tiers` (0 = SSS, 3 = A)
 export const tierMax: Record<TierOption, number> = { all: Number.POSITIVE_INFINITY, top: 3, hot: 2 }
@@ -80,7 +85,7 @@ export interface TargetFilters extends PackFilters {
 
 /** What a pack is ranked on, e.g. "a Hot trainer ☆☆ you're missing" or "a top-tier ◊◊◊"; shared by the cards, the banner and the chart. */
 export function describeTarget({ rarity, tier, kind, onlyMissing }: TargetFilters) {
-  const words = [tier === 'hot' ? 'Hot' : tier === 'top' ? 'top-tier' : '', kind ? kindLabel[kind as TwoStarKind].toLowerCase() : '', rarity]
+  const words = [tier === 'hot' ? 'Hot' : tier === 'top' ? 'top-tier' : '', kind ? kindLabel[kind as TwoStarKind].toLowerCase() : '', rarityNoun(rarity)]
   const phrase = words.filter(Boolean).join(' ')
   return `a ${phrase}${onlyMissing ? " you're missing" : ''}`
 }
@@ -91,9 +96,9 @@ export function packStat(pack: PackRow, filters: TargetFilters) {
     return { stat: packOdds(pack.perPack), caption: `${gives(pack.perPack)} ${describeTarget(filters)}` }
   }
   if (filters.onlyMissing && pack.missing === 0) {
-    return { stat: 'None left', caption: `you own every ${filters.rarity} here` }
+    return { stat: 'None left', caption: `you own every ${rarityNoun(filters.rarity)} here` }
   }
   return filters.onlyMissing && pack.cards.some((c) => matchesFilters(c, undefined, filters))
-    ? { stat: 'None left', caption: `you own every ${filters.rarity} here that matches` }
-    : { stat: 'None', caption: `no ${filters.rarity} here match` }
+    ? { stat: 'None left', caption: `you own every ${rarityNoun(filters.rarity)} here that matches` }
+    : { stat: 'None', caption: `no ${rarityNoun(filters.rarity)} here match${filters.rarity === 'all' ? 'es' : ''}` }
 }

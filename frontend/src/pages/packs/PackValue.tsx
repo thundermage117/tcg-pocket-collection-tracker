@@ -52,8 +52,9 @@ export default function PackValue() {
   // global tiers: a rarity can't be Top or Hot when none of its cards reach them (no ◊ is above B)
   const bestTier = bestTierOf(rarity)
   const reachable = (key: (typeof tierOptions)[number]) => key === 'all' || (bestTier !== undefined && bestTier <= tierMax[key])
-  // every pack of a set gives a rarity at the same rate, so "any" only ranks anything once owned cards drop out
-  const defaultTier = hasCollection || !reachable('top') ? 'all' : 'top'
+  // every pack of a set gives a rarity at the same rate, so "any" only ranks anything once owned cards drop out; across
+  // every rarity it hardly ranks even then (a pack nearly always has some common you're missing), so All starts on Top
+  const defaultTier = rarity === 'all' || (!hasCollection && reachable('top')) ? 'top' : 'all'
   const wantedTier = tierOptions.find((x) => x === get('tier')) ?? defaultTier
   const tier = reachable(wantedTier) ? wantedTier : 'all'
   // styles are a ☆☆ thing (full art / trainer / rainbow)
@@ -132,7 +133,7 @@ export default function PackValue() {
                   className="gap-1.5 px-3"
                 >
                   {key === 'all' ? (
-                    `Any ${showRarity(rarity)}`
+                    tierLabel('all', rarity)
                   ) : (
                     <>
                       <span className="flex gap-0.5">
@@ -199,6 +200,10 @@ export default function PackValue() {
           <li>
             Most wanted tiers are shared by every rarity, so a common rarity can't reach the top ones: no ◊ is above B and no ◊◊ above A, so Top or Hot is
             switched off there. ☆☆☆ and Crown Rare can't be traded and have no tier. Hot is SSS–S, Top is SSS–A.
+          </li>
+          <li>
+            All counts every rarity at once, each card on its own scale (☆☆ by vote, the rest by Most wanted), so "Top" means any card in its scale's SSS–A. It
+            starts on Top: with every rarity, nearly every pack has some common you're missing.
           </li>
           <li>
             "1 in N packs" uses the real pull odds of every slot, rare packs included, for the cards that match the rarity, tier, style and "only missing"
