@@ -29,6 +29,9 @@ interface Props {
 // What a cell shows: completion %, or how many cards are still missing
 type CellMode = 'pct' | 'left'
 
+// What sizes a pack on the map: cards missing from it, or how many of them one pack gives on average
+type MapSize = 'missing' | 'odds'
+
 interface Cell {
   collected: number
   available: number
@@ -158,6 +161,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
   // The pack value map is local: Overview owns cellMode (it lives in the URL) and only knows 'pct' | 'left'. Phones keep
   // the grid, where thirty-odd packs would shrink the smaller ones' tiles to slivers below a usable tap target.
   const [mapOn, setMapOn] = useState(false)
+  const [mapSize, setMapSize] = useState<MapSize>('missing')
   const showMap = mapOn && !isMobile
   // The map's key picks out one tier across every pack: hovering previews it, a click pins it until clicked again
   const [hoverTier, setHoverTier] = useState<number>()
@@ -191,7 +195,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
 
   const openable = expansions.filter((e) => e.openable)
   // Memoized: scrolling and selecting re-render the table
-  const { available, collected, missingCards, packGaps } = useMemo(() => {
+  const { available, collected, missingCards } = useMemo(() => {
     const openableIds = new Set(expansions.filter((e) => e.openable).map((e) => e.id))
     const openableAvailable = availableCards.filter((c) => openableIds.has(c.expansion))
     const openableCollected = collectedCards.filter((c) => openableIds.has(c.expansion))
@@ -199,9 +203,10 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
       available: countByCell(openableAvailable),
       collected: countByCell(openableCollected),
       missingCards: missingByCell(openableAvailable, openableCollected),
-      packGaps: getPackTierMap(availableCards, collectedCards),
     }
   }, [availableCards, collectedCards])
+  // odds are a pull rate per missing card, so they're only worked out while the map is sized by them
+  const packGaps = useMemo(() => getPackTierMap(availableCards, collectedCards, mapSize === 'odds'), [availableCards, collectedCards, mapSize])
 
   const cell = (row: string, col: string): Cell | undefined => {
     const n = available.get(`${row}|${col}`) ?? 0
@@ -465,7 +470,12 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
         </div>
         <p className="text-neutral-400 text-xs">
           {showMap ? (
-            "A pack's size is how many cards you're missing from it, coloured by value tier. Click a block to open that tier on Rankings; point at a tier below to find it in every pack."
+            <>
+              {mapSize === 'odds'
+                ? "A pack's size is how many cards you're missing one pack gives on average, coloured by value tier."
+                : "A pack's size is how many cards you're missing from it, coloured by value tier."}{' '}
+              Click a block to open that tier on Rankings; point at a tier below to find it in every pack.
+            </>
           ) : (
             <>
               "New card" is the chance one pack gives a card you're missing. <span className="md:hidden">Tap for details.</span>
@@ -474,41 +484,60 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
           )}
         </p>
       </div>
-      <ul className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-neutral-400 text-xs" aria-label="Colour key">
-        {showMap ? (
-          mapTiers.map((i) => (
-            <li key={i}>
-              <button
-                type="button"
-                className={`-mx-1 flex items-center gap-1 rounded px-1 py-0.5 transition-[opacity,background-color] hover:bg-neutral-700/60 ${pinnedTier === i ? 'bg-neutral-700 text-neutral-100' : ''} ${focusTier !== undefined && focusTier !== i ? 'opacity-50' : ''}`}
-                onMouseEnter={() => setHoverTier(i)}
-                onMouseLeave={() => setHoverTier(undefined)}
-                onFocus={() => setHoverTier(i)}
-                onBlur={() => setHoverTier(undefined)}
-                onClick={() => setPinnedTier(pinnedTier === i ? undefined : i)}
-                aria-pressed={pinnedTier === i}
-                aria-label={`Highlight ${tierOf(i).name} in every pack`}
-              >
-                <span className="size-3 rounded-sm" style={{ backgroundColor: tierOf(i).color }} />
-                {tierOf(i).name}
-              </button>
-            </li>
-          ))
-        ) : (
-          <>
-            {legend[cellMode].map(([swatch, label]) => (
-              <li key={swatch} className="flex items-center gap-1">
-                <span className="size-3 rounded-sm" style={{ backgroundColor: swatches[swatch].backgroundColor }} />
-                {label}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 text-neutral-400 text-xs" aria-label="Colour key">
+          {showMap ? (
+            mapTiers.map((i) => (
+              <li key={i}>
+                <button
+                  type="button"
+                  className={`-mx-1 flex items-center gap-1 rounded px-1 py-0.5 transition-[opacity,background-color] hover:bg-neutral-700/60 ${pinnedTier === i ? 'bg-neutral-700 text-neutral-100' : ''} ${focusTier !== undefined && focusTier !== i ? 'opacity-50' : ''}`}
+                  onMouseEnter={() => setHoverTier(i)}
+                  onMouseLeave={() => setHoverTier(undefined)}
+                  onFocus={() => setHoverTier(i)}
+                  onBlur={() => setHoverTier(undefined)}
+                  onClick={() => setPinnedTier(pinnedTier === i ? undefined : i)}
+                  aria-pressed={pinnedTier === i}
+                  aria-label={`Highlight ${tierOf(i).name} in every pack`}
+                >
+                  <span className="size-3 rounded-sm" style={{ backgroundColor: tierOf(i).color }} />
+                  {tierOf(i).name}
+                </button>
               </li>
-            ))}
-            <li className="flex items-center gap-1">
-              <span className="size-1.5 rounded-full bg-amber-400" />
-              1–2 tradable cards left
-            </li>
-          </>
+            ))
+          ) : (
+            <>
+              {legend[cellMode].map(([swatch, label]) => (
+                <li key={swatch} className="flex items-center gap-1">
+                  <span className="size-3 rounded-sm" style={{ backgroundColor: swatches[swatch].backgroundColor }} />
+                  {label}
+                </li>
+              ))}
+              <li className="flex items-center gap-1">
+                <span className="size-1.5 rounded-full bg-amber-400" />
+                1–2 tradable cards left
+              </li>
+            </>
+          )}
+        </ul>
+        {showMap && (
+          <ToggleGroup
+            type="single"
+            value={mapSize}
+            onValueChange={(v) => v && setMapSize(v as MapSize)}
+            className="gap-0.5 rounded-md border-1 border-neutral-700 p-0.5"
+            aria-label="Pack size"
+          >
+            <span className="px-1.5 text-neutral-400 text-xs">Size</span>
+            <ToggleGroupItem value="missing" className="h-6 px-2 text-xs" aria-label="Size by cards missing">
+              Cards missing
+            </ToggleGroupItem>
+            <ToggleGroupItem value="odds" className="h-6 px-2 text-xs" aria-label="Size by new cards per pack">
+              Pull odds
+            </ToggleGroupItem>
+          </ToggleGroup>
         )}
-      </ul>
+      </div>
       {showMap && (
         <PackValueMap
           sets={mapSets()}
@@ -516,6 +545,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
           best={bestChance([...chances.values()].flat())?.pack}
           focusTier={focusTier}
           fadeLow={!sortByValue}
+          sizeBy={mapSize}
           packName={packName}
           onOpen={(expansion, pack) => openCollection(expansion, 'all', (chances.get(expansion)?.length ?? 0) > 1 ? pack.name : undefined)}
           onOpenTier={openTier}

@@ -9,7 +9,7 @@ import { type Tier, tiers } from '@/lib/rankings'
 import { packArtworkUrl } from '@/pages/overview/components/BestPackCard'
 import { MissingThumbs, previewCount } from '@/pages/overview/components/MissingThumbs'
 import type { PackChance } from '@/pages/overview/packChances'
-import type { PackGap } from '@/pages/overview/packMap'
+import type { PackGap, TierGap } from '@/pages/overview/packMap'
 import { type Rect, squarify } from '@/pages/overview/squarify'
 import type { Card, ExpansionId, Pack } from '@/types'
 import './heatmap.css'
@@ -26,6 +26,7 @@ interface Props {
   best?: Pack // the overview's pick, ringed in its pack colour
   focusTier?: number // the key's highlighted tier: other tiers' blocks fade back
   fadeLow: boolean // Value shows every card: D, E and unranked blocks step back so the top tiers carry the map
+  sizeBy: 'missing' | 'odds' // cards missing, or how many of them one pack gives on average (rare tiers shrink to their pull odds)
   packName: (pack: Pack) => string
   onOpen: (expansion: ExpansionId, pack: Pack) => void // a pack's missing cards
   onOpenTier: (expansion: ExpansionId, tier: number) => void // a set's missing cards of one tier
@@ -69,7 +70,11 @@ function useSize() {
   return [ref, size] as const
 }
 
-export function PackValueMap({ sets, chances, best, focusTier, fadeLow, packName, onOpen, onOpenTier }: Props) {
+export function PackValueMap({ sets, chances, best, focusTier, fadeLow, sizeBy, packName, onOpen, onOpenTier }: Props) {
+  const packSize = (p: PackGap) => (sizeBy === 'odds' ? p.odds : p.missing)
+  const tierSize = (t: TierGap) => (sizeBy === 'odds' ? t.odds : t.cards.length)
+  // "≈0.12 per pack" next to a count, in odds mode
+  const perPack = (odds: number) => (sizeBy === 'odds' ? ` · ≈${odds < 0.01 ? odds.toFixed(3) : odds.toFixed(2)} per pack` : '')
   const [ref, size] = useSize()
   // Tiles glide to their new place when the filters change, but only once the first layout is down: before the box is
   // measured every rect is empty, and growing them all out of the corner on first paint would just be noise
@@ -80,7 +85,7 @@ export function PackValueMap({ sets, chances, best, focusTier, fadeLow, packName
       return () => cancelAnimationFrame(frame)
     }
   }, [size.w, moving])
-  const trays = layout(sets, (s) => s.packs.reduce((sum, p) => sum + p.missing, 0), { x: 0, y: 0, ...size })
+  const trays = layout(sets, (s) => s.packs.reduce((sum, p) => sum + packSize(p), 0), { x: 0, y: 0, ...size })
   // nothing missing out of something in view: a pack with no cards under the filters isn't "complete"
   const inView = (set: MapSet, pack: Pack) => (chances.get(set.id)?.find((c) => c.pack === pack)?.available ?? 0) > 0
   const complete = sets.flatMap((s) => s.packs.filter((p) => p.missing === 0 && inView(s, p.pack)).map((p) => ({ set: s, pack: p.pack })))
@@ -115,7 +120,7 @@ export function PackValueMap({ sets, chances, best, focusTier, fadeLow, packName
             style={{ height: PACK_HEAD + 2 }}
             onClick={() => onOpen(set.id, pack)}
             data-tooltip-id="pack-value-map"
-            data-tooltip-content={`${set.name} · ${name}: ${gap.missing} missing${chance ? ` · ${formatChance(chance.pct)} chance of a new card` : ''}`}
+            data-tooltip-content={`${set.name} · ${name}: ${gap.missing} missing${perPack(gap.odds)}${chance ? ` · ${formatChance(chance.pct)} chance of a new card` : ''}`}
             aria-label={`${name}: ${gap.missing} missing`}
           >
             <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: pack.color }} />
@@ -123,7 +128,7 @@ export function PackValueMap({ sets, chances, best, focusTier, fadeLow, packName
             {chance && rect.w >= 120 && <span className="shrink-0 text-neutral-400 tabular-nums">{formatChance(chance.pct)}</span>}
           </button>
         )}
-        {layout(gap.byTier, (t) => t.cards.length, body)
+        {layout(gap.byTier, tierSize, body)
           // keep the tier order on screen: SSS first, then down, whatever the layout's size order was
           .toSorted((a, b) => a.item.tier - b.item.tier)
           .map(({ item, rect: r }) => {
@@ -151,7 +156,7 @@ export function PackValueMap({ sets, chances, best, focusTier, fadeLow, packName
                 // a ranked tier opens on Rankings, which lists exactly those cards; unranked ones have no tier there
                 onClick={() => (tierOf(item.tier) === unrankedTier ? onOpen(set.id, pack) : onOpenTier(set.id, item.tier))}
                 data-tooltip-id="pack-value-map"
-                data-tooltip-content={`${set.name} · ${name} — ${tier === unrankedTier ? 'unranked' : tier.name}: ${n} missing`}
+                data-tooltip-content={`${set.name} · ${name} — ${tier === unrankedTier ? 'unranked' : tier.name}: ${n} missing${perPack(item.odds)}`}
                 data-gap={`${set.id}|${pack.name}|${item.tier}`}
                 aria-label={`${name}: ${n} ${tier === unrankedTier ? 'unranked' : tier.name} missing`}
               >
@@ -196,7 +201,7 @@ export function PackValueMap({ sets, chances, best, focusTier, fadeLow, packName
                   <span className="ml-auto shrink-0 text-neutral-500 tabular-nums">{missing}</span>
                 </header>
               )}
-              {layout(set.packs, (p) => p.missing, inner).map(({ item, rect: r }) => renderPack(set, item, inset(r, 1), packIndex++))}
+              {layout(set.packs, packSize, inner).map(({ item, rect: r }) => renderPack(set, item, inset(r, 1), packIndex++))}
             </section>
           )
         })}
