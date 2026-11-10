@@ -7,8 +7,8 @@ import { allSpecies, formArtworkId, speciesKey, spriteUrl } from '@/lib/pokedex'
 import { cn } from '@/lib/utils'
 import type { Card, Pack, Rarity } from '@/types'
 
-// Which card names the pack's Pokémon: its showiest printing first (Crown, ☆☆☆, ☆☆), the set's headline Pokémon
-const coverRarities: Rarity[] = ['Crown Rare', '☆☆☆', '☆☆', '✵✵', '✵', '☆']
+// Which card names the pack's Pokémon: its ☆☆☆ printing first, then ☆☆ (never the Crown: its Pokémon isn't the pack's headline)
+const coverRarities: Rarity[] = ['☆☆☆', '☆☆', '✵✵', '✵', '☆']
 
 const pickCover = (cards: Card[]) => coverRarities.flatMap((r) => cards.filter((c) => c.rarity === r))[0]
 
