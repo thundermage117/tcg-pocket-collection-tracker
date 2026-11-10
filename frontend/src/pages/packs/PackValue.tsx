@@ -2,7 +2,7 @@
 // you're missing one pack gives on average (Completion).
 
 import { useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { CountAltSwitch } from '@/components/CountAltSwitch'
 import { TabsFilter } from '@/components/Filters'
@@ -23,6 +23,7 @@ import { PackOdds } from './components/PackOdds'
 import { PackSummary } from './components/PackSummary'
 import {
   completionRarityOptions,
+  describeTarget,
   goalLabels,
   goalOptions,
   kindOptions,
@@ -72,6 +73,13 @@ export default function PackValue() {
   const hideComplete = get('hide') === '1'
   const waiting = collectionPending && onlyMissing
   const [expanded, setExpanded] = useState<string | undefined>()
+  const howItWorks = useRef<HTMLDetailsElement>(null)
+  const openHowItWorks = () => {
+    if (howItWorks.current) {
+      howItWorks.current.open = true
+      howItWorks.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
 
   const filters: TargetFilters = useMemo(
     () =>
@@ -100,21 +108,22 @@ export default function PackValue() {
     <main className="mx-auto max-w-6xl px-4 pb-12">
       <header className="mb-5">
         <h1 className="text-2xl font-semibold sm:text-3xl">Best packs</h1>
-        {completion ? (
-          <p className="mt-1 text-sm text-neutral-400">
-            Packs ranked by how many cards you're missing one pack gives, on average: the pack that fills your collection fastest comes first.
-            {!hasCollection && ' Log in to count what you own; until then every card counts as missing.'}
-          </p>
-        ) : (
-          <p className="mt-1 text-sm text-neutral-400">
-            Packs ranked by how often one pack gives a card you want. ☆☆ use the vote tiers, every other rarity the Most wanted (trade demand) tiers, as on{' '}
-            <Link to="/rankings" className="underline underline-offset-2 hover:text-neutral-200">
-              Rankings
-            </Link>
-            .{!hasCollection && ' Log in to count only the cards you are still missing.'}
-          </p>
-        )}
-        {!completion && <ValueDataAge className="mt-2" />}
+        {/* the question the page answers, in the words of the current filters; the details live in "How this works" */}
+        <p className="mt-1 text-sm text-neutral-400">
+          {completion ? (
+            <>
+              Which pack fills in <span className="text-neutral-100">{rarity === 'all' ? 'your collection' : `your ${showRarity(rarity)} cards`}</span> fastest.
+            </>
+          ) : (
+            <>
+              Which pack most often gives <span className="text-neutral-100">{describeTarget(filters)}</span>.
+            </>
+          )}
+          {!hasCollection && ' Log in to count only what you’re missing.'}{' '}
+          <button type="button" onClick={openHowItWorks} className="cursor-pointer underline underline-offset-2 hover:text-neutral-200">
+            How this works
+          </button>
+        </p>
       </header>
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
@@ -221,8 +230,9 @@ export default function PackValue() {
         </div>
       )}
 
-      <details className="mt-8 rounded-lg border border-neutral-800 px-4 py-3 text-sm text-neutral-400">
+      <details ref={howItWorks} className="mt-8 scroll-mt-20 rounded-lg border border-neutral-800 px-4 py-3 text-sm text-neutral-400">
         <summary className="cursor-pointer font-medium text-neutral-300">How this works</summary>
+        {!completion && <ValueDataAge className="mt-2" />}
         {completion ? (
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>
@@ -239,9 +249,13 @@ export default function PackValue() {
         ) : (
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>
-              Two scales, as on Rankings. ☆☆ use the vote tiers: an Elo score from community votes on pokemontcglivetrade, with few-vote cards pulled toward the
-              average, split where the Elo jumps. Every other rarity uses the Most wanted tiers: wishlists per trade-list offer (eleet), split by share (SSS is
-              the top 1% of every traded card).
+              Two scales, as on{' '}
+              <Link to="/rankings" className="underline underline-offset-2 hover:text-neutral-200">
+                Rankings
+              </Link>
+              . ☆☆ use the vote tiers: an Elo score from community votes on pokemontcglivetrade, with few-vote cards pulled toward the average, split where the
+              Elo jumps. Every other rarity uses the Most wanted tiers: wishlists per trade-list offer (eleet), split by share (SSS is the top 1% of every
+              traded card).
             </li>
             <li>
               Most wanted tiers are shared by every rarity, so a common rarity can't reach the top ones: no ◊ is above B and no ◊◊ above A, so Top or Hot is
