@@ -1,4 +1,4 @@
-/* Personal fork: the overview heatmap's finished-cell foil. Its own file so upstream's index.css stays untouched. */
+/* Personal fork: the overview's foil and motion (heatmap cells, Value tiers columns). Its own file so upstream's index.css stays untouched. */
 
 /* A holo sheen sweeps across finished cells now and then. --foil-delay (set per cell) staggers the sweeps into a
    diagonal wave. It sits under the label (z-index -1 inside the isolated cell), so the 100% / ✓ stays readable. */

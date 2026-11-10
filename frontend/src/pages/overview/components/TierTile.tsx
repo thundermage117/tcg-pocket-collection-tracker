@@ -1,5 +1,5 @@
 // Personal fork: owned / ranked cards per Most wanted tier, so the overview says how good the collection is, not just how big.
-// Each row opens its tier on Rankings.
+// Each column opens its tier on Rankings.
 import { ChevronRight } from 'lucide-react'
 import { Link } from 'react-router'
 import { tiers } from '@/lib/rankings'
@@ -12,6 +12,23 @@ interface Props {
   value: ValueOption // tiers the Value filter leaves out are dimmed
   rarity: Rarity[]
   className?: string
+}
+
+// Never round a gap up to 100% or a single card down to 0% (same as the heatmap)
+const formatPct = (have: number, total: number) => `${have === total ? 100 : have > 0 ? Math.max(1, Math.min(99, Math.floor((100 * have) / total))) : 0}%`
+
+// One tier as a column filled from the bottom by the share owned. A finished tier gets the heatmap's foil sweep, staggered
+// across the row; its colour goes on the column itself, since a full fill layer would cover the foil beneath it.
+function TierColumn({ color, share, delay }: { color: string; share: number; delay: number }) {
+  const done = share === 1
+  return (
+    <span
+      className={`relative block w-full flex-1 overflow-hidden rounded-md border border-neutral-700 bg-neutral-900/60 ${done ? 'heat-foil' : ''}`}
+      style={{ backgroundColor: done ? color : undefined, ['--foil-delay' as string]: `${delay}s` }}
+    >
+      {!done && <span className="absolute inset-x-0 bottom-0 transition-[height] duration-500" style={{ height: `${share * 100}%`, backgroundColor: color }} />}
+    </span>
+  )
 }
 
 export function TierTile({ counts, value, rarity, className }: Props) {
@@ -30,32 +47,25 @@ export function TierTile({ counts, value, rarity, className }: Props) {
       {shown.length === 0 ? (
         <p className="my-auto text-center text-neutral-400 text-xs">No ranked cards with these filters</p>
       ) : (
-        // rows spread over the tile's height (set by the ring beside it) rather than floating mid-tile
-        <ul className="flex flex-1 flex-col justify-between">
+        // eight equal columns over the tile's full height, like an equalizer; counts are in the hover text (a column is
+        // ~27px wide on desktop, too narrow for "513/870")
+        <ul className="flex min-h-24 flex-1 gap-1 sm:gap-1.5">
           {shown.map(({ tier, i, available, collected }) => (
-            <li key={tier.name} className={i > valueMaxTier[value] ? 'opacity-35' : ''}>
+            <li key={tier.name} className={`flex min-w-0 flex-1 ${i > valueMaxTier[value] ? 'opacity-35' : ''}`}>
               <Link
                 to={`/rankings?${params}&tier=${tier.name}`}
-                className="-mx-1 flex items-center gap-1.5 rounded px-1 py-0.5 text-[11px] transition-colors hover:bg-neutral-700/60 sm:gap-2 sm:py-[3px] sm:text-xs"
+                className="-mx-0.5 flex flex-1 flex-col items-center gap-1 rounded-md px-0.5 pt-0.5 transition-colors hover:bg-neutral-700/60"
                 aria-label={`${tier.name}: ${collected} of ${available} owned`}
+                title={`${tier.name}: ${collected} / ${available}`}
               >
-                <span
-                  className={`relative w-8 shrink-0 rounded py-0.5 text-center font-black text-[10px] text-neutral-900 ${collected === available ? 'heat-foil' : ''}`}
-                  style={{ backgroundColor: tier.color, ['--foil-delay' as string]: `${i * 0.12}s` }}
-                >
+                <TierColumn color={tier.color} share={collected / available} delay={i * 0.12} />
+                <span className="font-black text-[8px] leading-none sm:text-[11px]" style={{ color: tier.color }}>
                   {tier.name}
                 </span>
-                <span className="h-1.5 min-w-4 grow overflow-hidden rounded-full bg-neutral-700">
-                  {/* a finished tier's badge and bar get the heatmap's foil sweep, staggered down the list */}
-                  <span
-                    className={`relative block h-full rounded-full ${collected === available ? 'heat-foil' : ''}`}
-                    style={{ width: `${(100 * collected) / available}%`, backgroundColor: tier.color, ['--foil-delay' as string]: `${i * 0.12}s` }}
-                  />
-                </span>
-                {/* fixed width so every bar is the same length */}
-                <span className="w-13 shrink-0 text-right text-neutral-300 tabular-nums sm:w-16">
-                  {collected}
-                  <span className="text-neutral-500">/{available}</span>
+                {/* phones: no % sign, which ran the ~15px columns' numbers together */}
+                <span className="whitespace-nowrap text-[8px] text-neutral-300 leading-none tabular-nums sm:text-[10px]">
+                  {formatPct(collected, available).slice(0, -1)}
+                  <span className="max-sm:hidden">%</span>
                 </span>
               </Link>
             </li>
