@@ -13,9 +13,9 @@ import { AlertTitle } from '@/components/ui/alert.tsx'
 import { useUrlFilters } from '@/hooks/useUrlFilters'
 import { getFilteredCards } from '@/lib/filters'
 import { getBoosterValues } from '@/lib/packValue'
+import { CollectionRing } from '@/pages/overview/components/CollectionRing'
 import { CompletionHeatmap } from '@/pages/overview/components/CompletionHeatmap.tsx'
 import { GradientCard } from '@/pages/overview/components/GradientCard.tsx'
-import { RarityRing } from '@/pages/overview/components/RarityRing'
 import { TierTile } from '@/pages/overview/components/TierTile'
 import { UnlockTile } from '@/pages/overview/components/UnlockTile'
 import { bestChance, getPackChances } from '@/pages/overview/packChances'
@@ -120,12 +120,15 @@ function Overview() {
 
         {/* Personal fork: below md the two stat tiles share a row and the pick goes under them, so the heatmap starts higher */}
         <section className="grid grid-cols-8 gap-3 sm:gap-4">
-          <div className="col-span-4 md:col-span-2 flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 bg-neutral-800 border-solid p-3 sm:p-6 md:p-8">
-            <h2 className="font-bold mb-2 text-center text-base sm:mb-4 sm:text-lg md:text-3xl">{t('uniqueCards')}</h2>
-            {/* Personal fork: split by rarity family instead of upstream's single-colour RadialChart */}
-            <RarityRing availableCards={availableCards} collectedCards={collectedCards} className="size-28 sm:size-45" />
-            <h2 className="mt-2 text-balance text-center text-neutral-300 text-xs sm:mt-6 sm:text-sm sm:text-white">{t('numberOfCopies-single')}</h2>
-            {filters.value !== 'all' && <p className="mt-1 text-center text-neutral-400 text-xs">{valueLabels[filters.value]}</p>}
+          {/* Personal fork: heading sized like the tier tile's and a muted footnote, so the ring gets the room */}
+          <div className="col-span-4 md:col-span-2 flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 bg-neutral-800 border-solid p-3 sm:p-5">
+            <h2 className="font-bold mb-2 text-center text-base sm:mb-3 sm:text-lg md:text-xl">{t('uniqueCards')}</h2>
+            {/* Personal fork: upstream's RadialChart plus an inner ring for the newest set */}
+            <CollectionRing availableCards={availableCards} collectedCards={collectedCards} className="size-36 sm:size-48 md:size-56" />
+            <p className="mt-2 text-balance text-center text-neutral-400 text-xs sm:mt-3">
+              {t('numberOfCopies-single')}
+              {filters.value !== 'all' && ` · ${valueLabels[filters.value]}`}
+            </p>
           </div>
           {/* Personal fork: the card is upstream's every-rarity pick; the ☆☆ pick is its own link to the packs page, which ranks only ☆☆ */}
           {bestPack && bestPack.pct > 0 ? (
