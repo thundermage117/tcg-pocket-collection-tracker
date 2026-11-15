@@ -37,9 +37,16 @@ def load_rankings(snapshot):
     for level in LEVELS:
         levels[level] = json.loads((snapshot / 'rankings' / f'lv{level}.json').read_text())['items']
     unknown = collections.Counter(i['PackId'] for items in levels.values() for i in items if i['PackId'] not in PACKS)
-    if unknown:
+    # The site lists a new pack before anyone has voted or traded on it, and often before the set is in
+    # cards.json. Such a pack carries no data, so skip it; stop once it does.
+    has_data = {i['PackId'] for items in levels.values() for i in items
+                if i['PackId'] in unknown and (i['VoteCount'] or i['DemandCount'] or i['SupplyCount'])}
+    if has_data:
         sys.exit(f'Unknown PackIds (add them to scripts/value/packs.py): {dict(unknown)} '
                  f'(numbers are card counts across all rarities)')
+    if unknown:
+        print(f'Skipping unknown PackIds with no votes or trades yet: {dict(unknown)} (card counts)')
+        levels = {level: [i for i in items if i['PackId'] in PACKS] for level, items in levels.items()}
     return levels
 
 
