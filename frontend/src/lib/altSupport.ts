@@ -7,11 +7,11 @@
 // newest set's ◊–☆ cards come first for both accounts, and the alt's ☆☆ Wonder Picks can then be traded to main.
 // They reportedly stop once the account owns every ☆☆ of the set. Sources are in FORK.md, "Alt account".
 import { allCards, basicRarities, expansions, getCardByInternalId, tradableExpansions } from '@/lib/CardsDB'
-import { pullRate } from '@/lib/stats'
+import { pullRate, pullRateForSpecificCard } from '@/lib/stats'
 import { getWantedCards } from '@/lib/utils'
 import { valueSortKey } from '@/lib/ValueDB'
 import type { Profile } from '@/services/profile/useProfile'
-import { type Card, type Collection, type Rarity, type RaritySettingsRow, tradableRarities } from '@/types'
+import { type Card, type Collection, type Expansion, type Pack, type Rarity, type RaritySettingsRow, tradableRarities } from '@/types'
 
 export const today = () => new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time
 /** localStorage key for the day the last gift to `to` was logged on /alt, so the next one waits for tomorrow. */
@@ -150,4 +150,77 @@ export function withAltCards(main: Collection, alt: Collection | undefined): Col
     }
   }
   return merged
+}
+
+/** Main can take one gift a day, so once the alt holds this many ◊–◊◊◊◊ main needs, more of them add nothing for weeks. */
+export const GIFT_QUEUE_FULL = 14
+
+export interface AltPackRow {
+  expansion: Expansion
+  pack: Pack
+  unlockTargets: Card[] // the alt's missing newest-set ◊–☆ in this pack that main can't gift it
+  unlockChance: number // chance one pack gives one of them
+  rareTargets: Card[] // ☆ and up main needs, the alt doesn't own and can trade, best first
+  rareChance: number
+  commonTargets: Card[] // ◊–◊◊◊◊ main needs and the alt doesn't own; empty while the gift queue is full
+  commonExpected: number // how many of them one pack gives on average
+}
+
+export interface AltPackPick {
+  phase: 'unlock' | 'main'
+  unlockLeft: number // the alt's unlock cards only packs or Wonder Picks can give
+  giftQueue: number // ◊–◊◊◊◊ main needs that the alt already holds
+  packs: AltPackRow[] // best first, only packs that give something
+}
+
+const openablePacks = expansions
+  .filter((e) => e.openable && !e.promo && e.packStructure)
+  .flatMap((expansion) => expansion.packs.filter((p) => p.name !== 'everypack').map((pack) => ({ expansion, pack })))
+
+const inPack = (cards: Card[], expansion: Expansion, pack: Pack) =>
+  cards.filter((c) => c.expansion === expansion.id && (c.pack === pack.name || c.pack === 'everypack'))
+
+/**
+ * Which pack the alt should open. While the alt still misses newest-set ◊–☆ that main can't gift it, the newest set's
+ * packs, by the chance of one of those (its ☆☆ Wonder Picks follow). After that every pack, by the chance of a ☆ or
+ * rarer card main needs that neither account has, since trades are what the alt adds; ◊–◊◊◊◊ break ties only while
+ * the gift queue is short.
+ */
+export function bestAltPacks(main: Collection, mainSettings: RaritySettingsRow[], alt: Collection): AltPackPick {
+  const toAlt = new Set(giftsToAlt(main, mainSettings, alt).map((c) => c.internal_id))
+  const unlock = unlockProgress(alt).missing.filter((c) => !toAlt.has(c.internal_id))
+  const cover = altCovers(main, mainSettings, alt)
+  const giftQueue = cover.gift.length
+
+  const needs = new Set([...getWantedCards(main, mainSettings), ...unlockProgress(main).missing.map((c) => c.internal_id)])
+  const forMain = [...needs]
+    .map((id) => getCardByInternalId(id))
+    .filter((c): c is Card => c !== undefined && canMoveToMain(c) && (alt.get(c.internal_id)?.amount_owned ?? 0) === 0)
+    .sort((a, b) => (rarityOrder.get(b.rarity) ?? 0) - (rarityOrder.get(a.rarity) ?? 0) || valueSortKey(b.card_id) - valueSortKey(a.card_id))
+  const rare = forMain.filter((c) => !isGiftable(c))
+  const common = giftQueue < GIFT_QUEUE_FULL ? forMain.filter(isGiftable) : []
+
+  const phase = unlock.length > 0 ? 'unlock' : 'main'
+  const rows = openablePacks
+    .filter(({ expansion }) => phase === 'main' || expansion.id === latestExpansion.id)
+    .map(({ expansion, pack }): AltPackRow => {
+      const unlockTargets = inPack(unlock, expansion, pack)
+      const rareTargets = inPack(rare, expansion, pack)
+      const commonTargets = inPack(common, expansion, pack)
+      return {
+        expansion,
+        pack,
+        unlockTargets,
+        unlockChance: unlockTargets.length ? pullRate(unlockTargets, expansion, pack, false) : 0,
+        rareTargets,
+        rareChance: rareTargets.length ? pullRate(rareTargets, expansion, pack, false) : 0,
+        commonTargets,
+        // by linearity, the expected number of them in one pack (pullRateForSpecificCard is a percent)
+        commonExpected: commonTargets.reduce((sum, c) => sum + pullRateForSpecificCard(expansion, pack.name, c) / 100, 0),
+      }
+    })
+    .filter((r) => r.unlockChance > 0 || r.rareChance > 0 || r.commonExpected > 0)
+    .sort((a, b) => (phase === 'unlock' ? b.unlockChance - a.unlockChance : 0) || b.rareChance - a.rareChance || b.commonExpected - a.commonExpected)
+
+  return { phase, unlockLeft: unlock.length, giftQueue, packs: rows }
 }

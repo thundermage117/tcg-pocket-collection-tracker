@@ -136,6 +136,10 @@ The alt's rows live in the same tables as main's, under the key `alt:<login emai
   Sources, checked 2026-11-07: [Nintenpedia](https://nintenpedia.com/how-to-get-2-star-wonder-picks-in-pokemon-tcg-pocket/),
   [PokeTrade's test](https://x.com/ptcgptrade/status/1999219869900845152) (both from Mega Rising, B1: 226 ◊ and 24 ☆);
   Share rules: [Game8](https://game8.co/games/Pokemon-TCG-Pocket/archives/557585). Recheck if the game changes Wonder Picks.
+- **Which pack the alt opens** (`/alt`, `bestAltPacks` in `lib/altSupport.ts`): while the alt still misses newest-set ◊–☆
+  that main can't gift it, the newest set's packs ranked by the chance of one of those (its own unlock comes first).
+  After that every openable pack, by the chance of a ☆-or-rarer card main needs that neither account has. ◊–◊◊◊◊ for
+  main only break ties, and only while the alt holds fewer than 14 of them for main (one gift a day).
 - **Trade:** "Looking for" hides cards the alt has (switch to show them, marked "alt"). "For trade" is main's spares only.
 
 ## Rankings

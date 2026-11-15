@@ -1,7 +1,7 @@
 // Personal fork: how the alt account helps the main one (see lib/altSupport.ts). The latest set's unlock for both
 // accounts, gifts both ways (◊–◊◊◊◊, one received a day) and trades to main (☆ and up), each moved between the two
 // collections with one click. A trade opens in Trade check, which finalizes it.
-import { ArrowRight, Gift, Library, Repeat, ScanLine, Sparkles } from 'lucide-react'
+import { ArrowRight, Gift, Library, Package, Repeat, ScanLine, Sparkles } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress'
 import { useUndoTransferToast } from '@/hooks/useUndoToast'
 import {
   altCovers,
+  bestAltPacks,
   bestUnlockPack,
   canMoveToMain,
   countsForUnlock,
@@ -35,6 +36,7 @@ import type { Profile } from '@/services/profile/useProfile'
 import { setActiveProfile, useProfileAccount } from '@/services/profile/useProfile'
 import { useProfileCollection, useTransferCards } from '@/services/profile/useProfileCollection'
 import { type Card, type Collection, defaultRaritySettings, type TradableRarity } from '@/types'
+import { AltPackNote, AltPackPick } from './AltPackPick'
 
 const PREVIEW = 16
 
@@ -76,11 +78,23 @@ function Bar({ label, have, total }: { label: string; have: number; total: numbe
 }
 
 /** One account's progress towards ☆☆-only 24-hour Wonder Picks in the latest set. */
-function UnlockCard({ title, progress, covered, pending }: { title: string; progress: UnlockProgress; covered: number; pending: Card[] }) {
+function UnlockCard({
+  title,
+  progress,
+  covered,
+  pending,
+  showBestPack = true,
+}: {
+  title: string
+  progress: UnlockProgress
+  covered: number
+  pending: Card[]
+  showBestPack?: boolean // the alt's pick has its own section
+}) {
   const { t } = useTranslation(['common/packs'])
   const diamondsLeft = progress.diamonds.total - progress.diamonds.have
   const starsLeft = progress.star.total - progress.star.have
-  const best = bestUnlockPack(pending)
+  const best = showBestPack ? bestUnlockPack(pending) : undefined
   const status =
     diamondsLeft > 0
       ? `${diamondsLeft} ◊ to go before 24-hour Wonder Picks show its missing ☆ / ☆☆.`
@@ -229,6 +243,7 @@ export default function AltHelper() {
     return {
       cover,
       toAlt,
+      packPick: bestAltPacks(main, settings, alt),
       trades,
       mainUnlock: { progress: mainUnlock, pending: mainUnlock.missing.filter((c) => !altCanGive(c)) },
       altUnlock: { progress: altUnlock, pending: altUnlock.missing.filter((c) => !toAltIds.has(c.internal_id)) },
@@ -317,8 +332,13 @@ export default function AltHelper() {
                 progress={data.altUnlock.progress}
                 pending={data.altUnlock.pending}
                 covered={data.altUnlock.progress.missing.length - data.altUnlock.pending.length}
+                showBestPack={false}
               />
             </div>
+          </Section>
+
+          <Section icon={<Package className="size-5 text-amber-400" />} title="Which pack the alt should open" note={<AltPackNote pick={data.packPick} />}>
+            <AltPackPick pick={data.packPick} />
           </Section>
 
           <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
