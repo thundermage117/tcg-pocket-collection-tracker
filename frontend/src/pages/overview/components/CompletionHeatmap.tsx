@@ -55,7 +55,7 @@ interface Props {
   chances: Map<ExpansionId, PackChance[]>
   cellMode: CellMode
   setCellMode: (mode: CellMode) => void
-  sortByValue: boolean // the overview's Value filter is on: the collection can't filter by tier, so most valuable go first
+  sortByValue: boolean // the overview's Value filter is on
   rarity: Rarity[] // the overview's rarity filter, carried to Rankings when a pack map block opens its tier
   value: ValueOption // the overview's Value filter, for the pack map's sentences
 }
@@ -167,21 +167,16 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
     return best && row && best.pct > 0 ? { row, chance: best } : undefined
   }
 
+  // the missing cards behind a cell, on the page built for ticking them off (pages/gaps)
   const openCollection = (expansion: string, rarity: Rarity | 'all', pack?: string) => {
-    const params = new URLSearchParams({ ownership: 'missing' })
-    if (expansion !== 'all') {
-      params.set('expansion', expansion)
-    }
+    const params = new URLSearchParams({ set: expansion })
     if (pack) {
       params.set('pack', pack)
     }
     if (rarity !== 'all') {
       params.set('rarity', rarity)
     }
-    if (sortByValue) {
-      params.set('sortBy', 'value')
-    }
-    navigate(`/collection?${params}`)
+    navigate(`/gaps?${params}`)
   }
   // Rankings has no pack filter, so a tier block opens the set's missing cards of that tier (like the Value tiers tile)
   const openTier = (expansion: ExpansionId, tier: number) => {

@@ -28,6 +28,7 @@ const TradeCheck = lazy(() => import('./pages/trade/TradeCheck.tsx'))
 const PackValue = lazy(() => import('./pages/packs/PackValue.tsx'))
 const Rankings = lazy(() => import('./pages/rankings/Rankings.tsx'))
 const AltHelper = lazy(() => import('./pages/alt/AltHelper.tsx'))
+const Gaps = lazy(() => import('./pages/gaps/Gaps.tsx'))
 const Pokedex = lazy(() => import('./pages/pokedex/Pokedex.tsx'))
 const SpeciesDetail = lazy(() => import('./pages/pokedex/SpeciesDetail.tsx'))
 const Scan = lazy(() => import('./pages/scan/Scan.tsx'))
@@ -143,6 +144,7 @@ function App() {
         { path: '/packs', element: <PackValue /> },
         { path: '/rankings', element: <Rankings /> },
         { path: '/alt', element: <AltHelper /> },
+        { path: '/gaps', element: <Gaps /> },
         { path: '/pokedex', element: <Pokedex /> },
         { path: '/pokedex/:nr', element: <SpeciesDetail /> },
         { path: '/import', element: <Import /> },
