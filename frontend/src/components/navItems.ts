@@ -19,7 +19,7 @@ export const navItems: NavItem[] = [
   { title: 'scan', href: '/scan', icon: ScanLine },
   { title: 'decks', href: '/decks', icon: Layers, secondary: true },
   { title: 'missions', href: '/missions', icon: ListChecks, secondary: true },
-  { title: 'Alt account', href: '/alt', icon: UsersRound, secondary: true },
+  { title: 'Alt', href: '/alt', icon: UsersRound, secondary: true },
 ]
 
 /** Overview matches only `/`; other pages match their sub-paths too (`/trade/check`, `/collection/<friend id>`). */
