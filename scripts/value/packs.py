@@ -30,6 +30,7 @@ PACKS = {
     21: 'B4a',  # Team Rocket's Ambition
     22: 'B4b',  # Deluxe Pack: Mega
     23: 'C1',   # Dual Fusion
+    24: 'SP1',  # First Partners special pack
 }
 
 # CardLevel used by the ranking API -> rarity string used in cards.json
