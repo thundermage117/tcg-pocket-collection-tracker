@@ -3,6 +3,7 @@
 // Dark like the tiles beside it and the Packs page's best pick, with the pack's colour as a tint and a glow behind the artwork.
 import type { ReactNode } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
+import { SetLogo } from '@/components/CardThumb'
 import { allCards, expansions } from '@/lib/CardsDB.ts'
 import { allSpecies, formArtworkId, speciesKey, spriteUrl } from '@/lib/pokedex'
 import { cn } from '@/lib/utils'
@@ -72,9 +73,11 @@ interface Props {
 }
 
 export function BestPackCard({ pack, pct, className, footer }: Props) {
-  const { t } = useTranslation(['gradient-card', 'common/packs'])
+  const { t } = useTranslation(['gradient-card', 'common/packs', 'common/sets'])
   const chancePercentage = Math.round(pct * 10) / 10
   const artwork = packArtworkUrl(pack)
+  // pack names repeat across expansions (a Pikachu pack in A1 and in C1), so the pick shows which one it means
+  const expansion = expansions.find((e) => e.packs.includes(pack))
 
   return (
     <div
@@ -95,8 +98,13 @@ export function BestPackCard({ pack, pct, className, footer }: Props) {
           />
         )}
         <div className={cn('flex flex-col items-start text-left', artwork && 'pr-32 sm:pr-60 lg:pr-72')}>
-          <p className="mb-1 text-md text-neutral-300 sm:text-xl">
+          <p className="mb-1 flex items-center gap-2 text-md text-neutral-300 sm:gap-3 sm:text-xl">
             <Trans i18nKey="open" ns="gradient-card" />
+            {expansion && (
+              <span title={t(expansion.name, { ns: 'common/sets' })} className="shrink-0">
+                <SetLogo expansionId={expansion.id} className="h-5 sm:h-7" />
+              </span>
+            )}
           </p>
           <header className="text-balance font-semibold text-2xl text-neutral-50 sm:text-5xl lg:text-6xl">{t(pack.name, { ns: 'common/packs' })}</header>
           <p className="mt-2 text-md text-neutral-300 sm:text-xl">

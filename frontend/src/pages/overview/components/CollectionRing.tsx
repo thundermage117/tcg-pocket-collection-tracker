@@ -14,7 +14,7 @@ interface Props {
 const size = 180
 const center = size / 2
 const outer = { r: 81, stroke: 16, color: '#92C5FD' } // upstream's ring colour
-const inner = { r: 62, stroke: 7, color: '#a78bfa' } // the unlock tile's violet: both are about the newest set
+const inner = { r: 62, stroke: 7, color: '#a78bfa' } // the today panel's unlock violet: both are about the newest set
 const track = '#404040'
 
 const unique = (cards: Card[]) => new Set(cards.map((c) => c.internal_id)).size

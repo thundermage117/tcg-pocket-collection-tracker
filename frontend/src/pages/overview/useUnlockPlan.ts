@@ -1,6 +1,6 @@
 // Personal fork: main's progress towards the latest expansion's ☆☆ Wonder Pick unlock and what the alt can hand it next,
-// shared by the unlock tile (the progress) and the today panel (the actions). Always main's real collection: it ignores
-// the Main / Alt switch and "Count alt's cards".
+// for the today panel's Unlock, Gift and Trade rows. Always main's real collection: it ignores the Main / Alt switch and
+// "Count alt's cards".
 import { useMemo } from 'react'
 import { allTwoStarsRegistered, altCovers, bestUnlockPack, canMoveToMain, latestExpansion, unlockProgress } from '@/lib/altSupport'
 import { useProfileAccount } from '@/services/profile/useProfile'

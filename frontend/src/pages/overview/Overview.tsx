@@ -1,6 +1,7 @@
-import { Siren } from 'lucide-react'
-import { useMemo } from 'react'
+import { Siren, SlidersHorizontal } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useMediaQuery } from 'react-responsive'
 import { CountAltSwitch } from '@/components/CountAltSwitch'
 import { DropdownFilter } from '@/components/Filters'
 import Footer from '@/components/Footer.tsx'
@@ -9,6 +10,8 @@ import RarityFilter from '@/components/filters/RarityFilter'
 import { Skeleton } from '@/components/Skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTitle } from '@/components/ui/alert.tsx'
+import { Button } from '@/components/ui/button'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { useUrlFilters } from '@/hooks/useUrlFilters'
 import { getFilteredCards } from '@/lib/filters'
 import { getBoosterValues } from '@/lib/packValue'
@@ -16,14 +19,17 @@ import { CollectionRing } from '@/pages/overview/components/CollectionRing'
 import { CompletionHeatmap } from '@/pages/overview/components/CompletionHeatmap.tsx'
 import { TierTile } from '@/pages/overview/components/TierTile'
 import { TodayPanel } from '@/pages/overview/components/TodayPanel'
-import { UnlockTile } from '@/pages/overview/components/UnlockTile'
 import { bestChance, getPackChances } from '@/pages/overview/packChances'
 import { countByTier, inValue, type ValueOption, valueLabels, valueOptions } from '@/pages/overview/valueTiers'
+import { useCountAlt } from '@/services/profile/useProfile'
 import { useMainWithAlt } from '@/services/profile/useProfileCollection'
 import { type Card, type CollectionRow, type Rarity, rarities } from '@/types'
 
 function Overview() {
-  const { data: ownedCards = new Map<number, CollectionRow>(), isLoading } = useMainWithAlt()
+  const { data: ownedCards = new Map<number, CollectionRow>(), isLoading, covered } = useMainWithAlt()
+  const countAlt = useCountAlt()
+  const isPhone = useMediaQuery({ query: '(max-width: 639px)' }) // below tailwind "sm"
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   const { t } = useTranslation(['pages/overview', 'filters', 'common/sets', 'common/packs', 'expansion-overview'])
 
@@ -69,6 +75,18 @@ function Overview() {
     [ownedCards],
   )
 
+  const toggles = (
+    <>
+      <CountAltSwitch id="overview-count-alt" />
+      <DeckbuildingFilter
+        deckbuildingMode={filters.deckbuildingMode}
+        setDeckbuildingMode={(deckbuildingMode) => update({ deck: deckbuildingMode ? '1' : undefined })}
+      />
+    </>
+  )
+  // how many of them are on, for the phone button's badge (the alt switch only shows when the alt covers something)
+  const togglesOn = Number(filters.deckbuildingMode) + Number(countAlt && covered > 0)
+
   if (isLoading) {
     // Personal fork: the page's shape (filters, the three tiles, the heatmap) instead of a spinner
     return (
@@ -95,8 +113,8 @@ function Overview() {
           </Alert>
         )}
 
-        {/* Personal fork: on phones the rarities are one sideways-scrolling row and Value sits beside the deck-building
-            toggle, instead of four stacked rows of controls above the tiles */}
+        {/* Personal fork: on phones the rarities are one sideways-scrolling row, and the two toggles sit behind "More" (a
+            bottom sheet, like the Packs page's filters) beside Value, instead of four stacked rows of controls above the tiles */}
         <div className="mb-4 flex flex-wrap items-center gap-2 max-sm:[&_label]:text-sm">
           <div className="max-sm:-mx-4 max-sm:basis-full max-sm:overflow-x-auto max-sm:px-4 max-sm:[&_[role=toolbar]]:w-max max-sm:[&_[role=toolbar]]:flex-nowrap">
             <RarityFilter
@@ -112,13 +130,26 @@ function Overview() {
             show={(v) => valueLabels[v]}
             onChange={(v: ValueOption) => update({ value: v === 'all' ? undefined : v })}
           />
-          <div className="grow max-sm:hidden" />
-          <CountAltSwitch id="overview-count-alt" />
-          <DeckbuildingFilter
-            deckbuildingMode={filters.deckbuildingMode}
-            setDeckbuildingMode={(deckbuildingMode) => update({ deck: deckbuildingMode ? '1' : undefined })}
-          />
+          <div className="grow" />
+          {isPhone ? (
+            <Button variant="outline" className="h-[38px] border-neutral-700" onClick={() => setSheetOpen(true)}>
+              <SlidersHorizontal />
+              More
+              {togglesOn > 0 && <span className="rounded-full bg-neutral-100 px-1.5 text-neutral-900 text-xs tabular-nums">{togglesOn}</span>}
+            </Button>
+          ) : (
+            toggles
+          )}
         </div>
+        {/* one copy of the toggles at a time: DeckbuildingFilter's checkbox has a fixed id */}
+        <Sheet open={isPhone && sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetContent side="bottom" className="rounded-t-xl border-neutral-800 px-4 pb-8">
+            <SheetHeader className="px-0">
+              <SheetTitle>More filters</SheetTitle>
+            </SheetHeader>
+            <div className="flex flex-col gap-4">{toggles}</div>
+          </SheetContent>
+        </Sheet>
 
         {/* Personal fork: below md the two stat tiles share a row and the today panel goes under them, so the heatmap starts higher */}
         <section className="grid grid-cols-8 gap-3 sm:gap-4">
@@ -132,18 +163,16 @@ function Overview() {
               {filters.value !== 'all' && ` · ${valueLabels[filters.value]}`}
             </p>
           </div>
-          {/* Personal fork: upstream's every-rarity pick as the headline of a "today" panel, with the ☆☆ pick, the unlock's
-              pack and the alt's next gift / trade listed under it */}
+          {/* Personal fork: upstream's every-rarity pick as the headline of a "today" panel, with the Wonder Pick unlock's
+              progress, the ☆☆ pick and the alt's next gift / trade listed under it */}
           <TodayPanel
             best={bestPack}
             twoStar={showTwoStarPick ? bestTwoStarPack : undefined}
             filtered={filters.rarity.length > 0 || filters.value !== 'all'}
-            className="order-1 col-span-8 md:order-none md:col-span-4 md:col-start-3"
+            className="order-last col-span-8 md:order-none md:col-span-4 md:col-start-3"
           />
           {/* Personal fork: replaces upstream's "You have N cards in total" */}
           <TierTile counts={tierCounts} value={filters.value} rarity={filters.rarity} className="col-span-4 md:col-span-2" />
-          {/* after the today panel on phones too: the progress explains its Unlock / Gift / Trade rows */}
-          <UnlockTile className="order-2 col-span-8 md:order-none" />
         </section>
 
         <CompletionHeatmap
