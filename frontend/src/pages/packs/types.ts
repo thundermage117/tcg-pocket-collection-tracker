@@ -22,6 +22,11 @@ export const goalOptions = ['value', 'complete'] as const
 export type Goal = (typeof goalOptions)[number]
 export const goalLabels: Record<Goal, string> = { value: 'Value', complete: 'Completion' }
 
+/** How Value ranks: by the chance of any card that counts (Most likely) or by that chance weighted by tier (Best hits). */
+export const sortOptions = ['odds', 'quality'] as const
+export type SortOption = (typeof sortOptions)[number]
+export const sortLabels: Record<SortOption, string> = { odds: 'Most likely', quality: 'Best hits' }
+
 // ?rarity= values, readable in a URL where the symbols would be percent-escaped
 export const raritySlug: Record<PackRarity, string> = {
   all: 'all',

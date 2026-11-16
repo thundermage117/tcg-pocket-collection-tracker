@@ -19,9 +19,12 @@ import {
   kindOptions,
   rarityOptions,
   raritySlug,
+  type SortOption,
   scaleName,
   showKind,
   showRarity,
+  sortLabels,
+  sortOptions,
   type TierOption,
   tierLabel,
   tierMax,
@@ -35,6 +38,8 @@ interface PackControlsProps {
   tier: TierOption
   defaultTier: TierOption
   reachable: (key: TierOption) => boolean
+  sort: SortOption
+  canSortByQuality: boolean // the rarity has tiers to weigh
   kind: KindOption
   onlyMissing: boolean
   series: string
@@ -48,7 +53,7 @@ interface PackControlsProps {
 const tierRange = { hot: 'SSS–S', top: 'SSS–A' }
 
 /** The secondary filters that are off their default, each with the URL change that resets it. */
-function activeFilters({ goal, rarity, tier, defaultTier, kind, onlyMissing, series, hideComplete, hasCollection }: PackControlsProps) {
+function activeFilters({ goal, rarity, tier, defaultTier, sort, kind, onlyMissing, series, hideComplete, hasCollection }: PackControlsProps) {
   const chips: { key: string; label: string; reset: Record<string, undefined> }[] = []
   if (goal === 'value') {
     if (hasCollection && !onlyMissing) {
@@ -59,6 +64,9 @@ function activeFilters({ goal, rarity, tier, defaultTier, kind, onlyMissing, ser
     }
     if (kind !== 'all') {
       chips.push({ key: 'kind', label: showKind(kind), reset: { kind: undefined } })
+    }
+    if (sort !== 'odds') {
+      chips.push({ key: 'sort', label: `Ranked by ${sortLabels[sort].toLowerCase()}`, reset: { sort: undefined } })
     }
   }
   if (series !== 'All') {
@@ -145,6 +153,8 @@ function MoreFilters({
   tier,
   defaultTier,
   reachable,
+  sort,
+  canSortByQuality,
   kind,
   onlyMissing,
   series,
@@ -198,6 +208,15 @@ function MoreFilters({
             ))}
           </ToggleGroup>
         </div>
+      )}
+      {value && canSortByQuality && (
+        <TabsFilter
+          label="Rank by"
+          options={sortOptions}
+          value={sort}
+          show={(x) => sortLabels[x]}
+          onChange={(x) => update({ sort: x === 'odds' ? undefined : x })}
+        />
       )}
       {value && rarity === '☆☆' && (
         <TabsFilter label="Style" options={kindOptions} value={kind} show={showKind} onChange={(x) => update({ kind: x === 'all' ? undefined : x })} />

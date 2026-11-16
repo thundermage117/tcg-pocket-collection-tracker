@@ -2,7 +2,7 @@
 // you're missing one pack gives on average (Completion).
 
 import { useQuery } from '@tanstack/react-query'
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { Skeleton, SkeletonGrid } from '@/components/Skeleton'
 import { ValueDataAge } from '@/components/ValueDataAge'
@@ -25,6 +25,7 @@ import {
   rarityOptions,
   raritySlug,
   showRarity,
+  sortOptions,
   type TargetFilters,
   tierMax,
   tierOptions,
@@ -39,7 +40,7 @@ export default function PackValue() {
   const hasCollection = Boolean(collection) || collectionPending
   // filters live in the URL (?rarity=3d&tier=hot&kind=trainer&owned=1&series=B&hide=1); rarity, tier and style are
   // remembered for the next visit
-  const { get, update } = useUrlFilters('packs-view', ['goal', 'rarity', 'tier', 'kind'])
+  const { get, update } = useUrlFilters('packs-view', ['goal', 'rarity', 'tier', 'kind', 'sort'])
   const goal = goalOptions.find((x) => x === get('goal')) ?? 'value'
   const completion = goal === 'complete'
   // each goal has its own default rarity (completion: every card), so switching goal drops the rarity back to it
@@ -55,6 +56,10 @@ export default function PackValue() {
   const tier = reachable(wantedTier) ? wantedTier : 'all'
   // styles are a ☆☆ thing (full art / trainer / rainbow)
   const kind = rarity === '☆☆' ? (kindOptions.find((x) => x === get('kind')) ?? 'all') : 'all'
+  // "best hits" weighs each card by its tier, so it needs a rarity that has tiers (☆☆☆ and Crown Rare don't)
+  const sort = !completion && bestTier !== undefined ? (sortOptions.find((x) => x === get('sort')) ?? 'odds') : 'odds'
+  // without a collection every pack gives about five new cards: nothing to rank
+  const ranked = !completion || hasCollection
   // completion counts every card you're missing, whatever its tier or style
   const onlyMissing = hasCollection && (completion || get('owned') !== '1')
   const hideComplete = get('hide') === '1'
@@ -80,16 +85,17 @@ export default function PackValue() {
     () => getBoosterValues(collection, filters).map((b) => ({ ...b, id: `${b.expansionId}-${b.packName}` })),
     [collection, filters],
   )
-  const score = (b: PackRow) => (completion ? b.expectedNew : b.perPack)
-  // odds start at zero so "twice as likely" looks twice as long
-  const range: Range = useMemo(() => ({ min: 0, max: Math.max(0, ...all.map((b) => (completion ? b.expectedNew : b.perPack))) }), [all, completion])
+  const score = useCallback((b: PackRow) => (completion ? b.expectedNew : sort === 'quality' ? b.weighted : b.perPack), [completion, sort])
+  // scores start at zero so "twice as likely" looks twice as long
+  const range: Range = useMemo(() => ({ min: 0, max: Math.max(0, ...all.map(score)) }), [all, score])
   const seriesOptions = useMemo(() => ['All', ...new Set(all.map((b) => b.expansionId[0]))], [all])
   const series = seriesOptions.find((x) => x === get('series')) ?? 'All'
 
   const packs = all
     .filter((b) => series === 'All' || b.expansionId.startsWith(series))
     .filter((b) => !(hideComplete && collection && b.missing === 0))
-    .toSorted((a, b) => score(b) - score(a))
+    // unranked packs stay in release order
+    .toSorted((a, b) => (ranked ? score(b) - score(a) : 0))
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-12">
@@ -101,12 +107,17 @@ export default function PackValue() {
             <>
               Which pack fills in <span className="text-neutral-100">{rarity === 'all' ? 'your collection' : `your ${showRarity(rarity)} cards`}</span> fastest.
             </>
+          ) : sort === 'quality' ? (
+            <>
+              Which pack is worth most to open: the chance of <span className="text-neutral-100">{describeTarget(filters)}</span>, with higher tiers counting
+              for more.
+            </>
           ) : (
             <>
               Which pack most often gives <span className="text-neutral-100">{describeTarget(filters)}</span>.
             </>
           )}
-          {!hasCollection && ' Log in to count only what you’re missing.'}{' '}
+          {!hasCollection && ranked && ' Log in to count only what you’re missing.'}{' '}
           <button type="button" onClick={openHowItWorks} className="cursor-pointer underline underline-offset-2 hover:text-neutral-200">
             How this works
           </button>
@@ -120,6 +131,8 @@ export default function PackValue() {
         tier={tier}
         defaultTier={defaultTier}
         reachable={reachable}
+        sort={sort}
+        canSortByQuality={bestTier !== undefined}
         kind={kind}
         onlyMissing={onlyMissing}
         series={series}
@@ -130,9 +143,18 @@ export default function PackValue() {
         update={update}
       />
 
-      {!waiting && packs.length > 0 && <PackSummary pack={packs[0]} filters={filters} goal={goal} />}
-      {/* the "≥1 hit within n packs" curve sits at 100% for nearly every pack with a missing ◊, so completion skips it */}
-      {!waiting && !completion && <PackOdds packs={packs} filters={filters} />}
+      {!waiting && packs.length > 0 && ranked && (
+        <PackSummary pack={packs[0]} filters={filters} goal={goal} sort={sort}>
+          {/* the "≥1 hit within n packs" curve sits at 100% for nearly every pack with a missing ◊, so completion skips it */}
+          {!completion && <PackOdds packs={packs} filters={filters} />}
+        </PackSummary>
+      )}
+      {!ranked && (
+        <p className="mb-6 rounded-xl border border-neutral-800 bg-neutral-900/60 px-4 py-3 text-sm text-neutral-300">
+          Without your collection, every pack gives about five new cards, so there's nothing to rank. Log in to see which pack fills in the most of what you're
+          missing. Until then the packs are in release order.
+        </p>
+      )}
 
       {waiting ? (
         <>
@@ -147,9 +169,10 @@ export default function PackValue() {
             <PackCard
               key={pack.id}
               pack={pack}
-              position={i + 1}
+              position={ranked ? i + 1 : undefined}
               filters={filters}
               goal={goal}
+              sort={sort}
               range={range}
               expanded={expanded === pack.id}
               onToggle={() => setExpanded(expanded === pack.id ? undefined : pack.id)}
@@ -180,6 +203,12 @@ export default function PackValue() {
               <Faq q="What does “1 in 59 packs” mean?">
                 On average, one pack in 59 gives at least one card that counts: the chosen rarity, tier and style, and only ones you're missing unless you turn
                 that off. It uses the real pull odds of every slot, rare packs included.
+              </Faq>
+              <Faq q="What does “Best hits” rank by?">
+                Most likely ranks by the chance of any card that counts, so an A counts the same as an SSS. Best hits weighs each card by its tier first: an S
+                counts as two A, an SS as four, an SSS as eight, and each tier below A as half the one above. The result is the tier-weighted value one pack
+                gives on average, shown as a score where the best pack is 100. The doubling is a rule of thumb, not a market price. The “1 in N packs” line
+                still says how often a pack hits at all.
               </Faq>
               <Faq q="What are A+ and S+?">
                 Value tiers, as on{' '}

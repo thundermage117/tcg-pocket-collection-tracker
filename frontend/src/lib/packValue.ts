@@ -36,6 +36,18 @@ export interface BoosterValue {
   best: Card
   perPack: number // chance one pack opened gives a card in `wanted`
   expectedNew: number // missing cards one pack gives on average: the sum of each one's chance to be in it
+  weighted: number // tier-weighted value one pack gives on average, over `wanted`: each card's chance × tierWeight
+}
+
+const A_TIER = tiers.findIndex((t) => t.name === 'A')
+
+/**
+ * What a card is worth next to an A for the "best hits" ranking: each tier up doubles it (S 2, SS 4, SSS 8), each tier
+ * down halves it. Cards nobody trades (☆☆☆, Crown Rare) have no tier and add nothing.
+ */
+export const tierWeight = (card: Card) => {
+  const tier = tierFor(card)
+  return tier === undefined ? 0 : 2 ** (A_TIER - tier)
 }
 
 export const ownsCard = (collection: Collection | undefined, card: Card) => (collection?.get(card.internal_id)?.amount_owned ?? 0) > 0
@@ -115,6 +127,7 @@ export function getBoosterValues(collection: Collection | undefined, filters: Pa
         perPack: wanted.length && expansion.packStructure ? pullRate(wanted, expansion, pack, false) : 0,
         // by linearity, the expected number of distinct missing cards in one pack (pullRateForSpecificCard is a percent)
         expectedNew: expansion.packStructure ? missing.reduce((sum, c) => sum + pullRateForSpecificCard(expansion, pack.name, c) / 100, 0) : 0,
+        weighted: expansion.packStructure ? wanted.reduce((sum, c) => sum + (tierWeight(c) * pullRateForSpecificCard(expansion, pack.name, c)) / 100, 0) : 0,
       })
     }
   }

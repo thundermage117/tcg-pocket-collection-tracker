@@ -1,5 +1,7 @@
 // Personal fork: one booster on the packs page — its best cards of the chosen rarity, the chance for the chosen filters, tier mix, expandable pool.
+// On phones it's a short row (name, odds, tier mix) so several fit a screen; tapping the name opens the pool.
 import { ChevronDown } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CardThumb, SetLogo } from '@/components/CardThumb'
 import { Progress } from '@/components/ui/progress'
@@ -9,21 +11,34 @@ import { cn } from '@/lib/utils'
 import { PROVISIONAL_VOTES } from '@/lib/ValueDB'
 import { useSelectedCard } from '@/services/collection/useCollection'
 import { useMainWithAlt } from '@/services/profile/useProfileCollection'
-import { completionStat, fill, type Goal, type PackRow, packStat, poolLine, type Range, rarityCount, scaleName, type TargetFilters } from '../types'
+import {
+  completionStat,
+  fill,
+  type Goal,
+  type PackRow,
+  packStat,
+  poolLine,
+  type Range,
+  rarityCount,
+  type SortOption,
+  scaleName,
+  type TargetFilters,
+} from '../types'
 import { CardTierBadge } from './CardTierBadge'
 import { PackPool } from './PackPool'
 
 interface Props {
   pack: PackRow
-  position: number
+  position?: number // undefined when there's nothing to rank the packs by
   filters: TargetFilters
   goal: Goal
+  sort: SortOption
   range: Range
   expanded: boolean
   onToggle: () => void
 }
 
-export function PackCard({ pack, position, filters, goal, range, expanded, onToggle }: Props) {
+export function PackCard({ pack, position, filters, goal, sort, range, expanded, onToggle }: Props) {
   const { t } = useTranslation(['common/sets', 'common/packs'])
   const { data: collection } = useMainWithAlt()
   const { setSelectedCardId } = useSelectedCard()
@@ -31,7 +46,24 @@ export function PackCard({ pack, position, filters, goal, range, expanded, onTog
   const complete = collection !== undefined && pack.missing === 0
   const completion = goal === 'complete'
   const headline = completion ? completionStat(pack, filters.rarity) : packStat(pack, filters)
-  const score = completion ? pack.expectedNew : pack.perPack
+  const quality = !completion && sort === 'quality'
+  const score = completion ? pack.expectedNew : quality ? pack.weighted : pack.perPack
+  const toggleLabel = expanded
+    ? 'Show less'
+    : filters.rarity === 'all'
+      ? `Show the ${pack.wanted.length} ${completion ? 'missing' : 'that count'}`
+      : `Show all ${rarityCount(pack.cards.length, filters.rarity)}`
+
+  // an open card takes the whole row and the grid reflows around it, so follow it to where it lands; closing it does
+  // the same when that leaves it off screen
+  const article = useRef<HTMLElement>(null)
+  const wasExpanded = useRef(expanded)
+  useEffect(() => {
+    if (wasExpanded.current !== expanded) {
+      wasExpanded.current = expanded
+      article.current?.scrollIntoView({ behavior: 'smooth', block: expanded ? 'start' : 'nearest' })
+    }
+  }, [expanded])
   // the thumbnails show what you'd be chasing: the best matching cards, topped up with the rest of the pool
   const preview = [...pack.wanted, ...pack.cards.filter((c) => !pack.wanted.includes(c))].slice(0, 3)
   // completion's Owned bar already says how many are left
@@ -39,21 +71,24 @@ export function PackCard({ pack, position, filters, goal, range, expanded, onTog
 
   return (
     <article
+      ref={article}
       className={cn(
-        'flex flex-col gap-4 rounded-xl border border-neutral-800 bg-neutral-900/60 p-4 transition-colors hover:border-neutral-700',
+        'flex scroll-mt-20 flex-col gap-2.5 rounded-xl border border-neutral-800 bg-neutral-900/60 p-3 transition-colors hover:border-neutral-700 sm:gap-4 sm:p-4',
         expanded && 'sm:col-span-2 lg:col-span-3',
       )}
       style={{ borderTopColor: pack.color, borderTopWidth: 3 }}
     >
-      <header className="flex items-start gap-3">
-        <span
-          className={cn(
-            'mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums',
-            position === 1 && score > 0 ? 'bg-amber-400 text-neutral-900' : 'bg-neutral-800 text-neutral-300',
-          )}
-        >
-          {position}
-        </span>
+      <header className="relative flex items-start gap-3">
+        {position !== undefined && (
+          <span
+            className={cn(
+              'mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums',
+              position === 1 && score > 0 ? 'bg-amber-400 text-neutral-900' : 'bg-neutral-800 text-neutral-300',
+            )}
+          >
+            {position}
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           <h2 className="truncate font-semibold leading-tight">{t(pack.packName, { ns: 'common/packs' })}</h2>
           <p className="truncate text-xs text-neutral-400">{t(pack.expansionName, { ns: 'common/sets' })}</p>
@@ -69,11 +104,21 @@ export function PackCard({ pack, position, filters, goal, range, expanded, onTog
             {complete && <span className="rounded bg-green-500/15 px-1.5 py-0.5 text-[10px] font-medium text-green-400">all owned</span>}
           </div>
         </div>
-        <SetLogo expansionId={pack.expansionId} className="h-9 max-w-[72px]" />
+        <SetLogo expansionId={pack.expansionId} className="h-7 max-w-[60px] sm:h-9 sm:max-w-[72px]" />
+        {/* phones: the whole header opens the pool (the button's ::after covers it); wider screens use the button below */}
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={expanded}
+          aria-label={toggleLabel}
+          className="mt-1 shrink-0 cursor-pointer text-neutral-400 after:absolute after:inset-0 sm:hidden"
+        >
+          <ChevronDown className={cn('size-5 transition-transform', expanded && 'rotate-180')} />
+        </button>
       </header>
 
       {!expanded && (
-        <div className="grid grid-cols-3 gap-2">
+        <div className="hidden grid-cols-3 gap-2 sm:grid">
           {preview.map((card) => (
             <CardThumb
               key={card.card_id}
@@ -91,8 +136,15 @@ export function PackCard({ pack, position, filters, goal, range, expanded, onTog
           <span className="font-semibold tabular-nums text-neutral-100">{headline.stat}</span> <span className="text-neutral-400">{headline.caption}</span>
         </p>
         {/* value's tier strip below says what the odds are made of, so only completion keeps a plain bar */}
-        {completion && <Progress value={score > 0 ? Math.round(100 * fill(score, range)) : 0} barColor={pack.color} className="h-1.5" />}
-        {countLine && <p className="text-xs text-neutral-500">{countLine}</p>}
+        {completion && <Progress value={score > 0 ? Math.round(100 * fill(score, range)) : 0} barColor={pack.color} className="hidden h-1.5 sm:block" />}
+        {/* best hits ranks by tier-weighted value, which the odds alone don't show: the score against the best pack's */}
+        {quality && range.max > 0 && (
+          <div className="flex items-center gap-2" title="Tier-weighted value per pack, with the best pack at 100">
+            <Progress value={Math.round((100 * score) / range.max)} barColor={pack.color} className="h-1.5" />
+            <span className="shrink-0 text-xs text-neutral-400 tabular-nums">score {Math.round((100 * score) / range.max)}</span>
+          </div>
+        )}
+        {countLine && <p className={cn('text-xs text-neutral-500', !expanded && 'hidden sm:block')}>{countLine}</p>}
       </div>
 
       {completion && <OwnedBar pack={pack} />}
@@ -103,13 +155,13 @@ export function PackCard({ pack, position, filters, goal, range, expanded, onTog
       <button
         type="button"
         onClick={onToggle}
-        className="mt-auto flex cursor-pointer items-center justify-center gap-1 rounded-md py-1.5 text-xs text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200"
+        className={cn(
+          'mt-auto cursor-pointer items-center justify-center gap-1 rounded-md py-1.5 text-xs text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200',
+          // phones open from the header; once open, a way to close at the bottom of a long pool
+          expanded ? 'flex' : 'hidden sm:flex',
+        )}
       >
-        {expanded
-          ? 'Show less'
-          : filters.rarity === 'all'
-            ? `Show the ${pack.wanted.length} ${completion ? 'missing' : 'that count'}`
-            : `Show all ${rarityCount(pack.cards.length, filters.rarity)}`}
+        {toggleLabel}
         <ChevronDown className={cn('size-4 transition-transform', expanded && 'rotate-180')} />
       </button>
     </article>

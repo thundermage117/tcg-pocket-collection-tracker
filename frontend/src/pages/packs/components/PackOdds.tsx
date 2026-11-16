@@ -1,5 +1,6 @@
 // Personal fork: "how many packs until…" — the chance of at least one hit within n packs, 1 − (1 − p)^n, for every
-// pack in the ranking. The best pick is the one coloured line; the rest are grey context behind it. A dashed vertical
+// pack in the ranking. It sits inside the best pick's banner, as the next thing to know about that pack: a sentence,
+// with the chart folded behind it. The best pick is the one coloured line; the rest are grey context behind it. A dashed vertical
 // line marks when the best pick's pack points (5 a pack, kept per expansion) buy the cheapest wanted card outright,
 // counting from zero.
 import { ChevronDown } from 'lucide-react'
@@ -100,12 +101,11 @@ export function PackOdds({ packs, filters }: { packs: PackRow[]; filters: Target
   }
 
   return (
-    <section className="mb-6 rounded-xl border border-neutral-800 bg-neutral-900/60 p-3 sm:p-4">
-      <h2 className="font-semibold text-base sm:text-lg">How many packs until you get {goal}?</h2>
-      <p className="mt-1 text-sm text-neutral-300">
-        <span className="font-medium">{name(best)}</span>: a 50% chance within <span className="font-semibold tabular-nums">{half.toLocaleString()}</span> packs
-        (≈ {days(half).toLocaleString()} {days(half) === 1 ? 'day' : 'days'} of free packs), 90% within{' '}
-        <span className="font-semibold tabular-nums">{most.toLocaleString()}</span>.
+    <div className="mt-4 border-white/10 border-t pt-3">
+      <p className="text-sm text-neutral-300">
+        <span className="text-neutral-400">Until you get {goal}:</span> a 50% chance within{' '}
+        <span className="font-semibold tabular-nums">{half.toLocaleString()}</span> packs (≈ {days(half).toLocaleString()} {days(half) === 1 ? 'day' : 'days'}{' '}
+        of free packs), 90% within <span className="font-semibold tabular-nums">{most.toLocaleString()}</span>.
         {exchange !== undefined && (
           <>
             {' '}
@@ -243,6 +243,6 @@ export function PackOdds({ packs, filters }: { packs: PackRow[]; filters: Target
           </p>
         </>
       )}
-    </section>
+    </div>
   )
 }
