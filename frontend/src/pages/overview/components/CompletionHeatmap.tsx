@@ -195,7 +195,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
         {best && (
           <button
             type="button"
-            className={`flex min-h-10 w-full items-center justify-center gap-1 rounded bg-neutral-700/50 px-1.5 text-xs tabular-nums whitespace-nowrap ${isSelected(row, 'packs') ? selectedRing : ''}`}
+            className={`flex min-h-8 w-full items-center justify-center gap-1 rounded bg-neutral-700/50 px-1.5 text-xs tabular-nums whitespace-nowrap ${isSelected(row, 'packs') ? selectedRing : ''}`}
             onClick={() => toggle({ row, col: 'packs' })}
             aria-label={`${setName(row)}: best pack ${formatChance(best.pct)} chance of a new card`}
           >
@@ -226,7 +226,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
       <td key={col} className={cellPad(col)}>
         <button
           type="button"
-          className={`relative min-h-10 w-full min-w-11 rounded text-xs tabular-nums transition-[filter] md:hover:brightness-125 focus-visible:outline-2 focus-visible:outline-neutral-200 md:min-h-0 md:py-1.5 ${isTotal ? 'font-semibold' : ''} ${isSelected(row, col) ? selectedRing : ''} ${swatch === 'done' ? 'heat-foil' : ''} heat-in`}
+          className={`relative min-h-8 w-full min-w-11 rounded text-xs tabular-nums transition-[filter] md:hover:brightness-125 focus-visible:outline-2 focus-visible:outline-neutral-200 md:min-h-0 md:py-1.5 ${isTotal ? 'font-semibold' : ''} ${isSelected(row, col) ? selectedRing : ''} ${swatch === 'done' ? 'heat-foil' : ''} heat-in`}
           style={{ ...swatches[swatch], ['--foil-delay' as string]: `${wave * 0.12}s`, ['--in-delay' as string]: `${wave * 0.02}s` }}
           onClick={() => (isMobile ? toggle({ row, col }) : openCollection(row, col))}
           onMouseEnter={isMobile ? undefined : () => setHovered({ row, col })}
@@ -480,10 +480,11 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
                 return (
                   <tr key={e.id}>
                     <th scope="row" className={`${stickyCol} py-0.5 pr-2 text-left font-normal text-sm`} title={name}>
-                      {/* Mobile: set logo with the code underneath; desktop: logo, then code and full name */}
-                      <span className="flex w-15 flex-col items-center md:hidden">
-                        <SetLogo expansionId={e.id} className="h-7 w-full" />
-                        <span className="text-[11px] text-neutral-400 leading-tight tabular-nums">{e.id}</span>
+                      {/* Mobile: set logo with the code beside it, so a row is one 32px cell tall and most of the table fits a
+                          phone screen; desktop: logo, then code and full name */}
+                      <span className="flex items-center gap-1 md:hidden">
+                        <SetLogo expansionId={e.id} className="h-6 w-12" />
+                        <span className="w-6 text-[11px] text-neutral-400 tabular-nums">{e.id}</span>
                       </span>
                       <span className={`-mx-1 hidden items-center gap-2 px-1 transition-colors md:flex ${hovered?.row === e.id ? headerLit : ''}`}>
                         <SetLogo expansionId={e.id} className="h-7 w-16 shrink-0" />
