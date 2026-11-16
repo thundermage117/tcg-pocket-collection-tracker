@@ -598,7 +598,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
                               </span>
                               <span className={`-mx-1 hidden items-center gap-2 px-1 transition-colors md:flex ${hovered?.row === e.id ? headerLit : ''}`}>
                                 <SetLogo expansionId={e.id} className="h-7 w-16 shrink-0" />
-                                <span className="max-w-44 truncate">
+                                <span className="max-w-44 truncate lg:max-w-64">
                                   <span className="mr-1.5 text-neutral-500 text-xs tabular-nums">{e.id}</span>
                                   <span className="text-neutral-200">{name}</span>
                                 </span>

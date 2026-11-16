@@ -57,13 +57,13 @@ export function TierTile({ counts, value, rarity, className }: Props) {
                 title={`${tier.name}: ${collected} / ${available}`}
               >
                 <TierColumn color={tier.color} share={collected / available} delay={i * 0.12} />
+                {/* phones: 8px is the most the ~15px columns take before SSS runs into SS */}
                 <span className="font-black text-[8px] leading-none sm:text-[11px]" style={{ color: tier.color }}>
                   {tier.name}
                 </span>
-                {/* phones: no % sign, which ran the ~15px columns' numbers together */}
-                <span className="whitespace-nowrap text-[8px] text-neutral-300 leading-none tabular-nums sm:text-[10px]">
-                  {completionPct(collected, available)}
-                  <span className="max-sm:hidden">%</span>
+                {/* not on phones: the ~15px columns only fit it at an unreadable 8px, and the fill already shows it */}
+                <span className="whitespace-nowrap text-[10px] text-neutral-300 leading-none tabular-nums max-sm:hidden">
+                  {completionPct(collected, available)}%
                 </span>
               </Link>
             </li>
