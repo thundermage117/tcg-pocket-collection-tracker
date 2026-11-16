@@ -177,7 +177,7 @@ function Overview() {
           <TierTile counts={tierCounts} value={filters.value} rarity={filters.rarity} className="md:col-start-1 md:row-start-2" />
         </section>
 
-        {/* Personal fork: the luck report's headline and the way to the chase wall */}
+        {/* Personal fork: the luck report's headline */}
         <LuckLine className="mt-3 sm:mt-4" />
 
         <CompletionHeatmap

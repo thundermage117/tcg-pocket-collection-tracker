@@ -28,7 +28,6 @@ const TradeCheck = lazy(() => import('./pages/trade/TradeCheck.tsx'))
 const PackValue = lazy(() => import('./pages/packs/PackValue.tsx'))
 const Rankings = lazy(() => import('./pages/rankings/Rankings.tsx'))
 const AltHelper = lazy(() => import('./pages/alt/AltHelper.tsx'))
-const ChaseWall = lazy(() => import('./pages/chase/ChaseWall.tsx'))
 const Luck = lazy(() => import('./pages/luck/Luck.tsx'))
 const Gaps = lazy(() => import('./pages/gaps/Gaps.tsx'))
 const Pokedex = lazy(() => import('./pages/pokedex/Pokedex.tsx'))
@@ -148,7 +147,6 @@ function App() {
         { path: '/alt', element: <AltHelper /> },
         { path: '/gaps', element: <Gaps /> },
         { path: '/luck', element: <Luck /> },
-        { path: '/chase', element: <ChaseWall /> },
         { path: '/pokedex', element: <Pokedex /> },
         { path: '/pokedex/:nr', element: <SpeciesDetail /> },
         { path: '/import', element: <Import /> },

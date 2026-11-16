@@ -11,7 +11,6 @@ import {
   type LucideIcon,
   Package,
   ScanLine,
-  Sparkles,
   Trophy,
   UsersRound,
 } from 'lucide-react'
@@ -33,7 +32,6 @@ export const navItems: NavItem[] = [
   { title: 'trade', href: '/trade', icon: ArrowLeftRight, tab: true },
   { title: 'scan', href: '/scan', icon: ScanLine },
   { title: 'Fill the gaps', href: '/gaps', icon: Grid3x3, secondary: true },
-  { title: 'Chase wall', href: '/chase', icon: Sparkles, secondary: true },
   { title: 'Luck', href: '/luck', icon: Clover, secondary: true },
   { title: 'decks', href: '/decks', icon: Layers, secondary: true },
   { title: 'missions', href: '/missions', icon: ListChecks, secondary: true },
