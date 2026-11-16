@@ -143,7 +143,7 @@ function Overview() {
                 <Link
                   to="/packs?rarity=2s&tier=all&kind=all"
                   // inline, not flex: flex made each text run its own column, which wrapped word by word on phones
-                  className="mt-3 text-balance rounded-full bg-white/35 px-3 py-1 text-left text-sm text-slate-900 transition-colors hover:bg-white/55"
+                  className="mt-3 text-balance rounded-full bg-white/10 px-3 py-1 text-left text-sm text-neutral-200 transition-colors hover:bg-white/20"
                 >
                   Best pack for ☆☆ you're missing: <span className="font-semibold">{t(bestTwoStarPack.packName, { ns: 'common/packs' })}</span> ·{' '}
                   {oneIn(bestTwoStarPack.perPack)} packs
