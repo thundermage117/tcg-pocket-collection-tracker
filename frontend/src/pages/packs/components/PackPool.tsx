@@ -57,7 +57,7 @@ export function PackPool({ cards, wanted, expansionId, rarity }: Props) {
         }
         className="mt-3 inline-block text-xs text-neutral-400 underline-offset-2 hover:text-neutral-200 hover:underline"
       >
-        See this set in the {rarity === '☆☆' ? '☆☆ vote' : 'Most wanted'} ranking →
+        See this expansion in the {rarity === '☆☆' ? '☆☆ vote' : 'Most wanted'} ranking →
       </Link>
     </div>
   )

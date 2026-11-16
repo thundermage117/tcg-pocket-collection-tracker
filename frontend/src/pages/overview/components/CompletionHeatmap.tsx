@@ -224,7 +224,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
   // the tiers the map has blocks for, for its key
   const mapTiers = [...new Set([...packGaps.values()].flat().flatMap((p) => p.byTier.map((t) => t.tier)))].toSorted((a, b) => a - b)
 
-  const setName = (row: string) => (row === 'all' ? 'All sets' : t(getExpansionById(row as ExpansionId).name, { ns: 'common/sets' }))
+  const setName = (row: string) => (row === 'all' ? 'All expansions' : t(getExpansionById(row as ExpansionId).name, { ns: 'common/sets' }))
   const packName = (pack: Pack) => t(pack.name, { ns: 'common/packs' })
 
   const bestInRow = (row: ExpansionId) => bestChance(chances.get(row) ?? [])
@@ -561,7 +561,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
           <table className="w-full border-separate border-spacing-0">
             <thead>
               <tr>
-                <th className={`${stickyCol} pr-2 text-left font-semibold text-neutral-400 text-xs uppercase tracking-wider`}>Set</th>
+                <th className={`${stickyCol} pr-2 text-left font-semibold text-neutral-400 text-xs uppercase tracking-wider`}>Expansion</th>
                 <th className="px-0.5 pb-1 text-center font-semibold text-[10px] text-neutral-400 uppercase leading-tight md:hidden">New card</th>
                 {columns.map((r) => (
                   <th
@@ -611,7 +611,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
               <tr>
                 <th scope="row" className={`${stickyCol} pt-2 pr-2 text-left font-semibold text-neutral-400 text-xs uppercase tracking-wider`}>
                   <span className="md:hidden">All</span>
-                  <span className={`-mx-1 hidden px-1 py-0.5 transition-colors md:inline ${hovered?.row === 'all' ? headerLit : ''}`}>All sets</span>
+                  <span className={`-mx-1 hidden px-1 py-0.5 transition-colors md:inline ${hovered?.row === 'all' ? headerLit : ''}`}>All expansions</span>
                 </th>
                 <td className="md:hidden" />
                 {columns.map((r) => renderCell('all', r, true))}

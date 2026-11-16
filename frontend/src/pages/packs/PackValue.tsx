@@ -197,8 +197,8 @@ export default function PackValue() {
                 Its cards split by tier. The bright part is the cards that count for the odds (the chosen tiers and style, and only ones you're missing unless
                 you turn that off); the faded part is the rest. Hover it for the numbers.
               </Faq>
-              <Faq q="What does “new set” mean?">
-                Some ☆☆ in that pack have fewer than {PROVISIONAL_VOTES} votes, so their tiers may still move. Usual in a set's first month.
+              <Faq q="What does “new expansion” mean?">
+                Some ☆☆ in that pack have fewer than {PROVISIONAL_VOTES} votes, so their tiers may still move. Usual in an expansion's first month.
               </Faq>
               <Faq q="Which packs are left out?">Packs that can no longer be opened (Deluxe Pack: ex) and promos.</Faq>
             </>

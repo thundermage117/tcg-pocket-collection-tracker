@@ -195,11 +195,11 @@ export default function PersonalTrade() {
             <div className="grid gap-3 sm:grid-cols-3">
               <SearchInput value={search} setValue={(q) => update({ q: q || undefined })} />
               <DropdownFilter
-                label="Set"
+                label="Expansion"
                 options={setOptions}
                 value={set}
                 onChange={(x) => update({ set: x === 'all' ? undefined : x, pack: undefined })}
-                show={(id) => (id === 'all' ? 'All sets' : t(getExpansionById(id).name, { ns: 'common/sets' }))}
+                show={(id) => (id === 'all' ? 'All expansions' : t(getExpansionById(id).name, { ns: 'common/sets' }))}
               />
               <DropdownFilter label="Pack" options={packOptions} value={pack} onChange={(x) => update({ pack: x === 'all' ? undefined : x })} show={showPack} />
             </div>

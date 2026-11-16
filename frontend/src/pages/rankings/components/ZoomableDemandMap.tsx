@@ -420,12 +420,12 @@ export function ZoomableDemandMap({ points, owned, onSelect }: Props) {
   const tipLeft = hovered && sx(hovered.lx) > width - 290 ? sx(hovered.lx) - 268 : (hovered ? sx(hovered.lx) : 0) + 12
   const tipTop = hovered ? Math.min(Math.max(sy(hovered.ly) - 50, 0), height - 130) : 0
 
-  const highlightLabel = (h: Highlight) => (h === 'owned' ? 'Owned' : h === 'newest' && newest ? `Newest set (${newest})` : 'None')
+  const highlightLabel = (h: Highlight) => (h === 'owned' ? 'Owned' : h === 'newest' && newest ? `Newest expansion (${newest})` : 'None')
   const legendItems =
     highlight === 'owned'
       ? ['Owned', 'Not owned']
       : highlight === 'newest' && newest
-        ? [`${t(getExpansionById(newest).name)} · few spares listed yet`, 'Other sets']
+        ? [`${t(getExpansionById(newest).name)} · few spares listed yet`, 'Other expansions']
         : undefined
   const button = 'flex h-7 min-w-7 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900/90 px-2 text-xs text-neutral-200'
 

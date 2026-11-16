@@ -261,7 +261,7 @@ export default function TradeCheck() {
     const points = packPointCost[get.rarity]
     if (points) {
       context.push({
-        text: `Benchmark: crafting ${name(get)} costs ${fmt(points)} ${t(getExpansionById(get.expansion).name)} pack points (${fmt(points / PACK_POINTS_PER_PACK)} packs of that set).`,
+        text: `Benchmark: crafting ${name(get)} costs ${fmt(points)} ${t(getExpansionById(get.expansion).name)} pack points (${fmt(points / PACK_POINTS_PER_PACK)} packs of that expansion).`,
       })
     }
   }

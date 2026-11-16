@@ -54,6 +54,9 @@ guidance goes here or in FORK.md. Where the two disagree, this file wins.
   ◊–◊◊◊◊ of the newest openable set registered → that account's 24-hour Wonder Picks show its missing ☆ / ☆☆; every ☆
   too → ☆☆ only; reportedly they stop once it owns every ☆☆. Logic in `lib/altSupport.ts`; details and sources in
   FORK.md, "Alt account".
+- **UI wording (2026-11-16):** "expansion" (upstream's term) for a set like A1, "pack" for a booster inside one. Don't
+  write "set" in user-visible text (the `?set=` URL params and code names stay). Reword upstream strings through the
+  `overrides` map in `frontend/src/i18n.ts`, not by editing upstream's locale JSON.
 - **Stale upstream docs/scripts:** `pnpm sync-locales` no longer exists. `pnpm scraper` calls `scripts/scraper.js`,
   but the file is `scripts/scraper.ts`.
 - **Tooling:** pnpm isn't global on the dev machine (`npx pnpm@12.4.1`). The lefthook git hooks need a `pnpm` shim

@@ -83,7 +83,7 @@ export function CollectionRing({ availableCards, collectedCards, className }: Pr
       <Arc {...outer} value={total === 0 ? 0 : (owned / total) * intro} animate={intro === 1} />
       {showLatest && (
         <g>
-          <title>{`Newest set, ${latestExpansion.id}: ${latestOwned} / ${latestTotal}`}</title>
+          <title>{`Newest expansion, ${latestExpansion.id}: ${latestOwned} / ${latestTotal}`}</title>
           <Arc {...inner} value={(latestOwned / latestTotal) * intro} animate={intro === 1} />
         </g>
       )}

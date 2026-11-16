@@ -246,12 +246,12 @@ export function DemandMap({ points, owned, onSelect }: Props) {
     )
   }
 
-  const highlightLabel = (h: Highlight) => (h === 'owned' ? 'Owned' : h === 'newest' && newest ? `Newest set (${newest})` : 'None')
+  const highlightLabel = (h: Highlight) => (h === 'owned' ? 'Owned' : h === 'newest' && newest ? `Newest expansion (${newest})` : 'None')
   const legendItems =
     highlight === 'owned'
       ? ['Owned', 'Not owned']
       : highlight === 'newest' && newest
-        ? [`${t(getExpansionById(newest).name)} · few spares listed yet`, 'Other sets']
+        ? [`${t(getExpansionById(newest).name)} · few spares listed yet`, 'Other expansions']
         : undefined
 
   return (

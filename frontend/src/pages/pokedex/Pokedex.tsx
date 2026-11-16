@@ -494,11 +494,11 @@ export default function Pokedex() {
               show={(x) => (x === 'all' ? 'All' : capitalize(x))}
             />
             <DropdownFilter
-              label="Set"
+              label="Expansion"
               options={setOptions}
               value={set}
               onChange={(id) => update({ set: id })}
-              show={(id) => (id === 'all' ? 'All sets' : `${id} · ${t(getExpansionById(id).name)}`)}
+              show={(id) => (id === 'all' ? 'All expansions' : `${id} · ${t(getExpansionById(id).name)}`)}
             />
             {sheetFiltering && (
               <Button

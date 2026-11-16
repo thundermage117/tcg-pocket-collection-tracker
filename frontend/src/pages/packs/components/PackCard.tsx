@@ -60,10 +60,10 @@ export function PackCard({ pack, position, filters, goal, range, expanded, onTog
           <div className="mt-1 flex flex-wrap gap-1">
             {provisional && (
               <span
-                title={`New set: some ☆☆ have fewer than ${PROVISIONAL_VOTES} votes, so their tiers may still move`}
+                title={`New expansion: some ☆☆ have fewer than ${PROVISIONAL_VOTES} votes, so their tiers may still move`}
                 className="rounded bg-amber-400/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-400"
               >
-                new set
+                new expansion
               </span>
             )}
             {complete && <span className="rounded bg-green-500/15 px-1.5 py-0.5 text-[10px] font-medium text-green-400">all owned</span>}

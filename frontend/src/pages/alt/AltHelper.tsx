@@ -130,7 +130,7 @@ function UnlockCard({
 }
 
 const UnlockBadge = () => (
-  <span title="Counts towards the latest set's Wonder Pick unlock" className="flex rounded-full bg-violet-500 p-0.5 text-white shadow">
+  <span title="Counts towards the latest expansion's Wonder Pick unlock" className="flex rounded-full bg-violet-500 p-0.5 text-white shadow">
     <Sparkles className="size-3" />
   </span>
 )
@@ -291,7 +291,7 @@ export default function AltHelper() {
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold sm:text-3xl">Alt account</h1>
-          <p className="mt-1 text-sm text-neutral-400">How the alt helps main: gifts, trades to main and the latest set's Wonder Pick unlock.</p>
+          <p className="mt-1 text-sm text-neutral-400">How the alt helps main: gifts, trades to main and the latest expansion's Wonder Pick unlock.</p>
         </div>
         <div className="flex gap-2">
           {/* opens the page with Alt picked in its Main / Alt switch */}
@@ -318,7 +318,7 @@ export default function AltHelper() {
           <Section
             icon={<Sparkles className="size-5 text-violet-400" />}
             title={`${t(latestExpansion.name, { ns: 'common/sets' })}: ☆☆ Wonder Pick unlock`}
-            note="Community-tested, not official: with every ◊–◊◊◊◊ of the newest set registered, an account's 24-hour Wonder Picks show ☆ / ☆☆ it's missing; with every ☆ too, only ☆☆. Worth it on both accounts: the alt's ☆☆ can be traded to main."
+            note="Community-tested, not official: with every ◊–◊◊◊◊ of the newest expansion registered, an account's 24-hour Wonder Picks show ☆ / ☆☆ it's missing; with every ☆ too, only ☆☆. Worth it on both accounts: the alt's ☆☆ can be traded to main."
           >
             <div className="grid gap-3 md:grid-cols-2">
               <UnlockCard
@@ -351,7 +351,7 @@ export default function AltHelper() {
           <Section
             icon={<Gift className="size-5 text-emerald-400" />}
             title="Gift to main"
-            note={giftNote('main', 'Main can receive one gift a day. Latest-set unlock cards first, then cards main has never had, rarest first.')}
+            note={giftNote('main', 'Main can receive one gift a day. Latest-expansion unlock cards first, then cards main has never had, rarest first.')}
           >
             {data.cover.gift.length === 0 ? (
               <p className="py-6 text-center text-neutral-500">The alt has no ◊–◊◊◊◊ cards that main needs.</p>
@@ -370,7 +370,10 @@ export default function AltHelper() {
             <Section
               icon={<Gift className="size-5 text-amber-400" />}
               title="Gift to alt"
-              note={giftNote('alt', "The alt can receive one a day too. Main's spare latest-set ◊–◊◊◊◊ the alt hasn't registered, for the alt's own unlock.")}
+              note={giftNote(
+                'alt',
+                "The alt can receive one a day too. Main's spare latest-expansion ◊–◊◊◊◊ the alt hasn't registered, for the alt's own unlock.",
+              )}
             >
               <GiftGrid
                 cards={data.toAlt}

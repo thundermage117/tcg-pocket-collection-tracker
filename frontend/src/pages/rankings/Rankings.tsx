@@ -191,11 +191,11 @@ export default function Rankings() {
         <div className="flex flex-col gap-3 sm:flex-row">
           <SearchInput value={search} setValue={(q) => update({ q: q.trim() || undefined })} className="sm:flex-1" />
           <DropdownFilter
-            label="Set"
+            label="Expansion"
             options={setsByTab[tab]}
             value={set}
             onChange={(id) => update({ set: id === 'all' ? undefined : id })}
-            show={(id) => (id === 'all' ? 'All sets' : t(getExpansionById(id).name))}
+            show={(id) => (id === 'all' ? 'All expansions' : t(getExpansionById(id).name))}
             className="sm:w-64"
           />
         </div>
