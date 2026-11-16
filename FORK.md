@@ -156,10 +156,11 @@ The alt's rows live in the same tables as main's, under the key `alt:<login emai
 
 `frontend/src/lib/luckModel.ts` (the maths, no imports) and `lib/luck.ts` (bound to the card data). The app never knows how many packs you opened, only which cards you own, so both numbers are estimates.
 
-- **Packs opened**: after n packs a card with per-pack chance p is owned with probability 1 − (1 − p)^n, so the pattern of owned and missing ◊–◊◊◊◊ has a most likely n for each booster. The bracketed range is two standard errors either way.
-- **A floor, not an estimate**: once a booster's ◊–◊◊◊◊ are all owned there's no upper limit. It gets the packs at which half a card would still be expected missing, shows as "at least", and that expansion's luck isn't judged.
+- **Packs opened**: after n packs a card with per-pack chance p is owned with probability 1 − (1 − p)^n, so the pattern of owned and missing ◊–◊◊◊◊ has a most likely n for each booster. The bracketed range is two standard errors either way, worked out per booster.
+- **The ladder**: once a booster's ◊–◊◊◊◊ are all owned there's no upper limit, so the next rarities join the evidence: ☆ (about as easy per card as ◊◊◊◊, so it rarely helps), then ☆☆ and ✵ (0.2–0.4% per pack each, good for well over a thousand packs). A rarity that counted the packs isn't judged for luck in that expansion. With those all owned too, the expansion shows "at least" and isn't judged.
 - **Worth**: the packs at which a typical player, opening the same mix of boosters, owns as many ☆-and-rarer cards as you.
-- **Luck**: the share of players with as many packs who'd own fewer ☆-and-rarer cards, averaged over the packs it could have been. Without that averaging, ordinary error in the pack estimate reads as luck.
+- **Luck**: the share of players with as many packs who'd own fewer of the judged cards, averaged over the packs it could have been. Without that averaging, ordinary error in the pack estimate reads as luck. Shown overall, per rarity (added up over the expansions where that rarity is judged) and per expansion.
+- **How good it is** (simulated on the real odds): the range holds the true pack count about 9 times in 10 or better. The pack estimate runs about 4% high on ◊–◊◊◊◊ alone and about 10% high on the ladder, so luck leans slightly unlucky: typical players average the 44th–50th percentile instead of the 50th.
 - **What it can't see**: how a card arrived. Alt gifts add to the packs opened (luck reads worse); trades, Wonder Picks and pack points add rares (luck reads better). Deluxe and special packs are left out. A card counts once it's in the dex (`collected` or owned), and only main's cards count.
 - Check the model: `pnpm tsx scripts/luck/check-luck.ts` deals simulated collections from known pack counts and checks it finds them again.
 

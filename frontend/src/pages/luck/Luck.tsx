@@ -1,15 +1,20 @@
 // Personal fork: the luck report (lib/luck.ts). One sentence up top: what the ☆-and-rarer cards are worth in packs
-// against the packs the ◊–◊◊◊◊ say were opened. Then the same per expansion, with a dial for where the luck sits.
+// against the packs the cards say were opened. Then luck per rarity, and per expansion with a dial for where it sits.
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SetLogo } from '@/components/CardThumb'
 import { Skeleton } from '@/components/Skeleton'
-import { type ExpansionLuck, getLuck, luckWords, roundPacks } from '@/lib/luck'
+import { formatRarity } from '@/components/utils'
+import { type ExpansionLuck, evidenceNames, getLuck, judgedNames, luckWords, roundPacks, typicalCount } from '@/lib/luck'
 import { useSelectedCard } from '@/services/collection/useCollection'
 import { useProfileCollection } from '@/services/profile/useProfileCollection'
+import type { Rarity } from '@/types'
 
 const big = 'font-semibold text-neutral-50 tabular-nums'
 const note = 'mt-3 text-pretty text-neutral-400 text-sm sm:text-base'
+
+// outside the middle 30–70%, a rarity or expansion is tinted as lucky or unlucky
+const tint = (percentile: number) => (percentile >= 0.7 ? 'text-amber-300' : percentile <= 0.3 ? 'text-sky-400' : 'text-neutral-300')
 
 /** Where the luck sits between unlucky and lucky: a dot on a track with the middle marked. Not progress: there's no end to reach. */
 function LuckDial({ percentile }: { percentile: number }) {
@@ -47,16 +52,38 @@ function Row({ row }: { row: ExpansionLuck }) {
       </div>
       <div className="col-span-2 sm:col-span-1">
         {row.atLeast ? (
-          <p className="text-neutral-500 text-xs">Every ◊–◊◊◊◊ owned, so the packs are a floor and luck can't be judged here.</p>
+          <p className="text-neutral-500 text-xs">Every {evidenceNames[row.evidenceLevel]} owned, so the packs are a floor and luck can't be judged here.</p>
         ) : (
           <>
-            <LuckDial percentile={row.percentile} />
+            <LuckDial percentile={row.judged.percentile} />
             <p className="mt-1.5 text-neutral-400 text-xs">
-              {luckWords(row.percentile)} · typical is {row.expected.toFixed(row.expected < 10 ? 1 : 0)} ☆+
+              {luckWords(row.judged.percentile)}
+              {row.evidenceLevel > 0 && ` on ${judgedNames[row.evidenceLevel]}`}
             </p>
           </>
         )}
       </div>
+      {/* each rarity against its typical count; the ones that counted the packs are greyed, as their luck can't be read */}
+      <ul className="col-span-2 flex flex-wrap gap-x-4 gap-y-1 text-xs sm:col-span-3">
+        {row.byRarity.map((r) => {
+          const judged = r.judged && !row.atLeast
+          return (
+            <li
+              key={r.rarity}
+              className={judged ? 'text-neutral-400' : 'text-neutral-600'}
+              title={
+                judged
+                  ? `${r.owned} of ${r.total} owned · ${luckWords(r.percentile)}`
+                  : `${r.owned} of ${r.total} owned · used to count the packs here, so not judged`
+              }
+            >
+              <span className={judged ? undefined : 'opacity-50'}>{formatRarity(r.rarity as Rarity)}</span>{' '}
+              <span className={`font-medium tabular-nums ${judged ? tint(r.percentile) : ''}`}>{r.owned}</span>
+              {judged && <span className="tabular-nums"> · typical {typicalCount(r.expected)}</span>}
+            </li>
+          )
+        })}
+      </ul>
     </li>
   )
 }
@@ -98,15 +125,14 @@ function Luck() {
               {!luck.atLeast && (
                 <>
                   {' '}
-                  Your ◊–◊◊◊◊ say you opened about <span className={big}>{roundPacks(luck.packs)}</span>.
+                  Your cards say you opened about <span className={big}>{roundPacks(luck.packs)}</span>.
                 </>
               )}
             </p>
             {/* With a floor in the mix the two totals can't be compared, so luck gets its own like-for-like numbers */}
             {luck.judged.expansions === 0 ? (
               <p className={note}>
-                You opened at least {roundPacks(luck.packs)} packs. Every expansion here has all its ◊–◊◊◊◊, so there's no telling how many more, or how lucky
-                they were.
+                You opened at least {roundPacks(luck.packs)} packs. Every expansion here is too complete to tell how many more, or how lucky they were.
               </p>
             ) : luck.atLeast ? (
               <>
@@ -127,6 +153,28 @@ function Luck() {
             )}
           </section>
 
+          {luck.byRarity.length > 0 && (
+            <section className="mb-6">
+              <h2 className="mb-2 font-medium text-neutral-300 text-sm">By rarity</h2>
+              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {luck.byRarity.map((r) => (
+                  <li key={r.rarity} className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-3 sm:p-4">
+                    <p className="flex items-baseline gap-2">
+                      <span className="text-base">{formatRarity(r.rarity)}</span>
+                      <span className={`font-semibold text-xl tabular-nums ${tint(r.percentile)}`}>{r.owned}</span>
+                      <span className="text-neutral-500 text-xs tabular-nums">typical {typicalCount(r.expected)}</span>
+                    </p>
+                    <div className="mt-3 mb-2">
+                      <LuckDial percentile={r.percentile} />
+                    </div>
+                    <p className="text-neutral-400 text-xs">{luckWords(r.percentile)}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <h2 className="mb-2 font-medium text-neutral-300 text-sm">By expansion</h2>
           <ul className="flex flex-col gap-3">
             {luck.expansions.map((row) => (
               <Row key={row.expansion.id} row={row} />
@@ -140,6 +188,11 @@ function Luck() {
                 <span className="text-neutral-200">Packs opened</span> is an estimate from which ◊–◊◊◊◊ are in your card dex: each extra pack makes fewer new
                 ones turn up, so the ones still missing say how far along you are, booster by booster. The range in brackets is where the true number probably
                 is.
+              </p>
+              <p>
+                <span className="text-neutral-200">Once every ◊–◊◊◊◊ is owned</span> they can't say how many more packs followed, so the next rarities count
+                instead: ☆, then ☆☆ and ✵. A rarity that counted the packs isn't judged for luck in that expansion (it's greyed in its row), and the estimate
+                gets rougher and tends to run about a tenth high.
               </p>
               <p>
                 <span className="text-neutral-200">Worth</span> is how many packs a typical player needs to own as many ☆-and-rarer cards as you do, opening the
