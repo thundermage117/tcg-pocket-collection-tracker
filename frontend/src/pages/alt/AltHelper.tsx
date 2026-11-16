@@ -167,7 +167,15 @@ function GiftGrid({
 }) {
   const { setSelectedCardId } = useSelectedCard()
   const [showAll, setShowAll] = useState(false)
+  const [open, setOpen] = useState(false) // today's gift is sent: the queue folds away until asked for
   const shown = showAll ? cards : cards.slice(0, PREVIEW)
+  if (sentToday && !open) {
+    return (
+      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
+        Show the {cards.length} queued {cards.length === 1 ? 'card' : 'cards'}
+      </Button>
+    )
+  }
   return (
     <>
       <div className="grid grid-cols-4 gap-x-2 gap-y-3 sm:grid-cols-6 md:grid-cols-8">
@@ -179,8 +187,8 @@ function GiftGrid({
               badge={countsForUnlock(receiver, card) && <UnlockBadge />}
               onClick={() => setSelectedCardId(card.internal_id)}
             />
-            <Button size="sm" variant={sentToday ? 'ghost' : 'outline'} className="h-7 text-xs" disabled={disabled} onClick={() => onGift(card)}>
-              Gifted
+            <Button size="sm" variant={sentToday ? 'ghost' : 'outline'} className="h-7 px-1 text-xs" disabled={disabled} onClick={() => onGift(card)}>
+              Mark gifted
             </Button>
           </div>
         ))}
@@ -188,6 +196,11 @@ function GiftGrid({
       {cards.length > PREVIEW && (
         <Button variant="ghost" size="sm" className="mt-3" onClick={() => setShowAll((all) => !all)}>
           {showAll ? 'Show fewer' : `Show all ${cards.length}`}
+        </Button>
+      )}
+      {sentToday && (
+        <Button variant="ghost" size="sm" className="mt-3" onClick={() => setOpen(false)}>
+          Hide
         </Button>
       )}
     </>
