@@ -91,7 +91,7 @@ function byPriority(receiver: Collection) {
 export const countsForUnlock = (receiver: Collection, card: Card) =>
   card.expansion === latestExpansion.id && unlockRarities.includes(card.rarity) && !registered(receiver, card.internal_id)
 
-interface AltCover {
+export interface AltCover {
   gift: Card[] // ◊–◊◊◊◊ main needs and the alt owns
   trade: Card[] // ☆ and up main needs and the alt owns
   rest: number // main needs it and the alt doesn't have it either

@@ -1,7 +1,6 @@
-import { ChevronRight, Siren } from 'lucide-react'
+import { Siren } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
 import { CountAltSwitch } from '@/components/CountAltSwitch'
 import { DropdownFilter } from '@/components/Filters'
 import Footer from '@/components/Footer.tsx'
@@ -13,14 +12,13 @@ import { AlertTitle } from '@/components/ui/alert.tsx'
 import { useUrlFilters } from '@/hooks/useUrlFilters'
 import { getFilteredCards } from '@/lib/filters'
 import { getBoosterValues } from '@/lib/packValue'
-import { BestPackCard } from '@/pages/overview/components/BestPackCard'
 import { CollectionRing } from '@/pages/overview/components/CollectionRing'
 import { CompletionHeatmap } from '@/pages/overview/components/CompletionHeatmap.tsx'
 import { TierTile } from '@/pages/overview/components/TierTile'
+import { TodayPanel } from '@/pages/overview/components/TodayPanel'
 import { UnlockTile } from '@/pages/overview/components/UnlockTile'
 import { bestChance, getPackChances } from '@/pages/overview/packChances'
 import { countByTier, inValue, type ValueOption, valueLabels, valueOptions } from '@/pages/overview/valueTiers'
-import { oneIn } from '@/pages/packs/types'
 import { useMainWithAlt } from '@/services/profile/useProfileCollection'
 import { type Card, type CollectionRow, type Rarity, rarities } from '@/types'
 
@@ -122,7 +120,7 @@ function Overview() {
           />
         </div>
 
-        {/* Personal fork: below md the two stat tiles share a row and the pick goes under them, so the heatmap starts higher */}
+        {/* Personal fork: below md the two stat tiles share a row and the today panel goes under them, so the heatmap starts higher */}
         <section className="grid grid-cols-8 gap-3 sm:gap-4">
           {/* Personal fork: heading sized like the tier tile's and a muted footnote, so the ring gets the room */}
           <div className="col-span-4 md:col-span-2 flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 bg-neutral-800 border-solid p-3 sm:p-5">
@@ -134,36 +132,18 @@ function Overview() {
               {filters.value !== 'all' && ` · ${valueLabels[filters.value]}`}
             </p>
           </div>
-          {/* Personal fork: the card is upstream's every-rarity pick; the ☆☆ pick is its own link to the packs page, which ranks only ☆☆ */}
-          {bestPack && bestPack.pct > 0 ? (
-            // Personal fork: upstream's GradientCard with the pack's cover card beside it
-            <BestPackCard pack={bestPack.pack} pct={bestPack.pct} className="order-last col-span-8 md:order-none md:col-span-4 md:col-start-3">
-              {showTwoStarPick && bestTwoStarPack && bestTwoStarPack.perPack > 0 && (
-                // explicit rarity, tier and style: a bare /packs reopens whatever was last picked there, which may not be the pick named here
-                <Link
-                  to="/packs?rarity=2s&tier=all&kind=all"
-                  // inline, not flex: flex made each text run its own column, which wrapped word by word on phones
-                  className="mt-3 text-balance rounded-full bg-white/10 px-3 py-1 text-left text-sm text-neutral-200 transition-colors hover:bg-white/20"
-                >
-                  Best pack for ☆☆ you're missing: <span className="font-semibold">{t(bestTwoStarPack.packName, { ns: 'common/packs' })}</span> ·{' '}
-                  {oneIn(bestTwoStarPack.perPack)} packs
-                  <ChevronRight className="ml-0.5 inline size-4 align-text-bottom" />
-                </Link>
-              )}
-            </BestPackCard>
-          ) : (
-            // Nothing missing in any openable pack: no pick to make
-            <div className="order-last col-span-8 md:order-none md:col-span-4 md:col-start-3 flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 bg-neutral-800 border-solid p-4 sm:p-8">
-              <p className="font-semibold text-center text-2xl sm:text-5xl">All caught up 🎉</p>
-              <p className="mt-2 text-balance text-center text-neutral-300 text-md sm:text-xl">
-                No booster pack has a card you're missing
-                {filters.rarity.length > 0 || filters.value !== 'all' ? ' with these filters' : ''}.
-              </p>
-            </div>
-          )}
+          {/* Personal fork: upstream's every-rarity pick as the headline of a "today" panel, with the ☆☆ pick, the unlock's
+              pack and the alt's next gift / trade listed under it */}
+          <TodayPanel
+            best={bestPack}
+            twoStar={showTwoStarPick ? bestTwoStarPack : undefined}
+            filtered={filters.rarity.length > 0 || filters.value !== 'all'}
+            className="order-1 col-span-8 md:order-none md:col-span-4 md:col-start-3"
+          />
           {/* Personal fork: replaces upstream's "You have N cards in total" */}
           <TierTile counts={tierCounts} value={filters.value} rarity={filters.rarity} className="col-span-4 md:col-span-2" />
-          <UnlockTile className="col-span-8" />
+          {/* after the today panel on phones too: the progress explains its Unlock / Gift / Trade rows */}
+          <UnlockTile className="order-2 col-span-8 md:order-none" />
         </section>
 
         <CompletionHeatmap

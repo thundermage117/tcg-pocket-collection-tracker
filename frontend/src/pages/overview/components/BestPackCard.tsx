@@ -68,40 +68,43 @@ interface Props {
   pack: Pack
   pct: number // 0–100
   className?: string
-  children?: ReactNode // extra line under the odds
+  footer?: ReactNode // full-width strip under the pick (the today panel's other actions)
 }
 
-export function BestPackCard({ pack, pct, className, children }: Props) {
+export function BestPackCard({ pack, pct, className, footer }: Props) {
   const { t } = useTranslation(['gradient-card', 'common/packs'])
   const chancePercentage = Math.round(pct * 10) / 10
   const artwork = packArtworkUrl(pack)
 
   return (
     <div
-      className={cn(className, 'relative isolate flex items-center overflow-hidden rounded-lg border-1 border-neutral-700 bg-neutral-800 p-4 sm:p-8')}
+      className={cn(className, 'relative isolate flex flex-col overflow-hidden rounded-lg border-1 border-neutral-700 bg-neutral-800')}
       style={{
         backgroundImage: `radial-gradient(circle at 85% 50%, ${pack.color}80, transparent 55%), linear-gradient(120deg, ${pack.color}40, transparent 70%)`,
       }}
     >
-      {artwork && (
-        <img
-          src={artwork}
-          alt=""
-          decoding="async"
-          // on the glow, partly off the edge on phones
-          className="-z-10 -right-4 sm:right-2 absolute top-1/2 h-[120%] -translate-y-1/2 drop-shadow-[0_8px_16px_rgb(0_0_0/0.5)] sm:h-[95%]"
-        />
-      )}
-      <div className={cn('flex flex-col items-start text-left', artwork && 'pr-28 sm:pr-60 lg:pr-72')}>
-        <p className="mb-1 text-md text-neutral-300 sm:text-xl">
-          <Trans i18nKey="open" ns="gradient-card" />
-        </p>
-        <header className="text-balance font-semibold text-2xl text-neutral-50 sm:text-5xl lg:text-6xl">{t(pack.name, { ns: 'common/packs' })}</header>
-        <p className="mt-2 text-md text-neutral-300 sm:text-xl">
-          <Trans i18nKey="text" ns="gradient-card" values={{ chancePercentage }} components={{ strong: <span className="font-bold text-neutral-50" /> }} />
-        </p>
-        {children}
+      {/* the artwork is sized by this part, not the whole card, so the footer never covers its feet */}
+      <div className="relative flex flex-1 items-center overflow-hidden p-4 sm:p-8">
+        {artwork && (
+          <img
+            src={artwork}
+            alt=""
+            decoding="async"
+            // on the glow, partly off the edge on phones
+            className="-z-10 -right-6 sm:right-2 absolute top-1/2 h-[120%] -translate-y-1/2 drop-shadow-[0_8px_16px_rgb(0_0_0/0.5)] sm:h-[95%]"
+          />
+        )}
+        <div className={cn('flex flex-col items-start text-left', artwork && 'pr-32 sm:pr-60 lg:pr-72')}>
+          <p className="mb-1 text-md text-neutral-300 sm:text-xl">
+            <Trans i18nKey="open" ns="gradient-card" />
+          </p>
+          <header className="text-balance font-semibold text-2xl text-neutral-50 sm:text-5xl lg:text-6xl">{t(pack.name, { ns: 'common/packs' })}</header>
+          <p className="mt-2 text-md text-neutral-300 sm:text-xl">
+            <Trans i18nKey="text" ns="gradient-card" values={{ chancePercentage }} components={{ strong: <span className="font-bold text-neutral-50" /> }} />
+          </p>
+        </div>
       </div>
+      {footer}
     </div>
   )
 }

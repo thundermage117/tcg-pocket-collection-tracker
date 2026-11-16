@@ -1,19 +1,12 @@
-// Personal fork: main's progress towards the latest set's ☆☆ Wonder Pick unlock (see lib/altSupport.ts) and the next
-// thing the alt can do for it. Always main's real collection: it ignores the Main / Alt switch and "Count alt's cards".
-import { ArrowLeftRight, Check, ChevronRight, Gift, type LucideIcon, Package, Sparkles } from 'lucide-react'
-import { type ReactNode, useMemo } from 'react'
+// Personal fork: main's progress towards the latest set's ☆☆ Wonder Pick unlock (see lib/altSupport.ts). What to do about
+// it (the pack to open, the alt's next gift or trade) is in the today panel above, from the same useUnlockPlan.
+import { Check, ChevronRight, Sparkles } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { SetLogo } from '@/components/CardThumb'
-import { allTwoStarsRegistered, altCovers, bestUnlockPack, canMoveToMain, latestExpansion, readGiftDate, today, unlockProgress } from '@/lib/altSupport'
-import { getCardNameByLang } from '@/lib/utils'
+import { latestExpansion } from '@/lib/altSupport'
 import './heatmap.css'
-import { packOdds } from '@/pages/packs/types'
-import { useProfileAccount } from '@/services/profile/useProfile'
-import { useProfileCollection } from '@/services/profile/useProfileCollection'
-import type { Card } from '@/types'
-
-const packCount = latestExpansion.packs.filter((p) => p.name !== 'everypack').length
+import { useUnlockPlan } from '@/pages/overview/useUnlockPlan'
 
 // One stage of the unlock: done stages get a ✓, the one not reached yet is dimmed
 // The striped part after the fill is what the alt can gift or trade over: progress main gets without opening a pack
@@ -59,43 +52,15 @@ function Stage({
   )
 }
 
-function Chip({ icon: Icon, children }: { icon: LucideIcon; children: ReactNode }) {
-  return (
-    <p className="flex min-w-0 items-center gap-2 rounded-md bg-neutral-900/50 px-2.5 py-1.5 text-neutral-400 text-xs">
-      <Icon className="size-3.5 shrink-0 text-violet-300" />
-      <span className="min-w-0 truncate">{children}</span>
-    </p>
-  )
-}
-
 export function UnlockTile({ className }: { className?: string }) {
-  const { t, i18n } = useTranslation(['common/sets', 'common/packs'])
-  const { data: mainAccount } = useProfileAccount('main')
-  const { data: main } = useProfileCollection('main')
-  const { data: alt } = useProfileCollection('alt')
+  const { t } = useTranslation('common/sets')
+  const data = useUnlockPlan()
 
-  const data = useMemo(() => {
-    if (!main || !alt || !mainAccount) {
-      return undefined
-    }
-    const progress = unlockProgress(main)
-    if (progress.missing.length === 0 && allTwoStarsRegistered(main)) {
-      return undefined // nothing left for the Wonder Picks to show
-    }
-    const cover = altCovers(main, mainAccount.trade_rarity_settings, alt)
-    const altCanGive = (c: Card) => canMoveToMain(c) && (alt.get(c.internal_id)?.amount_owned ?? 0) > 0
-    const altHas = progress.missing.filter((c) => c.rarity !== '☆' && altCanGive(c)).length
-    const altStars = progress.missing.filter((c) => c.rarity === '☆' && altCanGive(c)).length
-    // only worth naming when the set has a choice of packs
-    const best = packCount > 1 ? bestUnlockPack(progress.missing.filter((c) => !altCanGive(c))) : undefined
-    return { progress, cover, altHas, altStars, best }
-  }, [main, alt, mainAccount])
-
-  if (!data) {
+  if (!data || data.finished) {
     return null
   }
 
-  const { progress, cover, altHas, altStars, best } = data
+  const { progress, altHas, altStars } = data
   const diamondsLeft = progress.diamonds.total - progress.diamonds.have
   const starsLeft = progress.star.total - progress.star.have
   if (diamondsLeft === 0 && starsLeft === 0) {
@@ -116,8 +81,6 @@ export function UnlockTile({ className }: { className?: string }) {
     )
   }
   const headline = diamondsLeft > 0 ? { big: `${diamondsLeft} ◊`, small: 'to go, then the ☆' } : { big: `${starsLeft} ☆`, small: 'to go · Wonder Picks live' }
-  const next = cover.gift[0] ? { kind: 'gift', card: cover.gift[0] } : cover.trade[0] && { kind: 'trade', card: cover.trade[0] }
-  const giftSent = next?.kind === 'gift' && readGiftDate('main') === today()
 
   return (
     <Link
@@ -169,24 +132,6 @@ export function UnlockTile({ className }: { className?: string }) {
           />
         </div>
       </div>
-      {((best && best.chance > 0) || next) && (
-        <div className="grid gap-2 sm:grid-cols-2">
-          {best && best.chance > 0 && (
-            <Chip icon={Package}>
-              Open <span className="font-medium text-neutral-100">{t(best.pack.name, { ns: 'common/packs' })}</span> · {packOdds(best.chance)}
-            </Chip>
-          )}
-          {next && (
-            <Chip icon={next.kind === 'gift' ? Gift : ArrowLeftRight}>
-              Next {next.kind}:{' '}
-              <span className="font-medium text-neutral-100">
-                {getCardNameByLang(next.card, i18n.language)} {next.card.rarity}
-              </span>
-              {giftSent && <span className="text-emerald-400"> · ✓ sent today</span>}
-            </Chip>
-          )}
-        </div>
-      )}
     </Link>
   )
 }
