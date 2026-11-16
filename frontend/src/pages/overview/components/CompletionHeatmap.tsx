@@ -1,5 +1,5 @@
-import { ChevronRight, X } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ChevronDown, ChevronRight, X } from 'lucide-react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMediaQuery } from 'react-responsive'
 import { useNavigate } from 'react-router'
@@ -20,12 +20,15 @@ import {
   formatLeft,
   formatPct,
   isNearlyDone,
+  isSeriesRow,
   legend,
   type MapSize,
   missingByCell,
   rarityFamily,
   rarityLabel,
   type Selection,
+  seriesOf,
+  seriesRow,
   swatches,
 } from '@/pages/overview/heatmapCells'
 import { bestChance, type PackChance } from '@/pages/overview/packChances'
@@ -33,6 +36,18 @@ import { getPackTierMap } from '@/pages/overview/packMap'
 import type { ValueOption } from '@/pages/overview/valueTiers'
 import { type Card, type ExpansionId, type Pack, type Rarity, rarities } from '@/types'
 import './heatmap.css'
+
+// Which series are open, kept across visits. Until one is toggled, only the newest is: older series are mostly finished
+// and each new expansion would otherwise make the table one row longer.
+const openSeriesKey = 'overview-open-series'
+function loadOpenSeries(): string[] | undefined {
+  try {
+    const saved = JSON.parse(localStorage.getItem(openSeriesKey) ?? 'null')
+    return Array.isArray(saved) ? saved.filter((s) => typeof s === 'string') : undefined
+  } catch {
+    return undefined
+  }
+}
 
 interface Props {
   availableCards: Card[]
@@ -112,15 +127,45 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
   const familyStarts = new Set(columns.filter((r, i) => i > 0 && rarityFamily(columns[i - 1]) !== rarityFamily(r)))
   const cellPad = (col: Rarity | 'all') => (col !== 'all' && familyStarts.has(col) ? 'py-0.5 pr-0.5 pl-2' : 'p-0.5')
   const rows = openable.toReversed()
+  // newest series first, each with its expansions newest first
+  const seriesGroups = [...new Set(rows.map((e) => seriesOf(e.id)))].map((series) => ({ series, sets: rows.filter((e) => seriesOf(e.id) === series) }))
+  const [savedOpen, setOpenSeries] = useState(() => loadOpenSeries() ?? seriesGroups.slice(0, 1).map((g) => g.series))
+  // a series of one expansion has no summary row (it would repeat the expansion's), so it's always open
+  const openSeries = [...savedOpen, ...seriesGroups.filter((g) => g.sets.length === 1).map((g) => g.series)]
+  const toggleSeries = (series: string) => {
+    const next = savedOpen.includes(series) ? savedOpen.filter((s) => s !== series) : [...savedOpen, series]
+    setOpenSeries(next)
+    try {
+      localStorage.setItem(openSeriesKey, JSON.stringify(next))
+    } catch {
+      // storage unavailable: the choice lasts for this visit
+    }
+  }
+  // the rows on screen, top to bottom, for the cells' entrance wave
+  const visibleRows = seriesGroups.flatMap((g) => [
+    ...(g.sets.length > 1 ? [seriesRow(g.series)] : []),
+    ...(openSeries.includes(g.series) ? g.sets.map((e) => e.id as string) : []),
+  ])
 
   const mapSets = (): MapSet[] => rows.map((e) => ({ id: e.id, name: setName(e.id), packs: packGaps.get(e.id) ?? [] }))
   // the tiers the map has blocks for, for its key
   const mapTiers = [...new Set([...packGaps.values()].flat().flatMap((p) => p.byTier.map((t) => t.tier)))].toSorted((a, b) => a - b)
 
-  const setName = (row: string) => (row === 'all' ? 'All expansions' : t(getExpansionById(row as ExpansionId).name, { ns: 'common/sets' }))
+  const setName = (row: string) =>
+    row === 'all'
+      ? 'All expansions'
+      : isSeriesRow(row)
+        ? t(`series-${row.slice(2)}`, { ns: 'common/sets', defaultValue: `Series ${row.slice(2)}` })
+        : t(getExpansionById(row as ExpansionId).name, { ns: 'common/sets' })
   const packName = (pack: Pack) => t(pack.name, { ns: 'common/packs' })
 
   const bestInRow = (row: ExpansionId) => bestChance(chances.get(row) ?? [])
+  // a closed series still names its best pack, so collapsing never hides where to open
+  const bestInSeries = (sets: { id: ExpansionId }[]) => {
+    const best = bestChance(sets.flatMap((e) => chances.get(e.id) ?? []))
+    const row = best && sets.find((e) => chances.get(e.id)?.includes(best))?.id
+    return best && row && best.pct > 0 ? { row, chance: best } : undefined
+  }
 
   const openCollection = (expansion: string, rarity: Rarity | 'all', pack?: string) => {
     const params = new URLSearchParams({ ownership: 'missing' })
@@ -221,14 +266,16 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
     const label = col === 'all' ? setName(row) : `${setName(row)} ${col}`
     const swatch = cellSwatch(c, cellMode)
     // Finished cells get the foil; its sweeps run as a wave from the top-left corner down to the totals
-    const wave = (row === 'all' ? rows.length : rows.findIndex((e) => e.id === row)) + (col === 'all' ? columns.length : columns.indexOf(col))
+    const wave = (row === 'all' ? visibleRows.length : visibleRows.indexOf(row)) + (col === 'all' ? columns.length : columns.indexOf(col))
+    const series = isSeriesRow(row) ? row.slice(2) : undefined
     return (
       <td key={col} className={cellPad(col)}>
         <button
           type="button"
           className={`relative min-h-8 w-full min-w-11 rounded text-xs tabular-nums transition-[filter] md:hover:brightness-125 focus-visible:outline-2 focus-visible:outline-neutral-200 md:min-h-0 md:py-1.5 ${isTotal ? 'font-semibold' : ''} ${isSelected(row, col) ? selectedRing : ''} ${swatch === 'done' ? 'heat-foil' : ''} heat-in`}
           style={{ ...swatches[swatch], ['--foil-delay' as string]: `${wave * 0.12}s`, ['--in-delay' as string]: `${wave * 0.02}s` }}
-          onClick={() => (isMobile ? toggle({ row, col }) : openCollection(row, col))}
+          // the collection can't filter by series, so a series' cells open or close it instead
+          onClick={() => (series ? toggleSeries(series) : isMobile ? toggle({ row, col }) : openCollection(row, col))}
           onMouseEnter={isMobile ? undefined : () => setHovered({ row, col })}
           onMouseLeave={isMobile ? undefined : () => setHovered(null)}
           data-tooltip-id={isMobile ? undefined : 'completion-heatmap'}
@@ -475,31 +522,97 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
               </tr>
             </thead>
             <tbody>
-              {rows.map((e) => {
-                const name = setName(e.id)
+              {seriesGroups.map(({ series, sets }, i) => {
+                const key = seriesRow(series)
+                const open = openSeries.includes(series)
+                const Chevron = open ? ChevronDown : ChevronRight
+                const best = open ? undefined : bestInSeries(sets)
+                const bestLabel = best && `${setName(best.row)} · ${packName(best.chance.pack)}: ${formatChance(best.chance.pct)} chance of a new card`
                 return (
-                  <tr key={e.id}>
-                    <th scope="row" className={`${stickyCol} py-0.5 pr-2 text-left font-normal text-sm`} title={name}>
-                      {/* Mobile: set logo with the code beside it, so a row is one 32px cell tall and most of the table fits a
-                          phone screen; desktop: logo, then code and full name */}
-                      <span className="flex items-center gap-1 md:hidden">
-                        <SetLogo expansionId={e.id} className="h-6 w-12" />
-                        <span className="w-6 text-[11px] text-neutral-400 tabular-nums">{e.id}</span>
-                      </span>
-                      <span className={`-mx-1 hidden items-center gap-2 px-1 transition-colors md:flex ${hovered?.row === e.id ? headerLit : ''}`}>
-                        <SetLogo expansionId={e.id} className="h-7 w-16 shrink-0" />
-                        <span className="max-w-44 truncate">
-                          <span className="mr-1.5 text-neutral-500 text-xs tabular-nums">{e.id}</span>
-                          <span className="text-neutral-200">{name}</span>
-                        </span>
-                      </span>
-                    </th>
-                    {renderBestChance(e.id)}
-                    {columns.map((r) => renderCell(e.id, r))}
-                    <td className="w-2" />
-                    {renderCell(e.id, 'all', true)}
-                    {renderChances(e.id)}
-                  </tr>
+                  <Fragment key={series}>
+                    {i > 0 && (
+                      <tr>
+                        <td className="h-2" />
+                      </tr>
+                    )}
+                    {/* The series' summary: its totals per rarity, and the toggle for its expansions */}
+                    {sets.length > 1 && (
+                      <tr>
+                        <th scope="row" className={`${stickyCol} py-0.5 pr-2 text-left font-normal`}>
+                          <button
+                            type="button"
+                            className={`-mx-1 flex min-h-8 w-full items-center gap-1 rounded px-1 text-left font-semibold text-neutral-200 text-xs transition-colors hover:bg-neutral-700/60 md:text-sm focus-visible:outline-2 focus-visible:outline-neutral-200 md:min-h-7 ${hovered?.row === key ? headerLit : ''}`}
+                            onClick={() => toggleSeries(series)}
+                            aria-expanded={open}
+                          >
+                            <Chevron className="size-4 shrink-0 text-neutral-400" />
+                            <span className="whitespace-nowrap">{setName(key)}</span>
+                            <span className="ml-1 font-normal text-neutral-500 text-xs tabular-nums max-md:hidden">{sets.length} expansions</span>
+                          </button>
+                        </th>
+                        <td className="p-0.5 md:hidden">
+                          {best && (
+                            <button
+                              type="button"
+                              className="flex min-h-8 w-full items-center justify-center gap-1 rounded bg-neutral-700/50 px-1.5 text-xs tabular-nums whitespace-nowrap"
+                              onClick={() => toggleSeries(series)}
+                              aria-label={bestLabel}
+                            >
+                              <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: best.chance.pack.color }} />
+                              <span>{formatChance(best.chance.pct)}</span>
+                            </button>
+                          )}
+                        </td>
+                        {columns.map((r) => renderCell(key, r, true))}
+                        <td className="w-2" />
+                        {renderCell(key, 'all', true)}
+                        <td className="hidden pl-2 md:table-cell">
+                          {best && (
+                            <button
+                              type="button"
+                              className="flex items-center gap-1 rounded bg-neutral-700/50 px-1.5 py-1.5 text-xs tabular-nums whitespace-nowrap hover:bg-neutral-700 focus-visible:outline-2 focus-visible:outline-neutral-200"
+                              onClick={() => openPack(best.row, best.chance)}
+                              data-tooltip-id="completion-heatmap"
+                              data-tooltip-content={bestLabel}
+                              aria-label={bestLabel}
+                            >
+                              <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: best.chance.pack.color }} />
+                              <span>{formatChance(best.chance.pct)}</span>
+                              <span className="text-neutral-400">{best.row}</span>
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                    {open &&
+                      sets.map((e) => {
+                        const name = setName(e.id)
+                        return (
+                          <tr key={e.id}>
+                            <th scope="row" className={`${stickyCol} py-0.5 pr-2 text-left font-normal text-sm`} title={name}>
+                              {/* Mobile: set logo with the code beside it, so a row is one 32px cell tall and most of the table fits a
+                              phone screen; desktop: logo, then code and full name */}
+                              <span className="flex items-center gap-1 md:hidden">
+                                <SetLogo expansionId={e.id} className="h-6 w-12" />
+                                <span className="w-6 text-[11px] text-neutral-400 tabular-nums">{e.id}</span>
+                              </span>
+                              <span className={`-mx-1 hidden items-center gap-2 px-1 transition-colors md:flex ${hovered?.row === e.id ? headerLit : ''}`}>
+                                <SetLogo expansionId={e.id} className="h-7 w-16 shrink-0" />
+                                <span className="max-w-44 truncate">
+                                  <span className="mr-1.5 text-neutral-500 text-xs tabular-nums">{e.id}</span>
+                                  <span className="text-neutral-200">{name}</span>
+                                </span>
+                              </span>
+                            </th>
+                            {renderBestChance(e.id)}
+                            {columns.map((r) => renderCell(e.id, r))}
+                            <td className="w-2" />
+                            {renderCell(e.id, 'all', true)}
+                            {renderChances(e.id)}
+                          </tr>
+                        )
+                      })}
+                  </Fragment>
                 )
               })}
               <tr>

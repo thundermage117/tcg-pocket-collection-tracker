@@ -19,7 +19,14 @@ export interface Cell {
 // On mobile a tap selects a cell (or a set's pack chances) and shows it in the details bar
 export type Selection = { row: string; col: Rarity | 'all' } | { row: ExpansionId; col: 'packs' }
 
-// Unique cards per "<expansion>|<rarity>", plus "<expansion>|all" and "all|<rarity>" totals
+// Expansions are grouped by series (A, B, C: the id's first letter); a series' summary row is keyed "s:<letter>"
+export const seriesOf = (id: ExpansionId) => id.charAt(0)
+export const seriesRow = (series: string) => `s:${series}`
+export const isSeriesRow = (row: string) => row.startsWith('s:')
+
+const rowsOf = (c: Card) => [c.expansion, seriesRow(seriesOf(c.expansion)), 'all']
+
+// Unique cards per "<row>|<rarity>" and "<row>|all", where a row is an expansion, its series or "all"
 export function countByCell(cards: Card[]) {
   const ids = new Map<string, Set<number>>()
   const add = (key: string, id: number) => {
@@ -31,10 +38,10 @@ export function countByCell(cards: Card[]) {
     set.add(id)
   }
   for (const c of cards) {
-    add(`${c.expansion}|${c.rarity}`, c.internal_id)
-    add(`${c.expansion}|all`, c.internal_id)
-    add(`all|${c.rarity}`, c.internal_id)
-    add('all|all', c.internal_id)
+    for (const row of rowsOf(c)) {
+      add(`${row}|${c.rarity}`, c.internal_id)
+      add(`${row}|all`, c.internal_id)
+    }
   }
   return new Map([...ids].map(([key, set]) => [key, set.size]))
 }
@@ -48,7 +55,7 @@ export function missingByCell(available: Card[], collected: Card[]) {
     if (owned.has(c.internal_id)) {
       continue
     }
-    for (const key of [`${c.expansion}|${c.rarity}`, `${c.expansion}|all`, `all|${c.rarity}`, 'all|all']) {
+    for (const key of rowsOf(c).flatMap((row) => [`${row}|${c.rarity}`, `${row}|all`])) {
       const list = cards.get(key) ?? []
       // a card can be in several packs (or listed twice), so dedupe per cell
       if (list.length < previewCount && !seen.has(`${key}|${c.internal_id}`)) {
