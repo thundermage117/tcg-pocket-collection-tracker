@@ -4,9 +4,10 @@ import { ArrowLeftRight, Check, ChevronRight, Gift, type LucideIcon, Package, Sp
 import { type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { Progress } from '@/components/ui/progress'
+import { SetLogo } from '@/components/CardThumb'
 import { allTwoStarsRegistered, altCovers, bestUnlockPack, canMoveToMain, latestExpansion, readGiftDate, today, unlockProgress } from '@/lib/altSupport'
 import { getCardNameByLang } from '@/lib/utils'
+import './heatmap.css'
 import { packOdds } from '@/pages/packs/types'
 import { useProfileAccount } from '@/services/profile/useProfile'
 import { useProfileCollection } from '@/services/profile/useProfileCollection'
@@ -15,7 +16,23 @@ import type { Card } from '@/types'
 const packCount = latestExpansion.packs.filter((p) => p.name !== 'everypack').length
 
 // One stage of the unlock: done stages get a ✓, the one not reached yet is dimmed
-function Stage({ step, label, have, total, state }: { step: number; label: string; have: number; total: number; state: 'done' | 'active' | 'later' }) {
+// The striped part after the fill is what the alt can gift or trade over: progress main gets without opening a pack
+function Stage({
+  step,
+  label,
+  have,
+  alt,
+  total,
+  state,
+}: {
+  step: number
+  label: string
+  have: number
+  alt: number
+  total: number
+  state: 'done' | 'active' | 'later'
+}) {
+  const pct = (n: number) => `${total === 0 ? 100 : (100 * n) / total}%`
   return (
     <div className={`min-w-0 flex-1 ${state === 'later' ? 'opacity-45' : ''}`}>
       <div className="mb-1.5 flex items-center gap-1.5 text-xs">
@@ -29,7 +46,15 @@ function Stage({ step, label, have, total, state }: { step: number; label: strin
           {have}/{total}
         </span>
       </div>
-      <Progress value={total === 0 ? 100 : (100 * have) / total} className="h-2" barColor={state === 'done' ? '#34d399' : '#a78bfa'} />
+      <div className="flex h-2 overflow-hidden rounded-full bg-neutral-50/15">
+        <div className={`h-full transition-[width] duration-500 ${state === 'done' ? 'bg-emerald-400' : 'bg-violet-400'}`} style={{ width: pct(have) }} />
+        {alt > 0 && (
+          <div
+            className="h-full transition-[width] duration-500"
+            style={{ width: pct(alt), background: 'repeating-linear-gradient(135deg, rgb(167 139 250 / 0.55) 0 3px, rgb(167 139 250 / 0.2) 3px 6px)' }}
+          />
+        )}
+      </div>
     </div>
   )
 }
@@ -60,24 +85,37 @@ export function UnlockTile({ className }: { className?: string }) {
     const cover = altCovers(main, mainAccount.trade_rarity_settings, alt)
     const altCanGive = (c: Card) => canMoveToMain(c) && (alt.get(c.internal_id)?.amount_owned ?? 0) > 0
     const altHas = progress.missing.filter((c) => c.rarity !== '☆' && altCanGive(c)).length
+    const altStars = progress.missing.filter((c) => c.rarity === '☆' && altCanGive(c)).length
     // only worth naming when the set has a choice of packs
     const best = packCount > 1 ? bestUnlockPack(progress.missing.filter((c) => !altCanGive(c))) : undefined
-    return { progress, cover, altHas, best }
+    return { progress, cover, altHas, altStars, best }
   }, [main, alt, mainAccount])
 
   if (!data) {
     return null
   }
 
-  const { progress, cover, altHas, best } = data
+  const { progress, cover, altHas, altStars, best } = data
   const diamondsLeft = progress.diamonds.total - progress.diamonds.have
   const starsLeft = progress.star.total - progress.star.have
-  const headline =
-    diamondsLeft > 0
-      ? { big: `${diamondsLeft} ◊`, small: 'to go, then the ☆' }
-      : starsLeft > 0
-        ? { big: `${starsLeft} ☆`, small: 'to go · Wonder Picks show ☆ and ☆☆' }
-        : { big: 'Unlocked', small: 'daily ☆☆ Wonder Picks' }
+  if (diamondsLeft === 0 && starsLeft === 0) {
+    // Unlocked: only the ☆☆ left to register, which the Wonder Picks now show, so a slim strip is enough
+    return (
+      <Link
+        to="/alt"
+        className={`heat-foil group relative flex items-center gap-2 rounded-lg border-1 border-emerald-700/60 border-solid bg-neutral-800 px-3 py-2 text-sm transition-colors hover:border-emerald-500 sm:px-5 ${className ?? ''}`}
+      >
+        <Sparkles className="size-4 shrink-0 text-emerald-400" />
+        <SetLogo expansionId={latestExpansion.id} className="h-6 w-auto shrink-0" />
+        <span className="min-w-0 truncate">
+          <span className="font-bold">☆☆ Wonder Picks unlocked</span>
+          <span className="text-neutral-400 max-sm:hidden"> · they show the ☆☆ you're missing</span>
+        </span>
+        <ChevronRight className="ml-auto size-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5" />
+      </Link>
+    )
+  }
+  const headline = diamondsLeft > 0 ? { big: `${diamondsLeft} ◊`, small: 'to go, then the ☆' } : { big: `${starsLeft} ☆`, small: 'to go · Wonder Picks live' }
   const next = cover.gift[0] ? { kind: 'gift', card: cover.gift[0] } : cover.trade[0] && { kind: 'trade', card: cover.trade[0] }
   const giftSent = next?.kind === 'gift' && readGiftDate('main') === today()
 
@@ -89,7 +127,9 @@ export function UnlockTile({ className }: { className?: string }) {
       <div className="flex items-center gap-2">
         <Sparkles className="size-4 shrink-0 text-violet-400" />
         <h2 className="min-w-0 truncate font-bold">☆☆ Wonder Pick unlock</h2>
-        <span className="shrink-0 rounded-full bg-neutral-700/70 px-2 py-0.5 text-neutral-300 text-xs">{t(latestExpansion.name, { ns: 'common/sets' })}</span>
+        <span title={t(latestExpansion.name, { ns: 'common/sets' })} className="shrink-0">
+          <SetLogo expansionId={latestExpansion.id} className="h-7 w-auto sm:h-8" />
+        </span>
         <ChevronRight className="ml-auto size-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5" />
       </div>
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6">
@@ -97,15 +137,33 @@ export function UnlockTile({ className }: { className?: string }) {
           <span className="font-bold text-2xl text-white tabular-nums leading-none sm:text-3xl">{headline.big}</span>
           <span className="text-neutral-400 text-xs">
             {headline.small}
-            {diamondsLeft > 0 && altHas > 0 && <span className="text-violet-300"> · {altHas} on the alt</span>}
+            {(diamondsLeft > 0 ? altHas : altStars) > 0 && (
+              <span className="whitespace-nowrap text-violet-300">
+                {' '}
+                ·{' '}
+                <span
+                  className="inline-block h-2 w-3 rounded-sm align-middle"
+                  style={{ background: 'repeating-linear-gradient(135deg, rgb(167 139 250 / 0.7) 0 2px, rgb(167 139 250 / 0.25) 2px 4px)' }}
+                />{' '}
+                {diamondsLeft > 0 ? altHas : altStars} on the alt
+              </span>
+            )}
           </span>
         </div>
         <div className="flex min-w-0 flex-1 gap-3 sm:gap-4">
-          <Stage step={1} label="◊ – ◊◊◊◊" have={progress.diamonds.have} total={progress.diamonds.total} state={diamondsLeft > 0 ? 'active' : 'done'} />
+          <Stage
+            step={1}
+            label="◊ – ◊◊◊◊"
+            have={progress.diamonds.have}
+            alt={altHas}
+            total={progress.diamonds.total}
+            state={diamondsLeft > 0 ? 'active' : 'done'}
+          />
           <Stage
             step={2}
             label="☆"
             have={progress.star.have}
+            alt={altStars}
             total={progress.star.total}
             state={starsLeft === 0 ? 'done' : diamondsLeft > 0 ? 'later' : 'active'}
           />
