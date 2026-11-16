@@ -95,6 +95,13 @@ function UnlockCard({
   const diamondsLeft = progress.diamonds.total - progress.diamonds.have
   const starsLeft = progress.star.total - progress.star.have
   const best = showBestPack ? bestUnlockPack(pending) : undefined
+  const { setSelectedCardId } = useSelectedCard()
+  const [showMissing, setShowMissing] = useState(false)
+  const pendingIds = new Set(pending.map((c) => c.internal_id))
+  const groups = [
+    { label: 'Only from packs or Wonder Picks', cards: pending },
+    { label: 'Can come from the other account', cards: progress.missing.filter((c) => !pendingIds.has(c.internal_id)) },
+  ].filter((g) => g.cards.length > 0)
   const status =
     diamondsLeft > 0
       ? `${diamondsLeft} ◊ to go before 24-hour Wonder Picks show its missing ☆ / ☆☆.`
@@ -124,6 +131,26 @@ function UnlockCard({
             'The rest can all come from the other account.'
           )}
         </p>
+      )}
+      {progress.missing.length > 0 && (
+        <>
+          <Button variant="ghost" size="sm" className="self-start" aria-expanded={showMissing} onClick={() => setShowMissing((show) => !show)}>
+            {showMissing ? 'Hide' : 'Show'} the {progress.missing.length} missing {progress.missing.length === 1 ? 'card' : 'cards'}
+          </Button>
+          {showMissing &&
+            groups.map((group) => (
+              <div key={group.label}>
+                <p className="mb-2 text-xs text-neutral-400">
+                  {group.label} ({group.cards.length})
+                </p>
+                <div className="grid grid-cols-5 gap-x-2 gap-y-3 sm:grid-cols-8 md:grid-cols-6">
+                  {group.cards.map((card) => (
+                    <CardThumb key={card.internal_id} card={card} label={card.rarity} onClick={() => setSelectedCardId(card.internal_id)} />
+                  ))}
+                </div>
+              </div>
+            ))}
+        </>
       )}
     </div>
   )
