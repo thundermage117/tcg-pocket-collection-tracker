@@ -89,6 +89,12 @@ export const gives = (p: number) => (p >= 0.5 ? 'give' : 'gives')
 
 export const fill = (x: number, { min, max }: Range) => (max > min ? 0.08 + (0.92 * (x - min)) / (max - min) : 1)
 
+/** A pack's place under the Value ranking that isn't selected: "#4 most likely". */
+export interface OtherRank {
+  rank: number
+  label: string
+}
+
 export interface TargetFilters extends PackFilters {
   tier: TierOption
 }

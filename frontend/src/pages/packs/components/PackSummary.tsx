@@ -8,17 +8,30 @@ import { ownsCard } from '@/lib/packValue'
 import { getCardNameByLang } from '@/lib/utils'
 import { useSelectedCard } from '@/services/collection/useCollection'
 import { useMainWithAlt } from '@/services/profile/useProfileCollection'
-import { cardTier, describeTarget, type Goal, gives, newPerPack, type PackRow, packOdds, type SortOption, showRarity, type TargetFilters } from '../types'
+import {
+  cardTier,
+  describeTarget,
+  type Goal,
+  gives,
+  newPerPack,
+  type OtherRank,
+  type PackRow,
+  packOdds,
+  type SortOption,
+  showRarity,
+  type TargetFilters,
+} from '../types'
 
 interface Props {
   pack: PackRow
   filters: TargetFilters
   goal: Goal
   sort: SortOption
+  other?: OtherRank
   children?: ReactNode // "how many packs until…", under the pick it's about
 }
 
-export function PackSummary({ pack, filters, goal, sort, children }: Props) {
+export function PackSummary({ pack, filters, goal, sort, other, children }: Props) {
   const { t, i18n } = useTranslation(['common/sets', 'common/packs'])
   const { data: collection } = useMainWithAlt()
   const { setSelectedCardId } = useSelectedCard()
@@ -66,7 +79,10 @@ export function PackSummary({ pack, filters, goal, sort, children }: Props) {
             ) : pack.perPack > 0 ? (
               <>
                 <span className="font-semibold">{packOdds(pack.perPack)}</span> {gives(pack.perPack)} {describeTarget(filters)}
-                <span className="text-neutral-400"> ({pack.wanted.length} in this pack)</span>
+                <span className="text-neutral-400">
+                  {' '}
+                  ({pack.wanted.length} in this pack){other && other.rank > 1 && ` · #${other.rank} by ${other.label}`}
+                </span>
               </>
             ) : (
               `No pack here gives ${describeTarget(filters)}. Try a lower tier, another style or series.`

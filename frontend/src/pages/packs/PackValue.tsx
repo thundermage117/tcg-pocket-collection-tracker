@@ -2,7 +2,7 @@
 // you're missing one pack gives on average (Completion).
 
 import { useQuery } from '@tanstack/react-query'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { Skeleton, SkeletonGrid } from '@/components/Skeleton'
 import { ValueDataAge } from '@/components/ValueDataAge'
@@ -25,6 +25,7 @@ import {
   rarityOptions,
   raritySlug,
   showRarity,
+  sortLabels,
   sortOptions,
   type TargetFilters,
   tierMax,
@@ -85,9 +86,7 @@ export default function PackValue() {
     () => getBoosterValues(collection, filters).map((b) => ({ ...b, id: `${b.expansionId}-${b.packName}` })),
     [collection, filters],
   )
-  const score = useCallback((b: PackRow) => (completion ? b.expectedNew : sort === 'quality' ? b.weighted : b.perPack), [completion, sort])
-  // scores start at zero so "twice as likely" looks twice as long
-  const range: Range = useMemo(() => ({ min: 0, max: Math.max(0, ...all.map(score)) }), [all, score])
+  const score = (b: PackRow) => (completion ? b.expectedNew : sort === 'quality' ? b.weighted : b.perPack)
   const seriesOptions = useMemo(() => ['All', ...new Set(all.map((b) => b.expansionId[0]))], [all])
   const series = seriesOptions.find((x) => x === get('series')) ?? 'All'
 
@@ -96,6 +95,18 @@ export default function PackValue() {
     .filter((b) => !(hideComplete && collection && b.missing === 0))
     // unranked packs stay in release order
     .toSorted((a, b) => (ranked ? score(b) - score(a) : 0))
+  // against the best pack on show; scores start at zero so "twice as likely" looks twice as long
+  const range: Range = { min: 0, max: Math.max(0, ...packs.map(score)) }
+  // where each pack stands under the other Value ranking, so the two can be compared without flipping "Rank by"
+  const otherScore = (b: PackRow) => (sort === 'quality' ? b.perPack : b.weighted)
+  const otherRanks = new Map(
+    completion || bestTier === undefined
+      ? []
+      : packs
+          .filter((b) => otherScore(b) > 0)
+          .toSorted((a, b) => otherScore(b) - otherScore(a))
+          .map((b, i) => [b.id, { rank: i + 1, label: sortLabels[sort === 'quality' ? 'odds' : 'quality'].toLowerCase() }]),
+  )
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-12">
@@ -144,7 +155,7 @@ export default function PackValue() {
       />
 
       {!waiting && packs.length > 0 && ranked && (
-        <PackSummary pack={packs[0]} filters={filters} goal={goal} sort={sort}>
+        <PackSummary pack={packs[0]} filters={filters} goal={goal} sort={sort} other={otherRanks.get(packs[0].id)}>
           {/* the "≥1 hit within n packs" curve sits at 100% for nearly every pack with a missing ◊, so completion skips it */}
           {!completion && <PackOdds packs={packs} filters={filters} />}
         </PackSummary>
@@ -173,6 +184,7 @@ export default function PackValue() {
               filters={filters}
               goal={goal}
               sort={sort}
+              other={otherRanks.get(pack.id)}
               range={range}
               expanded={expanded === pack.id}
               onToggle={() => setExpanded(expanded === pack.id ? undefined : pack.id)}
@@ -209,6 +221,10 @@ export default function PackValue() {
                 counts as two A, an SS as four, an SSS as eight, and each tier below A as half the one above. The result is the tier-weighted value one pack
                 gives on average, shown as a score where the best pack is 100. The doubling is a rule of thumb, not a market price. The “1 in N packs” line
                 still says how often a pack hits at all.
+              </Faq>
+              <Faq q="What's the bar under the odds?">
+                The pack's score next to the best pack on show, so you can see how close the ranking is: under Most likely its odds as a share of the best
+                pack's, under Best hits its tier-weighted score. Beside it is the pack's rank under the other ranking.
               </Faq>
               <Faq q="What are A+ and S+?">
                 Value tiers, as on{' '}

@@ -15,6 +15,7 @@ import {
   completionStat,
   fill,
   type Goal,
+  type OtherRank,
   type PackRow,
   packStat,
   poolLine,
@@ -33,12 +34,13 @@ interface Props {
   filters: TargetFilters
   goal: Goal
   sort: SortOption
+  other?: OtherRank
   range: Range
   expanded: boolean
   onToggle: () => void
 }
 
-export function PackCard({ pack, position, filters, goal, sort, range, expanded, onToggle }: Props) {
+export function PackCard({ pack, position, filters, goal, sort, other, range, expanded, onToggle }: Props) {
   const { t } = useTranslation(['common/sets', 'common/packs'])
   const { data: collection } = useMainWithAlt()
   const { setSelectedCardId } = useSelectedCard()
@@ -48,6 +50,7 @@ export function PackCard({ pack, position, filters, goal, sort, range, expanded,
   const headline = completion ? completionStat(pack, filters.rarity) : packStat(pack, filters)
   const quality = !completion && sort === 'quality'
   const score = completion ? pack.expectedNew : quality ? pack.weighted : pack.perPack
+  const share = range.max > 0 ? Math.round((100 * score) / range.max) : 0
   const toggleLabel = expanded
     ? 'Show less'
     : filters.rarity === 'all'
@@ -137,11 +140,17 @@ export function PackCard({ pack, position, filters, goal, sort, range, expanded,
         </p>
         {/* value's tier strip below says what the odds are made of, so only completion keeps a plain bar */}
         {completion && <Progress value={score > 0 ? Math.round(100 * fill(score, range)) : 0} barColor={pack.color} className="hidden h-1.5 sm:block" />}
-        {/* best hits ranks by tier-weighted value, which the odds alone don't show: the score against the best pack's */}
-        {quality && range.max > 0 && (
-          <div className="flex items-center gap-2" title="Tier-weighted value per pack, with the best pack at 100">
-            <Progress value={Math.round((100 * score) / range.max)} barColor={pack.color} className="h-1.5" />
-            <span className="shrink-0 text-xs text-neutral-400 tabular-nums">score {Math.round((100 * score) / range.max)}</span>
+        {/* how close this pack is to the best one on show (1 in 54 against 1 in 62 is nearly a tie), and its place under the other ranking */}
+        {!completion && score > 0 && (
+          <div
+            className="flex items-center gap-2"
+            title={quality ? 'Tier-weighted value per pack, with the best pack on show at 100' : "This pack's odds as a share of the best pack's on show"}
+          >
+            <Progress value={share} barColor={pack.color} className="h-1.5" />
+            <span className="shrink-0 text-xs text-neutral-400 tabular-nums">
+              {quality ? `score ${share}` : share === 100 ? 'best odds' : `${share}% of best`}
+              {other && ` · #${other.rank} ${other.label}`}
+            </span>
           </div>
         )}
         {countLine && <p className={cn('text-xs text-neutral-500', !expanded && 'hidden sm:block')}>{countLine}</p>}
