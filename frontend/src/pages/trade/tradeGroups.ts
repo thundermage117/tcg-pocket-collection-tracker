@@ -1,6 +1,10 @@
 // Personal fork: LF / FT items grouped by expansion, shared by the trade grid and the Discord export.
 import { expansions } from '@/lib/CardsDB'
-import type { Card, ExpansionId } from '@/types'
+import { RARITY_ORDER } from '@/lib/discordTradeList'
+import { type Card, type ExpansionId, type Rarity, tradableRarities } from '@/types'
+
+// The rarities the game lets you trade, highest first
+export const tradeRarityOptions = RARITY_ORDER.filter((r) => (tradableRarities as readonly string[]).includes(r)) as Rarity[]
 
 export type SortMode = 'list' | 'value'
 

@@ -13,24 +13,22 @@ import { formatRarity } from '@/components/utils'
 import { ValueDataAge } from '@/components/ValueDataAge'
 import { useUrlFilters } from '@/hooks/useUrlFilters'
 import { expansions, getCardByInternalId, getExpansionById } from '@/lib/CardsDB'
-import { RARITY_ORDER } from '@/lib/discordTradeList'
 import { getCardNameByLang, getExtraCards, getWantedCards } from '@/lib/utils'
 import { demandScore, getCardValue, valueSortKey } from '@/lib/ValueDB'
 import TradeSettings from '@/pages/trade/TradeSettings.tsx'
 import { useLoginDialog } from '@/services/auth/useAuth'
 import { useProfileAccount } from '@/services/profile/useProfile'
 import { useProfileCollection } from '@/services/profile/useProfileCollection'
-import { defaultRaritySettings, type ExpansionId, type Rarity, tradableRarities } from '@/types'
+import { defaultRaritySettings, type ExpansionId, type Rarity } from '@/types'
 import { DiscordExport, useDiscordMessages } from './components/DiscordExport'
 import { hotLabel, TradeGrid } from './components/TradeGrid'
-import { cardNumber, groupBySet, markHot, type SortMode, type TradeItem } from './tradeGroups'
+import { cardNumber, groupBySet, markHot, type SortMode, type TradeItem, tradeRarityOptions } from './tradeGroups'
 
 type Side = 'lf' | 'ft'
 type SetOption = 'all' | ExpansionId
 // `${expansionId}|${packName}`; a set's "everypack" cards count as part of every pack
 type PackOption = 'all' | `${ExpansionId}|${string}`
 
-const rarityOptions = RARITY_ORDER.filter((r) => (tradableRarities as readonly string[]).includes(r)) as Rarity[]
 const sortOptions: SortMode[] = ['list', 'value']
 
 const DISCORD_SECTION_ID = 'discord-export'
@@ -58,7 +56,7 @@ export default function PersonalTrade() {
   // filters live in the URL (?rarity=☆☆&side=ft&set=B1&q=…); rarity and sort are remembered for the next visit
   const { get, update } = useUrlFilters('trade-view', ['rarity', 'sort'])
   const view = {
-    rarity: rarityOptions.find((r) => r === get('rarity')) ?? '☆',
+    rarity: tradeRarityOptions.find((r) => r === get('rarity')) ?? '☆',
     mode: sortOptions.find((m) => m === get('sort')) ?? 'list',
   }
   const side: Side = get('side') === 'ft' ? 'ft' : 'lf'
@@ -179,7 +177,7 @@ export default function PersonalTrade() {
             <div className="flex flex-wrap items-end gap-3">
               <TabsFilter
                 label="Rarity"
-                options={rarityOptions}
+                options={tradeRarityOptions}
                 value={view.rarity}
                 onChange={(rarity) => update({ rarity: rarity === '☆' ? undefined : rarity })}
                 show={formatRarity}

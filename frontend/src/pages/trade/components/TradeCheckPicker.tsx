@@ -5,10 +5,10 @@ import { TabsFilter } from '@/components/Filters'
 import SearchInput from '@/components/filters/SearchInput'
 import { Button } from '@/components/ui/button'
 import { formatRarity } from '@/components/utils'
-import { RARITY_ORDER } from '@/lib/discordTradeList'
 import { searchPredicate } from '@/lib/filters'
-import { type Card, type Rarity, tradableRarities } from '@/types'
+import type { Card, Rarity } from '@/types'
 import { cardScore, scoreHint } from '../tradeCheckData'
+import { tradeRarityOptions } from '../tradeGroups'
 
 export interface PickItem {
   card: Card
@@ -24,7 +24,6 @@ export interface PickSource {
 }
 
 const PAGE = 48
-const rarityOptions = RARITY_ORDER.filter((r) => (tradableRarities as readonly string[]).includes(r)) as Rarity[]
 type RarityOption = 'all' | Rarity
 
 interface Props {
@@ -67,7 +66,7 @@ export function TradeCheckPicker({ title, sources, lockedRarity, note, onPick }:
           )}
           {!lockedRarity && (
             <TabsFilter<RarityOption>
-              options={['all', ...rarityOptions]}
+              options={['all', ...tradeRarityOptions]}
               value={rarity}
               onChange={(r) => {
                 setRarity(r)
