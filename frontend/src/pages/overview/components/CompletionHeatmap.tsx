@@ -9,6 +9,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { formatRarity } from '@/components/utils'
 import { expansions, getExpansionById } from '@/lib/CardsDB.ts'
 import { tiers } from '@/lib/rankings'
+import { completionPct } from '@/pages/overview/completionPct'
 import { MissingThumbs, previewCount } from '@/pages/overview/components/MissingThumbs'
 import { type MapSet, PackValueMap, tierOf } from '@/pages/overview/components/PackValueMap'
 import { bestChance, type PackChance } from '@/pages/overview/packChances'
@@ -128,12 +129,7 @@ const legend: Record<CellMode, [Swatch, string][]> = {
 }
 
 function formatPct({ collected, available }: Cell) {
-  const pct = (100 * collected) / available
-  if (collected === available) {
-    return '100%'
-  }
-  // Never round a gap up to 100% or a single card down to 0%
-  return `${collected > 0 ? Math.max(1, Math.min(99, Math.floor(pct))) : 0}%`
+  return `${completionPct(collected, available)}%`
 }
 
 function formatLeft({ collected, available }: Cell) {

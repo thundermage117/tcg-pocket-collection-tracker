@@ -3,6 +3,7 @@
 import { ChevronRight } from 'lucide-react'
 import { Link } from 'react-router'
 import { tiers } from '@/lib/rankings'
+import { completionPct } from '@/pages/overview/completionPct'
 import { type TierCount, type ValueOption, valueMaxTier } from '@/pages/overview/valueTiers'
 import type { Rarity } from '@/types'
 import './heatmap.css'
@@ -13,9 +14,6 @@ interface Props {
   rarity: Rarity[]
   className?: string
 }
-
-// Never round a gap up to 100% or a single card down to 0% (same as the heatmap)
-const formatPct = (have: number, total: number) => `${have === total ? 100 : have > 0 ? Math.max(1, Math.min(99, Math.floor((100 * have) / total))) : 0}%`
 
 // One tier as a column filled from the bottom by the share owned. A finished tier gets the heatmap's foil sweep, staggered
 // across the row; its colour goes on the column itself, since a full fill layer would cover the foil beneath it.
@@ -64,7 +62,7 @@ export function TierTile({ counts, value, rarity, className }: Props) {
                 </span>
                 {/* phones: no % sign, which ran the ~15px columns' numbers together */}
                 <span className="whitespace-nowrap text-[8px] text-neutral-300 leading-none tabular-nums sm:text-[10px]">
-                  {formatPct(collected, available).slice(0, -1)}
+                  {completionPct(collected, available)}
                   <span className="max-sm:hidden">%</span>
                 </span>
               </Link>

@@ -2,6 +2,7 @@
 // Both follow the overview's filters.
 import { useEffect, useState } from 'react'
 import { latestExpansion } from '@/lib/altSupport'
+import { completionPct } from '@/pages/overview/completionPct'
 import type { Card } from '@/types'
 
 interface Props {
@@ -17,9 +18,6 @@ const inner = { r: 62, stroke: 7, color: '#a78bfa' } // the unlock tile's violet
 const track = '#404040'
 
 const unique = (cards: Card[]) => new Set(cards.map((c) => c.internal_id)).size
-
-// Never round a gap up to 100% or a single card down to 0% (same as the heatmap)
-const formatPct = (have: number, total: number) => (have === total ? 100 : have > 0 ? Math.max(1, Math.min(99, Math.floor((100 * have) / total))) : 0)
 
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -96,7 +94,7 @@ export function CollectionRing({ availableCards, collectedCards, className }: Pr
       {showLatest && (
         // the dot ties the label to the inner ring; the text itself stays in text colours
         <text x="50%" y={121} textAnchor="middle" dominantBaseline="central" className="font-semibold text-xs tabular-nums" fill="#D4D4D4">
-          <tspan fill={inner.color}>●</tspan> {latestExpansion.id} {formatPct(latestOwned, latestTotal)}%
+          <tspan fill={inner.color}>●</tspan> {latestExpansion.id} {completionPct(latestOwned, latestTotal)}%
         </text>
       )}
     </svg>
