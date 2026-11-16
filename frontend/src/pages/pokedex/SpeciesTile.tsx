@@ -56,13 +56,13 @@ export const typeColors: Record<CardType, string> = {
 }
 
 /** Type stripe: one colour, or a hard split for dual types (Water/Darkness). */
-export const typeStripe = (types: CardType[]) =>
+const typeStripe = (types: CardType[]) =>
   types.length === 1
     ? typeColors[types[0]]
     : `linear-gradient(90deg, ${types.map((t, i) => `${typeColors[t]} ${(100 * i) / types.length}% ${(100 * (i + 1)) / types.length}%`).join(', ')})`
 
 /** A soft glow of the type colour behind artwork, one per type for dual types; alpha is a hex byte ('40'). */
-export const typeGlow = (types: CardType[], alpha: string) =>
+const typeGlow = (types: CardType[], alpha: string) =>
   types.length === 1
     ? `radial-gradient(circle at 50% 40%, ${typeColors[types[0]]}${alpha}, transparent 70%)`
     : `radial-gradient(circle at 25% 30%, ${typeColors[types[0]]}${alpha}, transparent 60%), radial-gradient(circle at 75% 60%, ${typeColors[types[1]]}${alpha}, transparent 60%)`

@@ -53,7 +53,7 @@ export const setOptions: ('all' | ExpansionId)[] = [
   ...expansions.filter((e) => allSpecies.some((s) => s.cards.some((c) => c.expansion === e.id))).map((e) => e.id),
 ]
 
-export type DexFilters = ReturnType<typeof parseDexFilters>
+type DexFilters = ReturnType<typeof parseDexFilters>
 
 /** Defaults are left out of the URL; unknown values fall back to them. */
 export function parseDexFilters(params: URLSearchParams) {
@@ -87,7 +87,7 @@ interface Entry {
   group?: SpeciesGroup
 }
 
-export interface DexForm extends Entry {
+interface DexForm extends Entry {
   form: FormNode
 }
 

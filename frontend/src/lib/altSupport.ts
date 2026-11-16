@@ -28,7 +28,7 @@ export function readGiftDate(to: Profile) {
 /** Cards the alt can hand over at all: gifts and trades both need a tradable rarity in a tradable set. */
 export const canMoveToMain = (card: Card) => (tradableRarities as readonly Rarity[]).includes(card.rarity) && tradableExpansions.includes(card.expansion)
 
-export const isGiftable = (card: Card) => basicRarities.includes(card.rarity)
+const isGiftable = (card: Card) => basicRarities.includes(card.rarity)
 
 /** The newest set you can open packs of (deluxe and promo sets aren't). */
 export const latestExpansion = expansions.filter((e) => e.openable && !e.promo).at(-1) ?? expansions[0]
@@ -82,7 +82,7 @@ const rarityOrder = new Map(tradableRarities.map((r, i) => [r as Rarity, i]))
  * unlock), then other cards the receiver has never registered, then extra copies it wants; rarest and most valuable
  * first within each.
  */
-export function byPriority(receiver: Collection) {
+function byPriority(receiver: Collection) {
   const tier = (c: Card) => (registered(receiver, c.internal_id) ? 2 : c.expansion === latestExpansion.id ? 0 : 1)
   return (a: Card, b: Card) =>
     tier(a) - tier(b) || (rarityOrder.get(b.rarity) ?? 0) - (rarityOrder.get(a.rarity) ?? 0) || valueSortKey(b.card_id) - valueSortKey(a.card_id)
@@ -91,7 +91,7 @@ export function byPriority(receiver: Collection) {
 export const countsForUnlock = (receiver: Collection, card: Card) =>
   card.expansion === latestExpansion.id && unlockRarities.includes(card.rarity) && !registered(receiver, card.internal_id)
 
-export interface AltCover {
+interface AltCover {
   gift: Card[] // ◊–◊◊◊◊ main needs and the alt owns
   trade: Card[] // ☆ and up main needs and the alt owns
   rest: number // main needs it and the alt doesn't have it either

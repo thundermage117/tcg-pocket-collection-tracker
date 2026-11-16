@@ -204,7 +204,7 @@ export function judgeTrade(give: CardScore, get: CardScore, rarity: Rarity): Ver
   return { kind, big, lean, gap, headline, reasons }
 }
 
-export interface Ask<T> {
+interface Ask<T> {
   item: T
   score: number
   realistic: boolean // within the fair band of what you give; above it they may decline

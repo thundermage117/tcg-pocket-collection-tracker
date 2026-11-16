@@ -41,7 +41,7 @@ export const raritySlug: Record<PackRarity, string> = {
 export const showRarity = (r: PackRarity) => (r === 'all' ? 'All' : r === 'Crown Rare' ? 'Crown' : r)
 
 /** The rarity as a noun in a sentence: "an S+ ◊◊◊", "an A+ card", "12 ☆☆", "40 cards". */
-export const rarityNoun = (r: PackRarity) => (r === 'all' ? 'card' : r)
+const rarityNoun = (r: PackRarity) => (r === 'all' ? 'card' : r)
 export const rarityCount = (n: number, r: PackRarity) => (r === 'all' ? `${n} card${n === 1 ? '' : 's'}` : `${n} ${r}`)
 
 /** Which tier scale a rarity is judged by: ☆☆ by community vote Elo, every other rarity by trade demand. */

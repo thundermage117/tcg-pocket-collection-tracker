@@ -20,7 +20,7 @@ export interface PackFilters {
   everyCard?: boolean // completion: keep ☆☆ without an Elo yet (a new set's), which value stats leave out
 }
 
-export const defaultPackFilters: PackFilters = { rarity: '☆☆', maxTier: Number.POSITIVE_INFINITY, onlyMissing: true }
+const defaultPackFilters: PackFilters = { rarity: '☆☆', maxTier: Number.POSITIVE_INFINITY, onlyMissing: true }
 
 export interface BoosterValue {
   expansionId: ExpansionId

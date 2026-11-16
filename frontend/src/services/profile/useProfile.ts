@@ -55,7 +55,7 @@ export function useSelectedProfile(): Profile {
 }
 
 /** The profile this page shows and edits: the switch's pick on the Collection, Scan and Import pages, main elsewhere. */
-export function useActiveProfile(): Profile {
+function useActiveProfile(): Profile {
   const selected = useSelectedProfile()
   return isProfileRoute(useLocation().pathname) ? selected : 'main'
 }
@@ -86,9 +86,9 @@ export function setCountAlt(on: boolean) {
   }
 }
 
-export const altEmail = (email: string) => `alt:${email}`
+const altEmail = (email: string) => `alt:${email}`
 
-export function profileEmail(email: string | undefined, profile: Profile) {
+function profileEmail(email: string | undefined, profile: Profile) {
   return email && profile === 'alt' ? altEmail(email) : email
 }
 

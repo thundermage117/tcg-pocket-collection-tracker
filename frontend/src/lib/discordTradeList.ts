@@ -3,7 +3,7 @@
 
 export const DISCORD_LIMIT = 2000
 
-export interface TradeLine {
+interface TradeLine {
   name: string
   count?: number // shown as ×N when set
 }
@@ -13,7 +13,7 @@ export interface TradeGroup {
   lines: TradeLine[] // already in display order
 }
 
-export interface TradeSection {
+interface TradeSection {
   title: string // e.g. "LF"
   groups: TradeGroup[] // already in display order
 }

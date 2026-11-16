@@ -28,7 +28,7 @@ import {
   tierOptions,
 } from '../types'
 
-export interface PackControlsProps {
+interface PackControlsProps {
   goal: Goal
   rarity: PackRarity
   defaultRarity: PackRarity

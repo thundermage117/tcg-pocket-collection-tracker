@@ -58,7 +58,7 @@ export function demandRatio(value: CardValue | undefined): number {
 
 // Phantom offers at the average ratio added to every card's wish/offers, like SHRINK_K for Elo: a new set's
 // card with ~80 spares listed can't outrank thousands of trades on a lucky ratio. Mature cards barely move.
-export const DEMAND_K = 200
+const DEMAND_K = 200
 
 let meanRatio: number | undefined
 

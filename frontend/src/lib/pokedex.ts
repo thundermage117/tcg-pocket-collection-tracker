@@ -258,7 +258,7 @@ export interface FormNode {
   artworkId: number
 }
 
-export interface FormChain {
+interface FormChain {
   from?: string // the plain card it evolves from, when that isn't a form itself (Charmeleon → Mega Charizard X)
   stage: number // 0 basic, 1 stage 1, 2 stage 2: where the chain starts, so it lines up under the species line
   stages: FormNode[][]

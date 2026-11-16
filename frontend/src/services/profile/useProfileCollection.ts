@@ -37,7 +37,7 @@ export function useMainWithAlt() {
 }
 
 /** One copy of a card changing hands: `from` loses it, `to` gains it. */
-export interface Transfer {
+interface Transfer {
   internal_id: number
   from: Profile
   to: Profile

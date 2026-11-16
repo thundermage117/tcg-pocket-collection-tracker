@@ -37,7 +37,7 @@ interface Props {
 }
 
 // cards nobody ranks (☆☆☆, Crown Rare) sit after E, as on the packs page
-export const unrankedTier: Tier = { name: 'Unranked', color: '#525252' }
+const unrankedTier: Tier = { name: 'Unranked', color: '#525252' }
 export const tierOf = (i: number) => tiers[i] ?? unrankedTier
 
 const LOW_TIER = 6 // D: it and everything below fade back under fadeLow

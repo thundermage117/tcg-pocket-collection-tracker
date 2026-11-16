@@ -1,7 +1,7 @@
 // Personal fork: one list of pages for the desktop header, the phone tab bar and their "More" menus.
 import { ArrowLeftRight, BookOpen, Layers, LayoutDashboard, Library, ListChecks, type LucideIcon, Package, ScanLine, Trophy, UsersRound } from 'lucide-react'
 
-export type NavItem = {
+type NavItem = {
   title: string // header locale key; i18next falls back to the title for fork pages without one
   href: string
   icon: LucideIcon

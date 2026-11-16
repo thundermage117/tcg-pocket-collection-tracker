@@ -1,7 +1,7 @@
 // Personal fork: sticky row of tier chips on the rankings page; each one opens its tier and scrolls to it.
 import type { Tier } from '@/lib/rankings'
 
-export interface TierNavItem {
+interface TierNavItem {
   tier: Tier
   total: number
   owned?: number // left out when ownership isn't shown
