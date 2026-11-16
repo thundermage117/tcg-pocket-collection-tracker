@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, CircleHelp, X } from 'lucide-react'
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMediaQuery } from 'react-responsive'
@@ -377,10 +377,18 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
     return null
   }
 
+  const help = showMap
+    ? `${
+        mapSize === 'odds'
+          ? 'Big = worth opening now: size is how many new cards one pack gives you on average. Rare cards barely count, since you seldom pull them; "1/50" means one in every 50 packs.'
+          : "Big = lots left to collect: size is how many cards you're still missing from the pack."
+      } Colours are value tiers. Click a block to open its tier on Rankings.`
+    : `"New card" is the chance one pack gives a card you're missing. ${isMobile ? 'Tap a cell for details.' : 'Click a cell or a chance to see the cards.'} A series row opens its expansions.`
+
   return (
     <section className="mt-4 rounded-lg border border-neutral-700 bg-neutral-800 p-3 sm:p-4">
-      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <div className="flex items-center gap-3">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <h2 className="font-semibold text-base sm:text-lg">{showMap ? "What's left, by pack" : 'Completion by rarity'}</h2>
           <ToggleGroup
             type="single"
@@ -409,24 +417,34 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
               </ToggleGroupItem>
             )}
           </ToggleGroup>
-        </div>
-        <p className="text-neutral-400 text-xs">
-          {showMap ? (
-            <>
-              {mapSize === 'odds'
-                ? 'Big = worth opening now: size is how many new cards one pack gives you on average. Rare cards barely count, since you seldom pull them; "1/50" means one in every 50 packs.'
-                : "Big = lots left to collect: size is how many cards you're still missing from the pack."}{' '}
-              Colours are value tiers. Click a block to open its tier on Rankings.
-            </>
-          ) : (
-            <>
-              "New card" is the chance one pack gives a card you're missing. <span className="md:hidden">Tap for details.</span>
-              <span className="hidden md:inline">Click to see them.</span>
-            </>
+          {showMap && (
+            <ToggleGroup
+              type="single"
+              value={mapSize}
+              onValueChange={(v) => v && setMapSize(v as MapSize)}
+              className="gap-0.5 rounded-md border-1 border-neutral-700 p-0.5"
+              aria-label="Pack size"
+            >
+              <span className="px-1.5 text-neutral-400 text-xs">Size by</span>
+              <ToggleGroupItem value="missing" className="h-6 px-2 text-xs" title="How many cards you're still missing from each pack">
+                Missing cards
+              </ToggleGroupItem>
+              <ToggleGroupItem value="odds" className="h-6 px-2 text-xs" title="How many new cards opening one pack gives you, on average">
+                Per pack opened
+              </ToggleGroupItem>
+            </ToggleGroup>
           )}
-        </p>
-      </div>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          {/* the explanation, one hover or tap away, so the header stays one line above a table that's now a few rows */}
+          <button
+            type="button"
+            className="-m-1.5 rounded p-1.5 text-neutral-400 hover:text-neutral-200 focus-visible:outline-2 focus-visible:outline-neutral-200"
+            data-tooltip-id="completion-heatmap"
+            data-tooltip-content={help}
+            aria-label={help}
+          >
+            <CircleHelp className="size-4" />
+          </button>
+        </div>
         <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 text-neutral-400 text-xs" aria-label="Colour key">
           {showMap ? (
             mapTiers.map((i) => (
@@ -462,23 +480,6 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
             </>
           )}
         </ul>
-        {showMap && (
-          <ToggleGroup
-            type="single"
-            value={mapSize}
-            onValueChange={(v) => v && setMapSize(v as MapSize)}
-            className="gap-0.5 rounded-md border-1 border-neutral-700 p-0.5"
-            aria-label="Pack size"
-          >
-            <span className="px-1.5 text-neutral-400 text-xs">Size by</span>
-            <ToggleGroupItem value="missing" className="h-6 px-2 text-xs" title="How many cards you're still missing from each pack">
-              Missing cards
-            </ToggleGroupItem>
-            <ToggleGroupItem value="odds" className="h-6 px-2 text-xs" title="How many new cards opening one pack gives you, on average">
-              Per pack opened
-            </ToggleGroupItem>
-          </ToggleGroup>
-        )}
       </div>
       {showMap && (
         <PackValueMap
@@ -644,7 +645,7 @@ export function CompletionHeatmap({ availableCards, collectedCards, chances, cel
           const c = key ? cell(row, col) : undefined
           const thumbs = key ? (missingCards.get(key) ?? []) : []
           return (
-            <div className={c && thumbs.length > 0 ? 'w-64' : undefined}>
+            <div className={c && thumbs.length > 0 ? 'w-64' : 'max-w-72'}>
               <p>{content}</p>
               {c && thumbs.length > 0 && <MissingThumbs cards={thumbs} missing={c.available - c.collected} className="mt-1.5" />}
             </div>

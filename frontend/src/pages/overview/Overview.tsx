@@ -92,12 +92,12 @@ function Overview() {
     return (
       <main role="status" aria-label="Loading" className="mx-auto max-w-7xl px-4">
         <Skeleton className="mb-4 h-20" />
-        <div className="grid grid-cols-8 gap-3 sm:gap-4">
-          <Skeleton className="col-span-4 h-56 rounded-lg md:col-span-2 md:h-80" />
-          <Skeleton className="order-last col-span-8 h-40 rounded-lg md:order-none md:col-span-4 md:h-80" />
-          <Skeleton className="col-span-4 h-56 rounded-lg md:col-span-2 md:h-80" />
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
+          <Skeleton className="h-56 rounded-lg md:h-64" />
+          <Skeleton className="order-last col-span-2 h-72 rounded-lg md:order-none md:col-span-3 md:row-span-2 md:h-auto" />
+          <Skeleton className="h-56 rounded-lg md:h-40" />
         </div>
-        <Skeleton className="mt-6 h-[28rem]" />
+        <Skeleton className="mt-4 h-56" />
       </main>
     )
   }
@@ -151,13 +151,14 @@ function Overview() {
           </SheetContent>
         </Sheet>
 
-        {/* Personal fork: below md the two stat tiles share a row and the today panel goes under them, so the heatmap starts higher */}
-        <section className="grid grid-cols-8 gap-3 sm:gap-4">
+        {/* Personal fork: the two stat tiles are one column beside the today panel, which gets three quarters of the width
+            so each row's reason fits on a line. Below md they share a row and the panel goes under them. */}
+        <section className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
           {/* Personal fork: heading sized like the tier tile's and a muted footnote, so the ring gets the room */}
-          <div className="col-span-4 md:col-span-2 flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 bg-neutral-800 border-solid p-3 sm:p-5">
+          <div className="flex flex-col items-center justify-center rounded-lg border-1 border-neutral-700 border-solid bg-neutral-800 p-3 sm:p-5 md:row-start-1">
             <h2 className="font-bold mb-2 text-center text-base sm:mb-3 sm:text-lg md:text-xl">{t('uniqueCards')}</h2>
             {/* Personal fork: upstream's RadialChart plus an inner ring for the newest set */}
-            <CollectionRing availableCards={availableCards} collectedCards={collectedCards} className="size-36 sm:size-48 md:size-52" />
+            <CollectionRing availableCards={availableCards} collectedCards={collectedCards} className="size-36 sm:size-48 md:size-32 lg:size-40" />
             <p className="mt-2 text-balance text-center text-neutral-400 text-xs sm:mt-3">
               {t('numberOfCopies-single')}
               {filters.value !== 'all' && ` · ${valueLabels[filters.value]}`}
@@ -169,10 +170,10 @@ function Overview() {
             best={bestPack}
             twoStar={showTwoStarPick ? bestTwoStarPack : undefined}
             filtered={filters.rarity.length > 0 || filters.value !== 'all'}
-            className="order-last col-span-8 md:order-none md:col-span-4 md:col-start-3"
+            className="order-last col-span-2 md:order-none md:col-span-3 md:col-start-2 md:row-span-2 md:row-start-1"
           />
           {/* Personal fork: replaces upstream's "You have N cards in total" */}
-          <TierTile counts={tierCounts} value={filters.value} rarity={filters.rarity} className="col-span-4 md:col-span-2" />
+          <TierTile counts={tierCounts} value={filters.value} rarity={filters.rarity} className="md:col-start-1 md:row-start-2" />
         </section>
 
         <CompletionHeatmap
