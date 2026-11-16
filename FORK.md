@@ -12,6 +12,9 @@ Work happens on the `personal` branch, which Vercel deploys. `main` mirrors upst
 - **Rankings** (`/rankings`): SSS–E tier lists. "☆☆ Elo" ranks every ☆☆ by community vote; "Most wanted" ranks every rarity by trade demand, with a "Deluxe foils" switch (off by default). See [Rankings](#rankings).
 - **Trade** (`/trade`): "Looking for" and "For trade" grids from your keep/collect settings, filtered by rarity, set, pack and name, sorted by number or value. A flame marks the top quarter by demand. "Copy for Discord" turns them into LF / FT messages grouped by expansion, split under Discord's 2,000-character limit.
 - **Trade check** (`/trade/check`): pick the card you give and the card you get for a fair / steal / overpay verdict with reasons, ownership, Shinedust and pack-point costs. See [Trade check](#trade-check).
+- **Fill the gaps** (`/gaps`): one expansion's missing cards as a tight grid, grouped by pack. One tap marks a card owned; it stays in place as "got it", and a second tap undoes it. The overview heatmap's cells open it on their expansion, rarity and pack (`?set=B1&rarity=☆&pack=…`, `set=all` for every expansion).
+- **Luck** (`/luck`, and one line on the overview): how many packs your ☆-and-rarer cards are worth against how many your ◊–◊◊◊◊ say you opened. See [Luck](#luck).
+- **Chase wall** (`/chase`): one card per openable booster, large, with the odds of one pack holding it. A full screen per booster on phones, a wall on desktop. The card is the missing ☆-or-rarer one with the highest Rankings tier, then the rarer one (`pages/chase/chaseCards.ts`); ☆☆☆ and Crown have no tier, so they lead a booster only when nothing ranked is left.
 - **Alt account** (`/alt`, header Main / Alt switch): a second game account tracked under the same login. See [Alt account](#alt-account).
 - **Navigation**: below `lg` a bottom tab bar (Overview, Collection, Packs, Trade, More) replaces the hamburger; More holds the other pages and account actions. On desktop, Decks and Missions sit behind "More". Pages are listed once in `frontend/src/components/navItems.ts`.
 - **Filters in the URL** on the overview, packs, rankings, trade and trade check pages, so refresh, back and links keep the view (e.g. `/#/rankings?tab=wanted&set=B1`). `useUrlFilters` also remembers a few choices (overview filters, pack goal, trade rarity and sort) for when the URL leaves them out.
@@ -149,6 +152,17 @@ The alt's rows live in the same tables as main's, under the key `alt:<login emai
 - **☆☆ Elo**: by adjusted Elo. Tiers are Jenks natural breaks (least within-tier variance), so they end where the Elo jumps and read as Elo ranges.
 - **Most wanted**: by `demandScore`, in fixed shares: top 1 / 3 / 8 / 20 / 45 / 70 / 90 / 100%.
 - **Deluxe foils** (◊–◊◊◊ holo versions from the deluxe packs) are scarce enough to fill the top tiers on their own, so the switch swaps in a separate ranking that includes them rather than filtering one.
+
+## Luck
+
+`frontend/src/lib/luckModel.ts` (the maths, no imports) and `lib/luck.ts` (bound to the card data). The app never knows how many packs you opened, only which cards you own, so both numbers are estimates.
+
+- **Packs opened**: after n packs a card with per-pack chance p is owned with probability 1 − (1 − p)^n, so the pattern of owned and missing ◊–◊◊◊◊ has a most likely n for each booster. The bracketed range is two standard errors either way.
+- **A floor, not an estimate**: once a booster's ◊–◊◊◊◊ are all owned there's no upper limit. It gets the packs at which half a card would still be expected missing, shows as "at least", and that expansion's luck isn't judged.
+- **Worth**: the packs at which a typical player, opening the same mix of boosters, owns as many ☆-and-rarer cards as you.
+- **Luck**: the share of players with as many packs who'd own fewer ☆-and-rarer cards, averaged over the packs it could have been. Without that averaging, ordinary error in the pack estimate reads as luck.
+- **What it can't see**: how a card arrived. Alt gifts add to the packs opened (luck reads worse); trades, Wonder Picks and pack points add rares (luck reads better). Deluxe and special packs are left out. A card counts once it's in the dex (`collected` or owned), and only main's cards count.
+- Check the model: `pnpm tsx scripts/luck/check-luck.ts` deals simulated collections from known pack counts and checks it finds them again.
 
 ## Trade check
 

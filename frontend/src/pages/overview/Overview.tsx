@@ -17,6 +17,7 @@ import { getFilteredCards } from '@/lib/filters'
 import { getBoosterValues } from '@/lib/packValue'
 import { CollectionRing } from '@/pages/overview/components/CollectionRing'
 import { CompletionHeatmap } from '@/pages/overview/components/CompletionHeatmap.tsx'
+import { LuckLine } from '@/pages/overview/components/LuckLine'
 import { TierTile } from '@/pages/overview/components/TierTile'
 import { TodayPanel } from '@/pages/overview/components/TodayPanel'
 import { bestChance, getPackChances } from '@/pages/overview/packChances'
@@ -175,6 +176,9 @@ function Overview() {
           {/* Personal fork: replaces upstream's "You have N cards in total" */}
           <TierTile counts={tierCounts} value={filters.value} rarity={filters.rarity} className="md:col-start-1 md:row-start-2" />
         </section>
+
+        {/* Personal fork: the luck report's headline and the way to the chase wall */}
+        <LuckLine className="mt-3 sm:mt-4" />
 
         <CompletionHeatmap
           availableCards={availableCards}
