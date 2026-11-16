@@ -20,6 +20,7 @@ import {
   type SortOption,
   showRarity,
   type TargetFilters,
+  topHits,
 } from '../types'
 
 interface Props {
@@ -88,6 +89,11 @@ export function PackSummary({ pack, filters, goal, sort, other, children }: Prop
               `No pack here gives ${describeTarget(filters)}. Try a lower tier, another style or series.`
             )}
           </p>
+          {!completion && sort === 'quality' && pack.perPack > 0 && pack.topOdds.length > 0 && (
+            <p className="mt-1 text-sm text-neutral-200 tabular-nums">
+              <span className="text-neutral-400">Top hits:</span> {topHits(pack)}
+            </p>
+          )}
           {!completion && (
             <p className="mt-1 flex items-center gap-1.5 text-xs text-neutral-400">
               <span className="truncate">

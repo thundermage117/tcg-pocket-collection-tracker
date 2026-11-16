@@ -217,14 +217,15 @@ export default function PackValue() {
                 that off. It uses the real pull odds of every slot, rare packs included.
               </Faq>
               <Faq q="What does “Best hits” rank by?">
-                Most likely ranks by the chance of any card that counts, so an A counts the same as an SSS. Best hits weighs each card by its tier first: an S
-                counts as two A, an SS as four, an SSS as eight, and each tier below A as half the one above. The result is the tier-weighted value one pack
-                gives on average, shown as a score where the best pack is 100. The doubling is a rule of thumb, not a market price. The “1 in N packs” line
-                still says how often a pack hits at all.
+                Most likely ranks by the chance of any card that counts, so an A counts the same as an SSS. Best hits ranks a pack higher the more of its hits
+                are top tier, so a pack that hits less often can still come first. Each pack's “Top hits” line shows why: how often one pack gives an S+ (S or
+                better) and an SS+, in packs; for rarities with nothing that high, their own two best tiers. Behind the order, each card's chance is weighed by
+                its tier (an S counts as two A, an SS as four, an SSS as eight, each tier below A as half the one above); that doubling is a rule of thumb, not
+                a market price.
               </Faq>
               <Faq q="What's the bar under the odds?">
-                The pack's score next to the best pack on show, so you can see how close the ranking is: under Most likely its odds as a share of the best
-                pack's, under Best hits its tier-weighted score. Beside it is the pack's rank under the other ranking.
+                How the pack compares with the best pack on show, so you can see how close the ranking is: under Most likely its odds as a share of the best
+                pack's, under Best hits the same with higher tiers counting for more. Beside it is the pack's rank under the other ranking.
               </Faq>
               <Faq q="What are A+ and S+?">
                 Value tiers, as on{' '}

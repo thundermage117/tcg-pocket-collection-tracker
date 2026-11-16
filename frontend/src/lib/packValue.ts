@@ -36,6 +36,7 @@ export interface BoosterValue {
   best: Card
   perPack: number // chance one pack opened gives a card in `wanted`
   expectedNew: number // missing cards one pack gives on average: the sum of each one's chance to be in it
+  topOdds: { tier: number; perPack: number }[] // chance one pack gives a wanted card at or above each of topTiers
   weighted: number // tier-weighted value one pack gives on average, over `wanted`: each card's chance × tierWeight
 }
 
@@ -93,8 +94,22 @@ export function bestTierOf(rarity: PackRarity): number | undefined {
   return bestTiers.get(rarity)
 }
 
+/**
+ * The tiers a "top hit" is counted at, lowest first: S+ and SS+, or the rarity's own two best tiers when none of its
+ * cards get that high (no ◊ is above B). Only the ones above what the filters already count, which the headline covers.
+ */
+function topTiers({ rarity, maxTier }: PackFilters) {
+  const best = bestTierOf(rarity)
+  if (best === undefined) {
+    return []
+  }
+  const sPlus = tiers.findIndex((t) => t.name === 'S')
+  return (best > sPlus - 1 ? [best + 1, best] : [sPlus, sPlus - 1]).filter((t) => t < Math.min(maxTier, tiers.length - 1))
+}
+
 export function getBoosterValues(collection: Collection | undefined, filters: PackFilters = defaultPackFilters): BoosterValue[] {
   const result: BoosterValue[] = []
+  const top = topTiers(filters)
   const pool = poolOf(filters.rarity, filters.everyCard)
 
   for (const expansion of openableExpansions) {
@@ -127,6 +142,10 @@ export function getBoosterValues(collection: Collection | undefined, filters: Pa
         perPack: wanted.length && expansion.packStructure ? pullRate(wanted, expansion, pack, false) : 0,
         // by linearity, the expected number of distinct missing cards in one pack (pullRateForSpecificCard is a percent)
         expectedNew: expansion.packStructure ? missing.reduce((sum, c) => sum + pullRateForSpecificCard(expansion, pack.name, c) / 100, 0) : 0,
+        topOdds: top.map((tier) => {
+          const hits = wanted.filter((c) => (tierFor(c) ?? Number.POSITIVE_INFINITY) <= tier)
+          return { tier, perPack: hits.length && expansion.packStructure ? pullRate(hits, expansion, pack, false) : 0 }
+        }),
         weighted: expansion.packStructure ? wanted.reduce((sum, c) => sum + (tierWeight(c) * pullRateForSpecificCard(expansion, pack.name, c)) / 100, 0) : 0,
       })
     }

@@ -87,6 +87,16 @@ export const packOdds = (p: number) => (p >= 0.5 ? `${Math.round(100 * p)}% of p
 /** The verb after packOdds: "1 in 28 packs gives", "83% of packs give". */
 export const gives = (p: number) => (p >= 0.5 ? 'give' : 'gives')
 
+/** The odds of a top hit, which is what Best hits ranks higher: "S+ 1 in 95 · SS+ 1 in 240", "S+ 1 in 400 · no SS+". */
+export function topHits(pack: PackRow) {
+  return pack.topOdds
+    .map(({ tier, perPack }) => {
+      const name = `${tiers[tier].name}${tier === 0 ? '' : '+'}`
+      return perPack > 0 ? `${name} ${perPack >= 0.5 ? `${Math.round(100 * perPack)}%` : oneIn(perPack)}` : `no ${name}`
+    })
+    .join(' · ')
+}
+
 export const fill = (x: number, { min, max }: Range) => (max > min ? 0.08 + (0.92 * (x - min)) / (max - min) : 1)
 
 /** A pack's place under the Value ranking that isn't selected: "#4 most likely". */

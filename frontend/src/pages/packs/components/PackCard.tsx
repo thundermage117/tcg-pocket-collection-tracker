@@ -24,6 +24,7 @@ import {
   type SortOption,
   scaleName,
   type TargetFilters,
+  topHits,
 } from '../types'
 import { CardTierBadge } from './CardTierBadge'
 import { PackPool } from './PackPool'
@@ -144,14 +145,23 @@ export function PackCard({ pack, position, filters, goal, sort, other, range, ex
         {!completion && score > 0 && (
           <div
             className="flex items-center gap-2"
-            title={quality ? 'Tier-weighted value per pack, with the best pack on show at 100' : "This pack's odds as a share of the best pack's on show"}
+            title={
+              quality
+                ? 'How this pack compares with the best one on show, with higher tiers counting for more'
+                : "This pack's odds as a share of the best pack's on show"
+            }
           >
             <Progress value={share} barColor={pack.color} className="h-1.5" />
             <span className="shrink-0 text-xs text-neutral-400 tabular-nums">
-              {quality ? `score ${share}` : share === 100 ? 'best odds' : `${share}% of best`}
-              {other && ` · #${other.rank} ${other.label}`}
+              {[quality ? undefined : share === 100 ? 'best odds' : `${share}% of best`, other && `#${other.rank} ${other.label}`].filter(Boolean).join(' · ')}
             </span>
           </div>
+        )}
+        {/* why a pack that hits less often can rank higher under best hits: how often the hit is a top one */}
+        {quality && score > 0 && pack.topOdds.length > 0 && (
+          <p className={cn('text-xs text-neutral-300 tabular-nums', !expanded && 'hidden sm:block')}>
+            <span className="text-neutral-500">Top hits:</span> {topHits(pack)}
+          </p>
         )}
         {countLine && <p className={cn('text-xs text-neutral-500', !expanded && 'hidden sm:block')}>{countLine}</p>}
       </div>
