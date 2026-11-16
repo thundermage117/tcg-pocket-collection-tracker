@@ -22,6 +22,7 @@ export function useUnlockPlan() {
     const cover = altCovers(main, mainAccount.trade_rarity_settings, alt)
     const altCanGive = (c: Card) => canMoveToMain(c) && (alt.get(c.internal_id)?.amount_owned ?? 0) > 0
     return {
+      main,
       progress,
       cover,
       // nothing left for the Wonder Picks to show

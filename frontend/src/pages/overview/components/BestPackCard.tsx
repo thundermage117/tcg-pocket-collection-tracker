@@ -94,17 +94,19 @@ export function BestPackCard({ pack, pct, className, footer }: Props) {
             alt=""
             decoding="async"
             // on the glow, partly off the edge on phones
-            className="-z-10 -right-6 sm:right-2 absolute top-1/2 h-[120%] -translate-y-1/2 drop-shadow-[0_8px_16px_rgb(0_0_0/0.5)] sm:h-[95%]"
+            className="-z-10 -right-6 sm:right-2 absolute top-1/2 h-[105%] -translate-y-1/2 drop-shadow-[0_8px_16px_rgb(0_0_0/0.5)] sm:h-[95%]"
           />
         )}
         <div className={cn('flex flex-col items-start text-left', artwork && 'pr-32 sm:pr-60 lg:pr-72')}>
-          <p className="mb-1 flex items-center gap-2 text-md text-neutral-300 sm:gap-3 sm:text-xl">
+          {/* on its own line in a fixed box: logos are one or two lines of lettering, so beside the sentence a wide one
+              pushed it onto two lines and they all sat at different sizes */}
+          {expansion && (
+            <span title={t(expansion.name, { ns: 'common/sets' })} className="mb-1.5 flex h-6 w-24 items-center sm:mb-2 sm:h-8 sm:w-32">
+              <SetLogo expansionId={expansion.id} className="h-full w-full object-left" />
+            </span>
+          )}
+          <p className="mb-1 text-md text-neutral-300 sm:text-xl">
             <Trans i18nKey="open" ns="gradient-card" />
-            {expansion && (
-              <span title={t(expansion.name, { ns: 'common/sets' })} className="shrink-0">
-                <SetLogo expansionId={expansion.id} className="h-5 sm:h-7" />
-              </span>
-            )}
           </p>
           <header className="text-balance font-semibold text-2xl text-neutral-50 sm:text-5xl lg:text-6xl">{t(pack.name, { ns: 'common/packs' })}</header>
           <p className="mt-2 text-md text-neutral-300 sm:text-xl">

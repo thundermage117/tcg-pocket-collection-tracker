@@ -1,20 +1,19 @@
 // Personal fork: the overview's one answer to "what should I do today". The headline is upstream's pick (the pack most
-// likely to give any new card, under the page's filters); the strip under it lists the other things worth doing: main's
-// progress towards the latest expansion's ☆☆ Wonder Pick unlock (see lib/altSupport.ts) with the pack that moves it
-// along, the best pack for ☆☆, and the alt's next gift and trade.
-import { ArrowLeftRight, Check, ChevronRight, Gift, type LucideIcon, Package, Sparkles } from 'lucide-react'
+// likely to give any new card, under the page's filters). The rows under it are the other things worth doing, each
+// with the reason on its second line: the pack for the latest expansion's ☆☆ Wonder Pick unlock (see lib/altSupport.ts)
+// with main's progress towards it, the best pack for ☆☆, and the alt's next gift and trade.
+import { ArrowLeftRight, ChevronRight, Gift, type LucideIcon, Package, Sparkles } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { latestExpansion, readGiftDate, today } from '@/lib/altSupport'
-import { expansions } from '@/lib/CardsDB'
+import { countsForUnlock, latestExpansion, readGiftDate, registered, today } from '@/lib/altSupport'
 import type { BoosterValue } from '@/lib/packValue'
 import { getCardNameByLang } from '@/lib/utils'
 import { BestPackCard } from '@/pages/overview/components/BestPackCard'
 import type { PackChance } from '@/pages/overview/packChances'
 import { useUnlockPlan } from '@/pages/overview/useUnlockPlan'
-import { oneIn } from '@/pages/packs/types'
-import type { Pack } from '@/types'
+import { gives, packOdds } from '@/pages/packs/types'
+import type { Card, Pack } from '@/types'
 
 const stripes = (strong: number, weak: number) => `repeating-linear-gradient(135deg, rgb(167 139 250 / ${strong}) 0 3px, rgb(167 139 250 / ${weak}) 3px 6px)`
 
@@ -30,14 +29,18 @@ function StageBar({ have, alt, total, state }: { have: number; alt: number; tota
   )
 }
 
-function Action({ to, icon: Icon, label, title, children }: { to: string; icon: LucideIcon; label: string; title: string; children: ReactNode }) {
+// One thing to do: what, and under it why. Rows pair up on desktop, so the reason wraps rather than truncates.
+function Action({ to, icon: Icon, what, why, children }: { to: string; icon: LucideIcon; what: ReactNode; why: ReactNode; children?: ReactNode }) {
   return (
     <li className="min-w-0">
-      <Link to={to} title={title} className="group flex min-h-10 items-center gap-2 px-3 text-sm transition-colors hover:bg-white/5 sm:px-4">
-        <Icon className="size-4 shrink-0 text-violet-300" />
-        <span className="shrink-0 text-neutral-400">{label}</span>
-        <span className="min-w-0 truncate text-neutral-400">{children}</span>
-        <ChevronRight className="ml-auto size-4 shrink-0 text-neutral-500 transition-transform group-hover:translate-x-0.5" />
+      <Link to={to} className="group flex h-full items-start gap-2.5 px-3 py-2 transition-colors hover:bg-white/5 sm:px-4">
+        <Icon className="mt-0.5 size-4 shrink-0 text-violet-300" />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-neutral-300 text-sm">{what}</span>
+          <span className="block text-pretty text-neutral-400 text-xs">{why}</span>
+          {children}
+        </span>
+        <ChevronRight className="mt-0.5 size-4 shrink-0 text-neutral-500 transition-transform group-hover:translate-x-0.5" />
       </Link>
     </li>
   )
@@ -45,8 +48,10 @@ function Action({ to, icon: Icon, label, title, children }: { to: string; icon: 
 
 const strong = 'font-medium text-neutral-100'
 
-// "1 in 48" or, for common pulls, "62%": short enough for half the panel's width; each row's title says what it counts
-const odds = (p: number) => (p >= 0.5 ? `${Math.round(100 * p)}%` : oneIn(p))
+const code = 'text-neutral-400 text-xs tabular-nums'
+
+// "· 1 in 39 packs gives one", kept on one line with its dot so a wrapped reason breaks before it, not inside it
+const perPack = (p: number) => <span className="whitespace-nowrap">{`· ${packOdds(p)} ${gives(p)} one`}</span>
 
 interface Props {
   best?: PackChance // the headline pick; none when no pack has a card that's missing
@@ -61,12 +66,6 @@ export function TodayPanel({ best, twoStar, filtered, className }: Props) {
   const headline = best && best.pct > 0 ? best.pack : undefined
   const packName = (pack: Pack | string) => t(typeof pack === 'string' ? pack : pack.name, { ns: 'common/packs' })
 
-  // pack names repeat across expansions (pikachupack), so "same pack" compares the expansion too
-  const twoStarIsHeadline =
-    twoStar !== undefined &&
-    headline !== undefined &&
-    headline.name === twoStar.packName &&
-    expansions.find((e) => e.id === twoStar.expansionId)?.packs.includes(headline)
   const progress = plan && !plan.finished ? plan.progress : undefined
   const unlockPack = progress && plan?.best && plan.best.chance > 0 ? plan.best : undefined
   const diamondsLeft = progress ? progress.diamonds.total - progress.diamonds.have : 0
@@ -77,33 +76,53 @@ export function TodayPanel({ best, twoStar, filtered, className }: Props) {
   const trade = plan?.cover.trade[0]
   const giftSent = readGiftDate('main') === today()
 
+  const unlocked = diamondsLeft + starsLeft === 0
+  const toGo = diamondsLeft > 0 ? `${diamondsLeft} ◊ to go` : `${starsLeft} ☆ to go`
+  const cardName = (card: Card) => `${getCardNameByLang(card, i18n.language)} ${card.rarity}`
+  // why main wants the card the alt hands over
+  const reason = (card: Card) =>
+    !plan
+      ? ''
+      : countsForUnlock(plan.main, card)
+        ? 'Counts towards the ☆☆ Wonder Pick unlock'
+        : registered(plan.main, card.internal_id)
+          ? 'An extra copy main wants'
+          : 'New for main'
+
   const actions = [
     progress && (
-      <li key="unlock" className="min-w-0 sm:col-span-2">
-        <Link
-          to="/alt"
-          title={`☆☆ Wonder Pick unlock, ${t(latestExpansion.name, { ns: 'common/sets' })}: ◊–◊◊◊◊ ${progress.diamonds.have}/${progress.diamonds.total}, ☆ ${progress.star.have}/${progress.star.total}${unlockPack ? `. ${packName(unlockPack.pack)} is the pack most likely to give a card it still needs.` : ''}`}
-          className="group relative flex flex-col gap-1.5 py-2.5 pr-9 pl-3 text-sm transition-colors hover:bg-white/5 sm:pr-10 sm:pl-4"
-        >
-          <span className="flex min-w-0 items-center gap-2">
-            <Sparkles className={`size-4 shrink-0 ${diamondsLeft + starsLeft === 0 ? 'text-emerald-400' : 'text-violet-300'}`} />
-            <span className="shrink-0 text-neutral-400">Unlock</span>
-            <span className="min-w-0 truncate text-neutral-400">
-              {diamondsLeft + starsLeft === 0 ? (
-                // only the ☆☆ left to register, which the Wonder Picks now show
-                <span className={strong}>☆☆ Wonder Picks unlocked</span>
-              ) : (
-                <span className={strong}>{diamondsLeft > 0 ? `${diamondsLeft} ◊ to go` : `${starsLeft} ☆ to go`}</span>
-              )}
-              {unlockPack && (
-                <>
-                  {' '}
-                  · <span className={strong}>{unlockPack.pack === headline ? 'same pack' : packName(unlockPack.pack)}</span> {odds(unlockPack.chance)}
-                </>
-              )}
-            </span>
-          </span>
-          <span className="flex min-w-0 items-center gap-2 pl-6">
+      <Action
+        key="unlock"
+        to="/alt"
+        icon={Sparkles}
+        what={
+          unlocked ? (
+            <span className={strong}>☆☆ Wonder Picks unlocked</span>
+          ) : unlockPack ? (
+            <>
+              Open <span className={strong}>{packName(unlockPack.pack)}</span> <span className={code}>{latestExpansion.id}</span>
+            </>
+          ) : (
+            <span className={strong}>☆☆ Wonder Pick unlock</span>
+          )
+        }
+        why={
+          unlocked ? (
+            "They now show the ☆☆ you're missing"
+          ) : unlockPack ? (
+            <>
+              ☆☆ Wonder Pick unlock: {toGo} {perPack(unlockPack.chance)}
+            </>
+          ) : (
+            `${toGo} in ${t(latestExpansion.name, { ns: 'common/sets' })}`
+          )
+        }
+      >
+        {!unlocked && (
+          <span
+            className="mt-1.5 flex items-center gap-2"
+            title={`◊–◊◊◊◊ ${progress.diamonds.have}/${progress.diamonds.total} · ☆ ${progress.star.have}/${progress.star.total}`}
+          >
             <StageBar have={progress.diamonds.have} alt={plan?.altHas ?? 0} total={progress.diamonds.total} state={diamondsLeft > 0 ? 'active' : 'done'} />
             <StageBar
               have={progress.star.have}
@@ -111,61 +130,71 @@ export function TodayPanel({ best, twoStar, filtered, className }: Props) {
               total={progress.star.total}
               state={starsLeft === 0 ? 'done' : diamondsLeft > 0 ? 'later' : 'active'}
             />
-            {diamondsLeft + starsLeft === 0 ? (
-              <Check className="size-3.5 shrink-0 text-emerald-400" strokeWidth={3} />
-            ) : (
-              onAlt > 0 && (
-                <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-violet-300 text-xs">
-                  <span className="inline-block h-2 w-3 rounded-sm" style={{ background: stripes(0.7, 0.25) }} />
-                  {onAlt} on the alt
-                </span>
-              )
+            {onAlt > 0 && (
+              <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-violet-300 text-xs">
+                <span className="inline-block h-2 w-3 rounded-sm" style={{ background: stripes(0.7, 0.25) }} />
+                {onAlt} on the alt
+              </span>
             )}
           </span>
-          <ChevronRight className="absolute top-3 right-3 size-4 text-neutral-500 transition-transform group-hover:translate-x-0.5 sm:right-4" />
-        </Link>
-      </li>
+        )}
+      </Action>
     ),
     twoStar && twoStar.perPack > 0 && (
-      // explicit rarity, tier and style: a bare /packs reopens whatever was last picked there, which may not be the pick named here
       <Action
         key="2s"
+        // explicit rarity, tier and style: a bare /packs reopens whatever was last picked there, which may not be the pick named here
         to="/packs?rarity=2s&tier=all&kind=all"
         icon={Package}
-        label="☆☆"
-        title="The pack most likely to give a ☆☆ you're missing, and how often a pack does"
-      >
-        {twoStarIsHeadline ? (
-          <span className={strong}>Same pack</span>
-        ) : (
+        what={
           <>
-            <span className={strong}>{packName(twoStar.packName)}</span> <span className="text-xs tabular-nums">{twoStar.expansionId}</span>
+            Open <span className={strong}>{packName(twoStar.packName)}</span> <span className={code}>{twoStar.expansionId}</span>
           </>
-        )}{' '}
-        · {odds(twoStar.perPack)}
-      </Action>
+        }
+        why={<>Best pack for a ☆☆ you're missing {perPack(twoStar.perPack)}</>}
+      />
     ),
     gift && (
-      <Action key="gift" to="/alt" icon={Gift} label="Gift" title="The alt's next gift to main (one a day)">
-        <span className={strong}>
-          {getCardNameByLang(gift, i18n.language)} {gift.rarity}
-        </span>
-        {giftSent && <span className="text-emerald-400"> · ✓ sent today</span>}
-      </Action>
+      <Action
+        key="gift"
+        to="/alt"
+        icon={Gift}
+        what={
+          <>
+            Gift <span className={strong}>{cardName(gift)}</span> from the alt
+          </>
+        }
+        why={
+          <>
+            {reason(gift)}{' '}
+            {giftSent ? (
+              <span className="whitespace-nowrap text-emerald-400">· ✓ gift sent today</span>
+            ) : (
+              <span className="whitespace-nowrap">· one gift a day</span>
+            )}
+          </>
+        }
+      />
     ),
     trade && (
-      <Action key="trade" to="/alt" icon={ArrowLeftRight} label="Trade" title="The alt's next trade to main">
-        <span className={strong}>
-          {getCardNameByLang(trade, i18n.language)} {trade.rarity}
-        </span>
-      </Action>
+      <Action
+        key="trade"
+        to="/alt"
+        icon={ArrowLeftRight}
+        what={
+          <>
+            Trade <span className={strong}>{cardName(trade)}</span> from the alt
+          </>
+        }
+        why={reason(trade)}
+      />
     ),
   ].filter(Boolean)
 
   const footer = actions.length > 0 && (
-    // rows pair up on desktop, after the full-width unlock row; a last row left without a partner takes the full width too
+    // rows pair up on desktop; a last row left without a partner takes the full width
     <ul
-      className={`grid border-neutral-700 border-t bg-neutral-900/60 py-1 sm:grid-cols-2 ${progress ? 'sm:[&>li:last-child:nth-child(even)]:col-span-2' : 'sm:[&>li:last-child:nth-child(odd)]:col-span-2'}`}
+      className="grid border-neutral-700 border-t bg-neutral-900/60 py-1 sm:grid-cols-2 sm:[&>li:last-child:nth-child(odd)]:col-span-2"
       aria-label="Also today"
     >
       {actions}
