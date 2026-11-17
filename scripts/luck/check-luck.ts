@@ -2,7 +2,7 @@
 // Deals simulated collections from known pack counts and checks the model finds them again. Cards are dealt
 // independently (each owned with 1 − (1 − p)^n), which is the model's own assumption, so this tests the solver.
 import assert from 'node:assert/strict'
-import { countPercentile, estimateLuck, looksTradedFor, type ModelCard, packsScale } from '../../frontend/src/lib/luckModel.ts'
+import { countOdds, countPercentile, estimateLuck, looksTradedFor, type ModelCard, packsScale } from '../../frontend/src/lib/luckModel.ts'
 
 // deterministic random numbers (mulberry32)
 function rng(seed: number) {
@@ -252,6 +252,46 @@ const star = (est: ReturnType<typeof estimateLuck>) => {
   assert.ok(Math.abs(sum / runs - 1) < 0.1)
   assert.equal(packsScale([{ cards: set.map((c) => ({ ...c, owned: false })), perBooster: [10, 10, 10] }]), 0)
 }
+
+// 7. The page counts packs from ◊ and ◊◊ only (◊◊◊ and ◊◊◊◊ set aside, as gifts and trades fill them in): still close,
+// and the range still holds the truth, across light and heavy opening (heavy climbs the ladder to ☆ and ☆☆)
+{
+  const diamonds = new Set(['◊◊◊', '◊◊◊◊'])
+  for (const truth of [
+    [40, 40, 40],
+    [120, 10, 0],
+    [15, 60, 300],
+  ]) {
+    const random = rng(truth[1] * 13 + truth[2])
+    const total = truth.reduce((a, b) => a + b, 0)
+    let sum = 0
+    let covered = 0
+    let counted = 0
+    let percentile = 0
+    for (let i = 0; i < 300; i++) {
+      const est = estimateLuck(deal(set, truth, random), 3, diamonds)
+      if (est.atLeast) {
+        continue
+      }
+      counted++
+      sum += est.packs
+      percentile += est.judged.percentile
+      covered += Number(est.low <= total && total <= est.high)
+      assert.ok(est.byRarity.some((r) => r.rarity === '◊◊◊◊' && r.setAside && !r.judged))
+    }
+    console.log(
+      `◊ and ◊◊ only, truth ${truth.join('/')}: mean ${(sum / counted).toFixed(0)} of ${total}, range holds truth ${Math.round((100 * covered) / counted)}%, mean percentile ${(percentile / counted).toFixed(2)}, ${300 - counted} floors`,
+    )
+    assert.ok(Math.abs(sum / counted - total) / total < 0.15)
+    assert.ok(covered / counted > 0.8)
+    assert.ok(Math.abs(percentile / counted - 0.5) < 0.08)
+  }
+}
+
+// 8. Small counts: the chance of this few or this many
+assert.ok(Math.abs(countOdds(0, 2) - Math.exp(-2)) < 1e-9)
+assert.ok(Math.abs(countOdds(1, 4.7) - Math.exp(-4.7) * 5.7) < 1e-9)
+assert.ok(Math.abs(countOdds(3, 1) - (1 - Math.exp(-1) * 2.5)) < 1e-9)
 
 // combined counts: Poisson while small (owning no Crown when 0.3 are typical is ordinary), normal when large
 assert.ok(Math.abs(countPercentile(0, 0.3, 0.3) - Math.exp(-0.3) / 2) < 1e-9)

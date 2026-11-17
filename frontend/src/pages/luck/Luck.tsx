@@ -11,10 +11,11 @@ import {
   evidenceNames,
   getLuck,
   type LuckReport,
+  luckInWords,
   luckWords,
-  packsAhead,
   type RarityKind,
   type RarityTotal,
+  rareRarities,
   roundPacks,
   typicalCount,
 } from '@/lib/luck'
@@ -27,6 +28,8 @@ const note = 'mt-3 text-pretty text-neutral-400 text-sm sm:text-base'
 
 // outside the middle 30–70%, a rarity or expansion is tinted as lucky or unlucky
 const tint = (percentile: number) => (percentile >= 0.7 ? 'text-amber-300' : percentile <= 0.3 ? 'text-sky-400' : 'text-neutral-300')
+// words that say "typical" stay neutral even when the percentile leans a little
+const wordsTint = (words: string, percentile: number) => (words === 'right on par' || words.startsWith('about what') ? 'text-neutral-100' : tint(percentile))
 
 // formatRarity gives an element for the star rarities, so the list is built as elements rather than joined text
 const rarityList = (rarities: Rarity[]) =>
@@ -81,9 +84,17 @@ function Headline({ luck }: { luck: LuckReport }) {
         <>
           <p className="text-balance text-lg text-neutral-300 sm:text-2xl">
             {luck.atLeast && luck.judgedExpansions < luck.expansions.length ? 'Where luck can be read, you' : 'You'} opened{' '}
-            {luck.atLeast ? <span className={big}>about {roundPacks(pulls.packs)}</span> : opened} packs, and your pulls are where a typical player is at{' '}
-            <span className={big}>{roundPacks(pulls.worth)}</span>:{' '}
-            <span className={`font-semibold ${tint(pulls.percentile)}`}>{packsAhead(pulls.worth, pulls.packs)}</span>.
+            {luck.atLeast ? <span className={big}>about {roundPacks(pulls.packs)}</span> : opened} packs, and your pulls{' '}
+            {pulls.expected < 10 ? (
+              <>
+                are <span className={big}>{pulls.owned}</span> where {typicalCount(pulls.expected)} is typical:{' '}
+              </>
+            ) : (
+              <>
+                are where a typical player is at <span className={big}>{roundPacks(pulls.worth)}</span>:{' '}
+              </>
+            )}
+            <span className={`font-semibold ${wordsTint(luckInWords(pulls), pulls.percentile)}`}>{luckInWords(pulls)}</span>.
           </p>
           <p className={note}>
             That's {luckWords(pulls.percentile)} who opened as many, on {rarityList(pulls.rarities)}.
@@ -91,7 +102,7 @@ function Headline({ luck }: { luck: LuckReport }) {
           {untradable && (
             <p className="mt-1.5 text-pretty text-neutral-400 text-sm sm:text-base">
               The cards nobody can trade you ({rarityList(untradable.rarities)}) alone: {untradable.owned} against {typicalCount(untradable.expected)} typical,{' '}
-              <span className={tint(untradable.percentile)}>{packsAhead(untradable.worth, untradable.packs)}</span>.
+              <span className={wordsTint(luckInWords(untradable), untradable.percentile)}>{luckInWords(untradable)}</span>.
             </p>
           )}
         </>
@@ -104,6 +115,18 @@ function Headline({ luck }: { luck: LuckReport }) {
             {Math.max(0, Math.round(r.owned - r.expected))} came another way. It's left out of the luck.
           </p>
         ))}
+      {luck.rarerDiamonds.some((r) => r.owned - r.expected >= 5) && (
+        <p className="mt-1.5 text-pretty text-neutral-500 text-sm">
+          Packs are counted from ◊ and ◊◊ only. Your{' '}
+          {luck.rarerDiamonds.map((r, i) => (
+            <Fragment key={r.rarity}>
+              {i > 0 && ' and '}
+              {r.rarity} ({r.owned} where packs give about {typicalCount(r.expected)})
+            </Fragment>
+          ))}{' '}
+          run ahead of them, as alt gifts, trades and pack points fill those in.
+        </p>
+      )}
       {floors.length > 0 && pulls && (
         <p className="mt-1.5 text-neutral-500 text-sm">
           {floors.map((r) => t(r.expansion.name, { ns: 'common/sets' })).join(', ')}: at least {roundPacks(luck.packs - pulls.packs)} packs more, too complete
@@ -132,7 +155,7 @@ function RarityCard({ r }: { r: RarityTotal }) {
         </p>
       ) : (
         <>
-          <p className={`mt-2 font-medium text-sm ${tint(r.percentile)}`}>{packsAhead(r.worth, r.packs)}</p>
+          <p className={`mt-2 font-medium text-sm ${wordsTint(luckInWords(r), r.percentile)}`}>{luckInWords(r)}</p>
           <div className="mt-2 mb-2">
             <LuckDial percentile={r.percentile} />
           </div>
@@ -153,6 +176,7 @@ function Row({ row }: { row: ExpansionLuck }) {
   const { t } = useTranslation(['common/sets'])
   const opened = row.atLeast ? `at least ${roundPacks(row.packs)}` : `about ${roundPacks(row.packs)}`
   const judged = !row.atLeast && row.judged.total > 0
+  const words = luckInWords({ owned: row.judged.owned, expected: row.judged.expected, worth: row.judgedWorth, packs: row.packs })
   return (
     <li className="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2 rounded-xl border border-neutral-800 bg-neutral-900/60 p-4 sm:grid-cols-[7rem_1fr_14rem]">
       <SetLogo expansionId={row.expansion.id} className="h-9 max-w-[7rem] justify-self-start" />
@@ -169,7 +193,7 @@ function Row({ row }: { row: ExpansionLuck }) {
           {judged && (
             <>
               {' · '}
-              <span className={tint(row.judged.percentile)}>{packsAhead(row.judgedWorth, row.packs)}</span>
+              <span className={wordsTint(words, row.judged.percentile)}>{words}</span>
             </>
           )}
         </p>
@@ -186,26 +210,28 @@ function Row({ row }: { row: ExpansionLuck }) {
       </div>
       {/* each rarity against its typical count; the ones that counted the packs or were traded for are greyed */}
       <ul className="col-span-2 flex flex-wrap gap-x-4 gap-y-1 text-xs sm:col-span-3">
-        {row.byRarity.map((r) => {
-          const shown = r.judged && !row.atLeast
-          return (
-            <li
-              key={r.rarity}
-              className={shown ? 'text-neutral-400' : 'text-neutral-600'}
-              title={
-                r.setAside
-                  ? `${r.owned} of ${r.total} owned · traded for, so not judged`
-                  : shown
-                    ? `${r.owned} of ${r.total} owned · ${luckWords(r.percentile)}`
-                    : `${r.owned} of ${r.total} owned · used to count the packs here, so not judged`
-              }
-            >
-              <span className={shown ? undefined : 'opacity-50'}>{formatRarity(r.rarity as Rarity)}</span>{' '}
-              <span className={`font-medium tabular-nums ${shown ? tint(r.percentile) : ''}`}>{r.owned}</span>
-              {shown && <span className="tabular-nums"> · typical {typicalCount(r.expected)}</span>}
-            </li>
-          )
-        })}
+        {row.byRarity
+          .filter((r) => rareRarities.includes(r.rarity as Rarity))
+          .map((r) => {
+            const shown = r.judged && !row.atLeast
+            return (
+              <li
+                key={r.rarity}
+                className={shown ? 'text-neutral-400' : 'text-neutral-600'}
+                title={
+                  r.setAside
+                    ? `${r.owned} of ${r.total} owned · traded for, so not judged`
+                    : shown
+                      ? `${r.owned} of ${r.total} owned · ${luckWords(r.percentile)}`
+                      : `${r.owned} of ${r.total} owned · used to count the packs here, so not judged`
+                }
+              >
+                <span className={shown ? undefined : 'opacity-50'}>{formatRarity(r.rarity as Rarity)}</span>{' '}
+                <span className={`font-medium tabular-nums ${shown ? tint(r.percentile) : ''}`}>{r.owned}</span>
+                {shown && <span className="tabular-nums"> · typical {typicalCount(r.expected)}</span>}
+              </li>
+            )
+          })}
       </ul>
     </li>
   )
@@ -281,13 +307,15 @@ function Luck() {
             <summary className="cursor-pointer text-neutral-300">How this works</summary>
             <div className="mt-2 flex flex-col gap-2">
               <p>
-                <span className="text-neutral-200">Packs opened</span> is an estimate from which ◊–◊◊◊◊ are in your card dex: each extra pack makes fewer new
+                <span className="text-neutral-200">Packs opened</span> is an estimate from which ◊ and ◊◊ are in your card dex: each extra pack makes fewer new
                 ones turn up, so the ones still missing say how far along you are, booster by booster. The range in brackets is where the true number probably
-                is. Once every ◊–◊◊◊◊ is owned, the next rarities count instead (☆, then ☆☆ and ✵), and they aren't judged in that expansion.
+                is. ◊◊◊ and ◊◊◊◊ are left out: the last few missing are what the estimate leans on most, and those are the ones gifts, trades and pack points
+                fill in. Once every ◊ and ◊◊ is owned, the next rarities count instead (☆, then ☆☆ and ✵), and they aren't judged in that expansion.
               </p>
               <p>
                 <span className="text-neutral-200">Ahead or behind</span>: how many packs a typical player needs to own as many of your pulled cards, against
-                the packs you opened. The percentile under it is the share of players with as many packs who'd own fewer.
+                the packs you opened. Where fewer than 10 are typical (Crowns, say), one card would swing that by hundreds of packs, so it's told as odds
+                instead: how many players have as few, or as many. The percentile under it is the share of players with as many packs who'd own fewer.
               </p>
               <p>
                 <span className="text-neutral-200">It can't see how a card arrived</span>, so it goes by what each rarity's count can say. ☆☆☆ and Crown can't

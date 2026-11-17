@@ -1,5 +1,5 @@
 // Personal fork: the luck report. Binds lib/luckModel.ts to the card data: per openable expansion, the packs opened
-// are estimated from which ◊–◊◊◊◊ are in the dex (and, once those are all owned, from ☆, then ☆☆ and ✵), then the
+// are estimated from which ◊ and ◊◊ are in the dex (and, once those are all owned, from ☆, then ☆☆ and ✵), then the
 // rarer cards owned are compared with what a typical player has after that many packs.
 //
 // It can't see how a card arrived, so it sorts the rarities by what their counts can say:
@@ -11,7 +11,7 @@
 // Deluxe and special packs are left out (different pack shapes, and deluxe reprints share ids with the originals).
 import { registered } from '@/lib/altSupport'
 import { allCards, basicRarities, expansions } from '@/lib/CardsDB'
-import { countPercentile, estimateLuck, type Judgement, type LuckEstimate, looksTradedFor, type ModelCard, packsScale } from '@/lib/luckModel'
+import { countOdds, countPercentile, estimateLuck, type Judgement, type LuckEstimate, looksTradedFor, type ModelCard, packsScale } from '@/lib/luckModel'
 import { pullRateForSpecificCard } from '@/lib/stats'
 import { type Card, type Collection, type Expansion, type Pack, type Rarity, tradableRarities } from '@/types'
 
@@ -19,9 +19,13 @@ import { type Card, type Collection, type Expansion, type Pack, type Rarity, tra
 const rareLevels: Partial<Record<Rarity, number>> = { '☆': 1, '☆☆': 2, '✵': 2, '☆☆☆': 3, '✵✵': 3, 'Crown Rare': 3 }
 export const rareRarities = Object.keys(rareLevels) as Rarity[]
 const canTrade = (rarity: string) => (tradableRarities as readonly string[]).includes(rarity)
+// Packs are counted from ◊ and ◊◊ only. The last missing cards are what the estimate leans on most, and those are
+// mostly ◊◊◊ and ◊◊◊◊, which alt gifts, trades for the Wonder Pick unlock and pack points fill in: each would add a lot
+// of packs that were never opened. ◊ and ◊◊ come in too many copies to be worth filling by hand.
+const rarerDiamonds: Rarity[] = ['◊◊◊', '◊◊◊◊']
 
 /** What the packs were counted from at each evidence level, and what's left to judge. */
-export const evidenceNames = ['◊–◊◊◊◊', '◊–☆', '◊–☆☆ and ✵']
+export const evidenceNames = ['◊ and ◊◊', '◊, ◊◊ and ☆', '◊, ◊◊, ☆, ☆☆ and ✵']
 
 interface ExpansionModel {
   expansion: Expansion
@@ -108,6 +112,7 @@ export interface LuckReport {
   untradable: Verdict | undefined // ☆☆☆ and Crown alone, which nobody can have traded for
   byRarity: RarityTotal[] // rarest first, only the ones read somewhere
   traded: Rarity[]
+  rarerDiamonds: RarityTotal[] // ◊◊◊ and ◊◊◊◊ against what the packs give; never used to count them
 }
 
 export function getLuck(collection: Collection): LuckReport {
@@ -117,12 +122,12 @@ export function getLuck(collection: Collection): LuckReport {
     model: cards.map(({ card, level, rates }): ModelCard => ({ rarity: card.rarity, level, rates, owned: registered(collection, card.internal_id) })),
   }))
 
-  // First pass: how each tradable rarity did on the packs alone, to spot the ones that were traded for
-  const firstPass = inputs.map(({ model, boosters }) => estimateLuck(model, boosters.length)).filter((e) => !e.atLeast)
+  // A first pass on the packs alone, to spot the tradable rares that run far ahead of them
+  const firstPass = inputs.map(({ model, boosters }) => estimateLuck(model, boosters.length, new Set(rarerDiamonds))).filter((e) => !e.atLeast)
   const traded = getRarestFirst().filter(
     (rarity) => canTrade(rarity) && looksTradedFor(firstPass.flatMap((e) => e.byRarity.filter((r) => r.rarity === rarity && r.judged))),
   )
-  const setAside = new Set<string>(traded)
+  const setAside = new Set<string>([...rarerDiamonds, ...traded])
 
   const rows = inputs
     .map(({ expansion, boosters, model }) => {
@@ -178,25 +183,29 @@ export function getLuck(collection: Collection): LuckReport {
     }
   }
 
+  // A set-aside rarity is never judged, only compared with what the packs give wherever they're a real estimate
+  const gapToPacks = (rarity: Rarity): RarityTotal[] => {
+    const of = judged.flatMap((r) => r.byRarity.filter((x) => x.rarity === rarity))
+    return of.length === 0
+      ? []
+      : [
+          {
+            rarity,
+            kind: 'traded',
+            owned: total(of, (j) => j.owned),
+            expected: total(of, (j) => j.expected),
+            percentile: percentile(of),
+            packs: total(judged, (r) => r.packs),
+            worth: 0,
+            expansions: of.length,
+          },
+        ]
+  }
+
   const byRarity = getRarestFirst().flatMap((rarity): RarityTotal[] => {
     const kind: RarityKind = setAside.has(rarity) ? 'traded' : canTrade(rarity) ? 'pulls' : 'untradable'
     if (kind === 'traded') {
-      // never judged: compared with what the packs give wherever the packs are a real estimate
-      const of = judged.flatMap((r) => r.byRarity.filter((x) => x.rarity === rarity))
-      return of.length === 0
-        ? []
-        : [
-            {
-              rarity,
-              kind,
-              owned: total(of, (j) => j.owned),
-              expected: total(of, (j) => j.expected),
-              percentile: percentile(of),
-              packs: total(judged, (r) => r.packs),
-              worth: 0,
-              expansions: of.length,
-            },
-          ]
+      return gapToPacks(rarity)
     }
     const v = verdict([rarity])
     const expansionsIn = judged.filter((r) => r.byRarity.some((x) => x.rarity === rarity && x.judged)).length
@@ -214,6 +223,7 @@ export function getLuck(collection: Collection): LuckReport {
     untradable: verdict(rareRarities.filter((r) => !canTrade(r))),
     byRarity,
     traded,
+    rarerDiamonds: rarerDiamonds.flatMap(gapToPacks),
   }
 }
 
@@ -237,6 +247,23 @@ export function packsAhead(worth: number, packs: number) {
   }
   return `about ${roundPacks(Math.abs(gap))} packs ${gap > 0 ? 'ahead' : 'behind'}`
 }
+
+/** Below this many typical cards, luck reads as odds ("about 1 player in 19 has this few"), not packs: one card more or
+ * less would swing a packs figure by hundreds. */
+const SMALL_COUNT = 10
+
+/** "about 1 player in 19 has this few" / "about 1 player in 6 has this many" / "about what most players have". */
+export function oddsWords(owned: number, expected: number) {
+  const chance = countOdds(owned, expected)
+  if (chance > 0.3) {
+    return 'about what most players have'
+  }
+  return `about 1 player in ${Math.round(1 / chance)} has this ${owned < expected ? 'few' : 'many'}`
+}
+
+/** Luck in packs while the count is big enough, in odds when it's small. */
+export const luckInWords = (v: { owned: number; expected: number; worth: number; packs: number }) =>
+  v.expected < SMALL_COUNT ? oddsWords(v.owned, v.expected) : packsAhead(v.worth, v.packs)
 
 /** "luckier than 88% of players" / "unluckier than 70% of players" / "about as lucky as most players" near the middle. */
 export function luckWords(percentile: number) {

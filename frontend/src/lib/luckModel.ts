@@ -43,7 +43,7 @@ export interface LuckEstimate {
   atLeast: boolean // even the last step of the ladder is all owned in some booster, so the packs are a floor
   rares: number // cards above ◊–◊◊◊◊ owned, not counting set-aside rarities
   judged: Judgement // over the cards above the evidence, not counting set-aside rarities
-  byRarity: RarityLuck[] // every rarity above ◊–◊◊◊◊, in the order first seen
+  byRarity: RarityLuck[] // every rarity above ◊–◊◊◊◊, and any set-aside ◊–◊◊◊◊, in the order first seen
   worth: number // packs a typical player needs to own `rares` of them
 }
 
@@ -228,7 +228,8 @@ const LAST_EVIDENCE_LEVEL = 2 // ☆☆ and ✵: the rarest cards allowed to cou
 /** `setAside`: rarities treated as traded for, so they neither count the packs nor are judged. */
 export function estimateLuck(cards: ModelCard[], boosters: number, setAside: ReadonlySet<string> = new Set()): LuckEstimate {
   // Climb the ladder until the evidence has a card missing in every booster that was opened
-  const usable = cards.filter((c) => c.level === 0 || !setAside.has(c.rarity))
+  // ◊◊◊ and ◊◊◊◊ can be set aside too (filled in by gifts or trades), leaving ◊ and ◊◊ to count the packs
+  const usable = cards.filter((c) => !setAside.has(c.rarity))
   let evidenceLevel = 0
   let evidence = usable.filter((c) => c.level === 0)
   let estimate = estimatePacks(evidence, boosters)
@@ -277,7 +278,7 @@ export function estimateLuck(cards: ModelCard[], boosters: number, setAside: Rea
 
   const byRarity = [
     ...Map.groupBy(
-      cards.filter((c) => c.level > 0),
+      cards.filter((c) => c.level > 0 || setAside.has(c.rarity)),
       (c) => c.rarity,
     ),
   ].map(([rarity, of]) => ({
@@ -334,4 +335,20 @@ export function looksTradedFor(perExpansion: Judgement[]) {
   const variance = perExpansion.reduce((n, j) => n + j.variance, 0)
   const ahead = perExpansion.filter((j) => j.owned > j.expected).length
   return owned - expected >= 5 && ahead >= 0.75 * perExpansion.length && countPercentile(owned, expected, variance) > 0.995
+}
+
+/**
+ * How unusual a small count is, for counts too small to put in packs (a Crown or two): the chance of owning this few
+ * (when below the typical count) or this many (when above), Poisson. The packs estimate's own error is small next to
+ * the luck of a count this size, so it's left out.
+ */
+export function countOdds(owned: number, expected: number) {
+  let term = Math.exp(-expected)
+  let below = 0 // chance of fewer than `owned`
+  for (let k = 0; k < owned; k++) {
+    below += term
+    term *= expected / (k + 1)
+  }
+  // `term` is now the chance of exactly `owned`
+  return owned < expected ? Math.min(1, below + term) : Math.min(1, 1 - below)
 }
