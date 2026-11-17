@@ -1,23 +1,27 @@
 // Personal fork: the luck report. Binds lib/luckModel.ts to the card data: per openable expansion, the packs opened
 // are estimated from which ◊–◊◊◊◊ are in the dex (and, once those are all owned, from ☆, then ☆☆ and ✵), then the
-// rarer cards owned are compared with what a typical player has after that many packs, in total and per rarity.
-// "Packs' worth" is the same comparison read the other way: how many packs a typical player needs for as many rares.
+// rarer cards owned are compared with what a typical player has after that many packs.
+//
+// It can't see how a card arrived, so it sorts the rarities by what their counts can say:
+// - can't be traded (☆☆☆, Crown): the gap to the pack odds is pure luck;
+// - tradable and in line with the odds: counted as pulls;
+// - tradable and far ahead of the odds in most expansions: traded for. Set aside, and only the gap is reported.
+// Luck is told in packs: how many packs a typical player needs to own as many of the pulled cards.
 //
 // Deluxe and special packs are left out (different pack shapes, and deluxe reprints share ids with the originals).
-// Cards that came by trade, alt gift, Wonder Pick or pack points count as pulled, so this is an estimate, not a record.
 import { registered } from '@/lib/altSupport'
 import { allCards, basicRarities, expansions } from '@/lib/CardsDB'
-import { countPercentile, estimateLuck, type Judgement, type LuckEstimate, type ModelCard } from '@/lib/luckModel'
+import { countPercentile, estimateLuck, type Judgement, type LuckEstimate, looksTradedFor, type ModelCard, packsScale } from '@/lib/luckModel'
 import { pullRateForSpecificCard } from '@/lib/stats'
-import type { Card, Collection, Expansion, Pack, Rarity } from '@/types'
+import { type Card, type Collection, type Expansion, type Pack, type Rarity, tradableRarities } from '@/types'
 
 // The evidence ladder: a rarity counts packs once every rarity below it is used up, and is judged for luck until then
 const rareLevels: Partial<Record<Rarity, number>> = { '☆': 1, '☆☆': 2, '✵': 2, '☆☆☆': 3, '✵✵': 3, 'Crown Rare': 3 }
 export const rareRarities = Object.keys(rareLevels) as Rarity[]
+const canTrade = (rarity: string) => (tradableRarities as readonly string[]).includes(rarity)
 
 /** What the packs were counted from at each evidence level, and what's left to judge. */
 export const evidenceNames = ['◊–◊◊◊◊', '◊–☆', '◊–☆☆ and ✵']
-export const judgedNames = ['☆ and rarer', '☆☆ and rarer', '☆☆☆, ✵✵ and Crown']
 
 interface ExpansionModel {
   expansion: Expansion
@@ -26,6 +30,7 @@ interface ExpansionModel {
 }
 
 let models: ExpansionModel[] | undefined
+let rarestFirst: Rarity[] | undefined
 
 // The odds don't depend on the collection, so each card's per-booster rate is worked out once
 function getModels() {
@@ -48,18 +53,48 @@ function getModels() {
   return models
 }
 
+/** The rare rarities by their average chance per card per pack, lowest first: the hits people remember lead. */
+function getRarestFirst() {
+  rarestFirst ??= (() => {
+    const all = getModels().flatMap((m) => m.cards.filter((c) => c.level > 0))
+    const mean = (rarity: Rarity) => {
+      const of = all.filter((c) => c.card.rarity === rarity)
+      return of.reduce((sum, c) => sum + Math.max(...c.rates), 0) / Math.max(1, of.length)
+    }
+    return rareRarities.toSorted((a, b) => mean(a) - mean(b))
+  })()
+  return rarestFirst
+}
+
 export interface ExpansionLuck extends LuckEstimate {
   expansion: Expansion
   boosters: Pack[]
+  clear: boolean // judged, and far enough from the middle (outside 10–90%) to be worth showing up front
+  judgedWorth: number // packs a typical player needs to own as many of the judged cards (`worth` covers every rare)
 }
 
-/** A rarity's luck over every expansion where it's judged. */
+export type RarityKind = 'untradable' | 'pulls' | 'traded'
+
+/** One rarity over every expansion where it can be read. */
 export interface RarityTotal {
   rarity: Rarity
+  kind: RarityKind
+  owned: number
+  expected: number // what the packs give a typical player
+  percentile: number
+  packs: number // packs opened in the expansions it's read in
+  worth: number // packs a typical player needs to own as many (0 for traded)
+  expansions: number
+}
+
+/** A group of rarities judged together: the packs it was judged over, what they're worth, and the luck. */
+export interface Verdict {
   owned: number
   expected: number
   percentile: number
-  expansions: number // how many expansions it's judged in
+  packs: number
+  worth: number
+  rarities: Rarity[]
 }
 
 export interface LuckReport {
@@ -68,28 +103,50 @@ export interface LuckReport {
   low: number
   high: number // Infinity when atLeast
   atLeast: boolean
-  rares: number
-  worth: number
-  // Luck is only judged where the packs are an estimate, not a floor, so those expansions get their own totals
-  judged: { expansions: number; packs: number; worth: number; percentile: number }
-  byRarity: RarityTotal[] // in rarity order, only the ones judged somewhere
+  judgedExpansions: number // expansions with a real estimate, not a floor: the only ones luck is read in
+  pulls: Verdict | undefined // every rarity counted as pulls: the headline
+  untradable: Verdict | undefined // ☆☆☆ and Crown alone, which nobody can have traded for
+  byRarity: RarityTotal[] // rarest first, only the ones read somewhere
+  traded: Rarity[]
 }
 
 export function getLuck(collection: Collection): LuckReport {
-  const rows = getModels()
-    .map(({ expansion, boosters, cards }): ExpansionLuck => {
-      const model: ModelCard[] = cards.map(({ card, level, rates }) => ({ rarity: card.rarity, level, rates, owned: registered(collection, card.internal_id) }))
-      return { expansion, boosters, ...estimateLuck(model, boosters.length) }
+  const inputs = getModels().map(({ expansion, boosters, cards }) => ({
+    expansion,
+    boosters,
+    model: cards.map(({ card, level, rates }): ModelCard => ({ rarity: card.rarity, level, rates, owned: registered(collection, card.internal_id) })),
+  }))
+
+  // First pass: how each tradable rarity did on the packs alone, to spot the ones that were traded for
+  const firstPass = inputs.map(({ model, boosters }) => estimateLuck(model, boosters.length)).filter((e) => !e.atLeast)
+  const traded = getRarestFirst().filter(
+    (rarity) => canTrade(rarity) && looksTradedFor(firstPass.flatMap((e) => e.byRarity.filter((r) => r.rarity === rarity && r.judged))),
+  )
+  const setAside = new Set<string>(traded)
+
+  const rows = inputs
+    .map(({ expansion, boosters, model }) => {
+      const estimate = estimateLuck(model, boosters.length, setAside)
+      const p = estimate.judged.percentile
+      const judgedRarities = new Set(estimate.byRarity.filter((r) => r.judged).map((r) => r.rarity))
+      const judgedWorth = packsScale([{ cards: model.filter((c) => judgedRarities.has(c.rarity)), perBooster: estimate.perBooster }]) * estimate.packs
+      return {
+        expansion,
+        boosters,
+        model,
+        ...estimate,
+        judgedWorth,
+        clear: !estimate.atLeast && estimate.judged.total > 0 && (p <= 0.1 || p >= 0.9),
+      }
     })
-    .filter((row) => row.packs >= 0.5 || row.rares > 0)
+    .filter((row) => row.packs >= 0.5 || row.rares > 0 || row.byRarity.some((r) => r.owned > 0))
 
   const total = <T>(of: T[], pick: (item: T) => number) => of.reduce((n, item) => n + pick(item), 0)
-  const sum = (pick: (row: ExpansionLuck) => number) => total(rows, pick)
-  const packs = sum((r) => r.packs)
+  const packs = total(rows, (r) => r.packs)
   const atLeast = rows.some((r) => r.atLeast)
   // independent errors add in quadrature
-  const spread = (pick: (row: ExpansionLuck) => number) => Math.sqrt(sum((r) => pick(r) ** 2))
-  // A floor on the packs would read as luck (too few packs for the rares), so only expansions with a real estimate are judged
+  const spread = (pick: (row: (typeof rows)[number]) => number) => Math.sqrt(total(rows, (r) => pick(r) ** 2))
+  // A floor on the packs would read as luck (too few packs for the rares), so only expansions with a real estimate are read
   const judged = rows.filter((r) => !r.atLeast)
   const percentile = (of: Judgement[]) =>
     countPercentile(
@@ -98,26 +155,65 @@ export function getLuck(collection: Collection): LuckReport {
       total(of, (j) => j.variance),
     )
 
+  // A group of rarities over the expansions where they're judged: luck as a percentile and in packs
+  const verdict = (rarities: Rarity[]): Verdict | undefined => {
+    const inRows = judged
+      .map((row) => ({ row, of: row.byRarity.filter((r) => r.judged && rarities.includes(r.rarity as Rarity)) }))
+      .filter(({ of }) => of.length > 0)
+    if (inRows.length === 0) {
+      return undefined
+    }
+    const of = inRows.flatMap((x) => x.of)
+    const over = total(inRows, ({ row }) => row.packs)
+    const scale = packsScale(
+      inRows.map(({ row, of }) => ({ cards: row.model.filter((c) => of.some((r) => r.rarity === c.rarity)), perBooster: row.perBooster })),
+    )
+    return {
+      owned: total(of, (j) => j.owned),
+      expected: total(of, (j) => j.expected),
+      percentile: percentile(of),
+      packs: over,
+      worth: scale * over,
+      rarities: rarities.filter((rarity) => of.some((r) => r.rarity === rarity)),
+    }
+  }
+
+  const byRarity = getRarestFirst().flatMap((rarity): RarityTotal[] => {
+    const kind: RarityKind = setAside.has(rarity) ? 'traded' : canTrade(rarity) ? 'pulls' : 'untradable'
+    if (kind === 'traded') {
+      // never judged: compared with what the packs give wherever the packs are a real estimate
+      const of = judged.flatMap((r) => r.byRarity.filter((x) => x.rarity === rarity))
+      return of.length === 0
+        ? []
+        : [
+            {
+              rarity,
+              kind,
+              owned: total(of, (j) => j.owned),
+              expected: total(of, (j) => j.expected),
+              percentile: percentile(of),
+              packs: total(judged, (r) => r.packs),
+              worth: 0,
+              expansions: of.length,
+            },
+          ]
+    }
+    const v = verdict([rarity])
+    const expansionsIn = judged.filter((r) => r.byRarity.some((x) => x.rarity === rarity && x.judged)).length
+    return v ? [{ rarity, kind, owned: v.owned, expected: v.expected, percentile: v.percentile, packs: v.packs, worth: v.worth, expansions: expansionsIn }] : []
+  })
+
   return {
     expansions: rows.toReversed(),
     packs,
     low: Math.max(0, packs - spread((r) => r.packs - r.low)),
     high: atLeast ? Number.POSITIVE_INFINITY : packs + spread((r) => r.high - r.packs),
     atLeast,
-    rares: sum((r) => r.rares),
-    worth: sum((r) => r.worth),
-    judged: {
-      expansions: judged.length,
-      packs: total(judged, (r) => r.packs),
-      worth: total(judged, (r) => r.worth),
-      percentile: percentile(judged.map((r) => r.judged)),
-    },
-    byRarity: rareRarities.flatMap((rarity) => {
-      const of = judged.flatMap((r) => r.byRarity.filter((x) => x.rarity === rarity && x.judged))
-      return of.length === 0
-        ? []
-        : [{ rarity, owned: total(of, (j) => j.owned), expected: total(of, (j) => j.expected), percentile: percentile(of), expansions: of.length }]
-    }),
+    judgedExpansions: judged.length,
+    pulls: verdict(rareRarities.filter((r) => !setAside.has(r))),
+    untradable: verdict(rareRarities.filter((r) => !canTrade(r))),
+    byRarity,
+    traded,
   }
 }
 
@@ -132,6 +228,15 @@ export function roundPacks(n: number) {
 
 /** A typical count: one decimal while it's small enough to matter ("2.1"), whole above ten. */
 export const typicalCount = (n: number) => n.toFixed(n < 10 ? 1 : 0)
+
+/** Luck in packs: "about 800 packs behind" / "about 300 packs ahead" / "right on par" within a tenth. */
+export function packsAhead(worth: number, packs: number) {
+  const gap = worth - packs
+  if (Math.abs(gap) < 0.1 * packs || Math.abs(gap) < 5) {
+    return 'right on par'
+  }
+  return `about ${roundPacks(Math.abs(gap))} packs ${gap > 0 ? 'ahead' : 'behind'}`
+}
 
 /** "luckier than 88% of players" / "unluckier than 70% of players" / "about as lucky as most players" near the middle. */
 export function luckWords(percentile: number) {

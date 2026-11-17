@@ -1,15 +1,15 @@
-// Personal fork: the luck report's headline as one line on the overview, linking to /luck.
+// Personal fork: the luck report's headline (packs ahead or behind on pulled cards) as one line on the overview, linking to /luck.
 import { ChevronRight, Clover } from 'lucide-react'
 import { useMemo } from 'react'
 import { Link } from 'react-router'
-import { getLuck, luckWords, roundPacks } from '@/lib/luck'
+import { getLuck, packsAhead } from '@/lib/luck'
 import { useProfileCollection } from '@/services/profile/useProfileCollection'
 
 export function LuckLine({ className }: { className?: string }) {
   // main's real cards, never the "Count alt's cards" view
   const { data: collection } = useProfileCollection('main')
   const luck = useMemo(() => (collection ? getLuck(collection) : undefined), [collection])
-  if (!luck || luck.expansions.length === 0) {
+  if (!luck?.pulls) {
     return null
   }
 
@@ -20,8 +20,7 @@ export function LuckLine({ className }: { className?: string }) {
     >
       <Clover className="size-4 shrink-0 text-amber-300" />
       <span className="min-w-0 text-pretty text-neutral-400">
-        Your ☆+ cards are worth about <span className="font-medium text-neutral-100">{roundPacks(luck.worth)} packs</span>
-        {luck.judged.expansions > 0 && <> · {luckWords(luck.judged.percentile)}</>}
+        Your pulls: <span className="font-medium text-neutral-100">{packsAhead(luck.pulls.worth, luck.pulls.packs)}</span>
       </span>
       <ChevronRight className="ml-auto size-4 shrink-0 text-neutral-500 transition-transform group-hover:translate-x-0.5" />
     </Link>
