@@ -9,7 +9,8 @@
 // When every common is owned the count has no upper limit, so the next rarities up join the evidence (☆, then ☆☆ and
 // ✵, whose cards take hundreds of packs to run out), and luck is judged only on the rarities above them.
 //
-// What it can't see: cards that arrived by trade, gift, Wonder Pick or pack points count as pulled.
+// What it can't see: how a card arrived. A rarity that was mostly traded for can be set aside: it then neither counts
+// the packs nor is judged, and only its gap to the pack odds is reported (lib/luck.ts decides which, from the data).
 
 export interface ModelCard {
   owned: boolean
@@ -29,7 +30,8 @@ export interface Judgement {
 
 export interface RarityLuck extends Judgement {
   rarity: string
-  judged: boolean // false when the rarity was used to count the packs, so its luck can't be read
+  judged: boolean // false when the rarity was used to count the packs or set aside, so its luck can't be read
+  setAside: boolean // treated as traded for: compared with the pack odds, but not luck
 }
 
 export interface LuckEstimate {
@@ -39,10 +41,39 @@ export interface LuckEstimate {
   high: number // Infinity when atLeast
   evidenceLevel: number // the highest card level the packs were counted from (0: ◊–◊◊◊◊ alone)
   atLeast: boolean // even the last step of the ladder is all owned in some booster, so the packs are a floor
-  rares: number // cards above ◊–◊◊◊◊ owned
-  judged: Judgement // over the cards above the evidence
+  rares: number // cards above ◊–◊◊◊◊ owned, not counting set-aside rarities
+  judged: Judgement // over the cards above the evidence, not counting set-aside rarities
   byRarity: RarityLuck[] // every rarity above ◊–◊◊◊◊, in the order first seen
   worth: number // packs a typical player needs to own `rares` of them
+}
+
+const chancesAt = (of: ModelCard[], mix: number[]) => of.map((c) => -Math.expm1(-exposure(c, mix)))
+
+/**
+ * Packs' worth over several expansions at once: the factor s at which a typical player, opening s times the packs
+ * estimated in each booster, owns as many of these cards as were owned. One factor for every expansion, so a single
+ * lucky Crown in a small expansion doesn't count for more than it is. Owning every card has no finite answer, so it
+ * aims half a card short; nothing owned is 0.
+ */
+export function packsScale(groups: { cards: ModelCard[]; perBooster: number[] }[]) {
+  const owned = groups.reduce((n, g) => n + g.cards.filter((c) => c.owned).length, 0)
+  const total = groups.reduce((n, g) => n + g.cards.length, 0)
+  if (owned === 0 || groups.every((g) => g.perBooster.every((n) => n <= 0))) {
+    return 0
+  }
+  const target = Math.min(owned, total - 0.5)
+  const expectedAt = (s: number) =>
+    groups.reduce(
+      (sum, g) =>
+        sum +
+        chancesAt(
+          g.cards,
+          g.perBooster.map((n) => n * s),
+        ).reduce((a, b) => a + b, 0),
+      0,
+    )
+  // the root of a decreasing function in s, found the same way as the packs (scaled so 1e6 isn't the ceiling on s)
+  return solveDecreasing((s) => target - expectedAt(s / 1000)) / 1000
 }
 
 const MAX_PACKS = 1e6
@@ -194,22 +225,22 @@ export function countPercentile(owned: number, expected: number, variance: numbe
 
 const LAST_EVIDENCE_LEVEL = 2 // ☆☆ and ✵: the rarest cards allowed to count packs, leaving the top rarities to judge
 
-export function estimateLuck(cards: ModelCard[], boosters: number): LuckEstimate {
+/** `setAside`: rarities treated as traded for, so they neither count the packs nor are judged. */
+export function estimateLuck(cards: ModelCard[], boosters: number, setAside: ReadonlySet<string> = new Set()): LuckEstimate {
   // Climb the ladder until the evidence has a card missing in every booster that was opened
+  const usable = cards.filter((c) => c.level === 0 || !setAside.has(c.rarity))
   let evidenceLevel = 0
-  let evidence = cards.filter((c) => c.level === 0)
+  let evidence = usable.filter((c) => c.level === 0)
   let estimate = estimatePacks(evidence, boosters)
   while (estimate.atLeast && evidenceLevel < LAST_EVIDENCE_LEVEL) {
     evidenceLevel++
-    evidence = cards.filter((c) => c.level <= evidenceLevel)
+    evidence = usable.filter((c) => c.level <= evidenceLevel)
     estimate = estimatePacks(evidence, boosters)
   }
   const { packs: perBooster, atLeast } = estimate
   const packs = perBooster.reduce((a, b) => a + b, 0)
   const error = relativeError(evidence, perBooster)
   const spread = Number.isFinite(error) ? error : 0
-
-  const chancesAt = (of: ModelCard[], mix: number[]) => of.map((c) => -Math.expm1(-exposure(c, mix)))
 
   // The packs are an estimate, and 20% more packs means noticeably more rares expected. Judging luck at the single
   // most likely number would call ordinary estimation error "lucky" or "unlucky", so the percentile is averaged over
@@ -244,9 +275,19 @@ export function estimateLuck(cards: ModelCard[], boosters: number): LuckEstimate
     }
   }
 
-  const rareCards = cards.filter((c) => c.level > 0)
+  const byRarity = [
+    ...Map.groupBy(
+      cards.filter((c) => c.level > 0),
+      (c) => c.rarity,
+    ),
+  ].map(([rarity, of]) => ({
+    rarity,
+    judged: of[0].level > evidenceLevel && !setAside.has(rarity),
+    setAside: setAside.has(rarity),
+    ...judge(of),
+  }))
+  const rareCards = usable.filter((c) => c.level > 0)
   const rares = rareCards.filter((c) => c.owned).length
-  const byRarity = [...Map.groupBy(rareCards, (c) => c.rarity)].map(([rarity, of]) => ({ rarity, judged: of[0].level > evidenceLevel, ...judge(of) }))
 
   // Packs' worth: scale the same booster mix until the expected rares match the owned ones. With no packs estimated
   // (rares but no commons, e.g. traded for), an even mix. Owning every rare has no finite answer, so aim half a card short.
@@ -272,8 +313,25 @@ export function estimateLuck(cards: ModelCard[], boosters: number): LuckEstimate
     evidenceLevel,
     atLeast,
     rares,
-    judged: judge(cards.filter((c) => c.level > evidenceLevel)),
+    judged: judge(usable.filter((c) => c.level > evidenceLevel)),
     byRarity,
     worth,
   }
+}
+
+/**
+ * Whether a tradable rarity looks traded for rather than pulled, from how it did in each expansion where it was judged
+ * on the packs alone. Luck can't be told apart from trades in a single count, but trading leaves a pattern luck rarely
+ * does: far more than the packs give overall (beyond the top half-percent of players), at least five cards more, and
+ * ahead in at least three expansions out of four. A real lucky streak in one or two expansions doesn't qualify.
+ */
+export function looksTradedFor(perExpansion: Judgement[]) {
+  if (perExpansion.length < 3) {
+    return false
+  }
+  const owned = perExpansion.reduce((n, j) => n + j.owned, 0)
+  const expected = perExpansion.reduce((n, j) => n + j.expected, 0)
+  const variance = perExpansion.reduce((n, j) => n + j.variance, 0)
+  const ahead = perExpansion.filter((j) => j.owned > j.expected).length
+  return owned - expected >= 5 && ahead >= 0.75 * perExpansion.length && countPercentile(owned, expected, variance) > 0.995
 }

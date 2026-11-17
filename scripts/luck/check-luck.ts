@@ -2,7 +2,7 @@
 // Deals simulated collections from known pack counts and checks the model finds them again. Cards are dealt
 // independently (each owned with 1 − (1 − p)^n), which is the model's own assumption, so this tests the solver.
 import assert from 'node:assert/strict'
-import { countPercentile, estimateLuck, type ModelCard } from '../../frontend/src/lib/luckModel.ts'
+import { countPercentile, estimateLuck, looksTradedFor, type ModelCard, packsScale } from '../../frontend/src/lib/luckModel.ts'
 
 // deterministic random numbers (mulberry32)
 function rng(seed: number) {
@@ -196,6 +196,61 @@ for (const truth of [
   )
   assert.equal(tradedFor.packs, 0)
   assert.ok(tradedFor.worth > 0)
+}
+
+const star = (est: ReturnType<typeof estimateLuck>) => {
+  const r = est.byRarity.find((x) => x.rarity === '☆')
+  assert.ok(r)
+  return r
+}
+
+// 5. Trading: a player who traded for every ☆ reads lucky until ☆ is set aside; then ☆ neither counts the packs nor is
+// judged, the rest reads as it did, and over many expansions the pattern is spotted while typical players' isn't
+{
+  const random = rng(11)
+  let flagged = 0
+  let falseAlarms = 0
+  const runs = 100
+  for (let i = 0; i < runs; i++) {
+    const expansions = Array.from({ length: 12 }, () => deal(set, [50, 40, 30], random))
+    const plain = expansions.map((cards) => estimateLuck(cards, 3))
+    falseAlarms += Number(looksTradedFor(plain.map(star)))
+    const traded = expansions.map((cards) => cards.map((c) => (c.rarity === '☆' ? { ...c, owned: true } : c)))
+    const naive = traded.map((cards) => estimateLuck(cards, 3))
+    flagged += Number(looksTradedFor(naive.map(star)))
+    if (i === 0) {
+      const aside = estimateLuck(traded[0], 3, new Set(['☆']))
+      const asideStar = star(aside)
+      assert.ok(asideStar.setAside && !asideStar.judged)
+      assert.ok(naive[0].judged.percentile > plain[0].judged.percentile)
+      assert.equal(aside.judged.total, plain[0].judged.total - asideStar.total)
+      assert.equal(aside.rares, plain[0].rares - star(plain[0]).owned)
+    }
+  }
+  console.log(`traded-for ☆ spotted in ${flagged} of ${runs} players, typical players flagged ${falseAlarms} times`)
+  assert.ok(flagged / runs > 0.95)
+  assert.ok(falseAlarms / runs < 0.02)
+
+  // every ☆ traded, commons all owned: ☆ can't count the packs, so ☆☆ does
+  const full = set.map((c) => ({ ...c, owned: c.level <= 1 || random() < 0.3 }))
+  assert.equal(estimateLuck(full, 3, new Set(['☆'])).evidenceLevel, 2)
+}
+
+// 6. Packs' worth as one factor over many expansions: about 1 for typical players, 0 with nothing owned
+{
+  const random = rng(21)
+  let sum = 0
+  const runs = 200
+  for (let i = 0; i < runs; i++) {
+    const groups = Array.from({ length: 6 }, (_, k) => {
+      const est = estimateLuck(deal(set, [20 + 10 * k, 30, 10], random), 3)
+      return { cards: deal(set, [20 + 10 * k, 30, 10], random).filter((c) => c.level > 0), perBooster: est.perBooster }
+    })
+    sum += packsScale(groups)
+  }
+  console.log(`packs' worth factor for typical players: ${(sum / runs).toFixed(2)}`)
+  assert.ok(Math.abs(sum / runs - 1) < 0.1)
+  assert.equal(packsScale([{ cards: set.map((c) => ({ ...c, owned: false })), perBooster: [10, 10, 10] }]), 0)
 }
 
 // combined counts: Poisson while small (owning no Crown when 0.3 are typical is ordinary), normal when large
