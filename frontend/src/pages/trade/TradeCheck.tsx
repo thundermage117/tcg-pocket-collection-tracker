@@ -8,6 +8,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { ValueDataAge } from '@/components/ValueDataAge'
 import { useUndoTransferToast } from '@/hooks/useUndoToast'
+import { KEEP_FOR_TRADING, keepForTrading, tradeScore } from '@/lib/altSupport'
 import { getCardById, getCardByInternalId, getExpansionById } from '@/lib/CardsDB'
 import { getLocalizedImagePath } from '@/lib/imageLocales'
 import { bestAsks, type CardScore, duplicateShinedust, judgeTrade, PACK_POINTS_PER_PACK, packPointCost, shareLabel, shinedustCost } from '@/lib/tradeFairness'
@@ -174,7 +175,8 @@ export default function TradeCheck() {
             id: 'ft',
             label: isAlt ? "Main's spares" : 'My spares',
             empty: 'No spares beyond your keep counts.',
-            items: lists.ft.map((card) => {
+            // alt mode: what the alt gets is never traded on, so the least wanted spares come first
+            items: (isAlt ? lists.ft.toSorted((a, b) => tradeScore(a) - tradeScore(b)) : lists.ft).map((card) => {
               const h = holding(card)
               return { card, label: `×${h.owned - h.keep}` }
             }),
@@ -237,6 +239,12 @@ export default function TradeCheck() {
             ? { text: `You have ${g.owned} of ${name(get)} (keeping ${g.keep}), so this gets you closer.` }
             : { text: `You already have ${g.owned} of ${name(get)} (keeping ${g.keep}), so this would be a spare.`, warn: true },
       )
+      if (isAlt && keepForTrading(give)) {
+        context.push({
+          text: `${name(give)} scores ${Math.round(tradeScore(give))} (${shareLabel(tradeScore(give))} of ${give.rarity}, keep line ${KEEP_FOR_TRADING}): the alt never trades it on, so it's worth more in a trade with another player. Send the alt a less wanted ${give.rarity}.`,
+          warn: true,
+        })
+      }
       if (isAlt) {
         const a = altCollection?.get(get.internal_id)?.amount_owned ?? 0
         context.push(a === 0 ? { text: `The alt doesn't own ${name(get)}.`, warn: true } : { text: `The alt has ${a} of ${name(get)}.` })
