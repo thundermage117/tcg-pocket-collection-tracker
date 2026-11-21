@@ -73,7 +73,7 @@ export function TodayPanel({ best, twoStar, filtered, className }: Props) {
   // what the alt can hand over for the stage main is on
   const onAlt = plan ? (diamondsLeft > 0 ? plan.altHas : plan.altStars) : 0
   const gift = plan?.cover.gift[0]
-  const trade = plan?.cover.trade[0]
+  const trade = plan?.readyTrade
   const giftSent = readGiftDate('main') === today()
 
   const unlocked = diamondsLeft + starsLeft === 0

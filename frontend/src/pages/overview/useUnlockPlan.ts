@@ -2,7 +2,7 @@
 // for the today panel's Unlock, Gift and Trade rows. Always main's real collection: it ignores the Main / Alt switch and
 // "Count alt's cards".
 import { useMemo } from 'react'
-import { allTwoStarsRegistered, altCovers, bestUnlockPack, canMoveToMain, latestExpansion, unlockProgress } from '@/lib/altSupport'
+import { allTwoStarsRegistered, altCovers, bestUnlockPack, canMoveToMain, latestExpansion, planSpares, unlockProgress } from '@/lib/altSupport'
 import { useProfileAccount } from '@/services/profile/useProfile'
 import { useProfileCollection } from '@/services/profile/useProfileCollection'
 import type { Card } from '@/types'
@@ -25,6 +25,8 @@ export function useUnlockPlan() {
       main,
       progress,
       cover,
+      // the first trade main has a cheap spare for; the rest wait (lib/altSupport, planSpares)
+      readyTrade: planSpares(main, mainAccount.trade_rarity_settings, alt).trades.find((t) => t.back)?.card,
       // nothing left for the Wonder Picks to show
       finished: progress.missing.length === 0 && allTwoStarsRegistered(main),
       altHas: progress.missing.filter((c) => c.rarity !== '☆' && altCanGive(c)).length,

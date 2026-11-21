@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { useUndoTransferToast } from '@/hooks/useUndoToast'
 import {
+  type AltTrade,
+  allTwoStarsRegistered,
   altCovers,
   bestAltPacks,
   bestUnlockPack,
@@ -18,24 +20,24 @@ import {
   countsForUnlock,
   giftKey,
   giftsToAlt,
+  KEEP_FOR_TRADING,
   latestExpansion,
+  planSpares,
   readGiftDate,
   today,
   type UnlockProgress,
   unlockProgress,
 } from '@/lib/altSupport'
-import { getCardByInternalId } from '@/lib/CardsDB'
 import { getLocalizedImagePath } from '@/lib/imageLocales'
 import { shinedustCost } from '@/lib/tradeFairness'
 import { getCardNameByLang } from '@/lib/utils'
-import { valueSortKey } from '@/lib/ValueDB'
 import { oneIn } from '@/pages/packs/types'
 import { useLoginDialog } from '@/services/auth/useAuth'
 import { useSelectedCard } from '@/services/collection/useCollection'
 import type { Profile } from '@/services/profile/useProfile'
 import { setActiveProfile, useProfileAccount } from '@/services/profile/useProfile'
 import { useProfileCollection, useTransferCards } from '@/services/profile/useProfileCollection'
-import { type Card, type Collection, defaultRaritySettings, type TradableRarity } from '@/types'
+import type { Card, Collection, TradableRarity } from '@/types'
 import { AltPackNote, AltPackPick } from './AltPackPick'
 
 const PREVIEW = 16
@@ -83,12 +85,14 @@ function UnlockCard({
   progress,
   covered,
   pending,
+  allTwoStars,
   showBestPack = true,
 }: {
   title: string
   progress: UnlockProgress
   covered: number
   pending: Card[]
+  allTwoStars: boolean // every ☆☆ registered too: the ☆☆ Wonder Picks reportedly stop
   showBestPack?: boolean // the alt's pick has its own section
 }) {
   const { t } = useTranslation(['common/packs'])
@@ -107,7 +111,9 @@ function UnlockCard({
       ? `${diamondsLeft} ◊ to go before 24-hour Wonder Picks show its missing ☆ / ☆☆.`
       : starsLeft > 0
         ? `24-hour Wonder Picks show missing ☆ or ☆☆; ${starsLeft} ☆ to go for ☆☆ only.`
-        : 'Unlocked: 24-hour Wonder Picks show ☆☆ it is missing.'
+        : allTwoStars
+          ? 'Done: it has every ☆☆ too, so 24-hour Wonder Picks reportedly stop showing them.'
+          : 'Unlocked: 24-hour Wonder Picks show ☆☆ it is missing.'
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-4">
@@ -176,6 +182,59 @@ function TradeImage({ card, badge }: { card: Card; badge?: ReactNode }) {
       />
       {badge && <span className="absolute top-1 left-1">{badge}</span>}
     </span>
+  )
+}
+
+const rowClass = 'flex items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-2'
+
+/** One alt-to-main trade: a link to Trade check when main has a cheap spare to send back, else what to do meanwhile. */
+function TradeRow({ trade: { card, back, outside }, main }: { trade: AltTrade; main: Collection }) {
+  const { i18n } = useTranslation()
+  const name = (c: Card) => getCardNameByLang(c, i18n.language)
+  const image = <TradeImage card={card} badge={countsForUnlock(main, card) && <UnlockBadge />} />
+  const title = (
+    <span className="truncate font-medium">
+      {name(card)} <span className="text-neutral-400">{card.rarity}</span>
+    </span>
+  )
+  const cost = (
+    <span className="text-xs text-neutral-500 tabular-nums">{shinedustCost[card.rarity as TradableRarity]?.toLocaleString()} Shinedust per account</span>
+  )
+
+  if (back) {
+    return (
+      <Link
+        to={`/trade/check?${new URLSearchParams({ give: back.card_id, get: card.card_id, alt: '1' })}`}
+        className={`${rowClass} transition-colors hover:border-neutral-600 hover:bg-neutral-800/60`}
+      >
+        {image}
+        <ArrowRight className="size-4 shrink-0 rotate-180 text-neutral-500" aria-label="for" />
+        <TradeImage card={back} />
+        <div className="flex min-w-0 grow flex-col gap-1.5 text-sm">
+          {title}
+          <span className="truncate text-xs text-neutral-400">main gives {name(back)}</span>
+          {cost}
+        </div>
+      </Link>
+    )
+  }
+  return (
+    <div className={rowClass}>
+      {image}
+      <ArrowRight className="size-4 shrink-0 rotate-180 text-neutral-500" aria-label="for" />
+      <div className="flex aspect-[367/512] w-16 shrink-0 items-center justify-center rounded-md border border-dashed border-neutral-700 p-1 text-center text-[11px] text-neutral-400">
+        waiting
+      </div>
+      <div className="flex min-w-0 grow flex-col gap-1.5 text-sm">
+        {title}
+        <span className="text-xs text-neutral-400">Main has no low-value {card.rarity} spare to send back yet.</span>
+        {outside && (
+          <Link to={`/trade/check?${new URLSearchParams({ give: outside.card_id, get: card.card_id })}`} className="text-xs text-sky-400 hover:underline">
+            Or trade {name(outside)} with another player for it
+          </Link>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -257,36 +316,13 @@ export default function AltHelper() {
     const altCanGive = (c: Card) => canMoveToMain(c) && (alt.get(c.internal_id)?.amount_owned ?? 0) > 0
     const toAltIds = new Set(toAlt.map((c) => c.internal_id))
 
-    // For each trade, the card main sends back: its least valuable spare of that rarity, or with no spare left its least
-    // valuable card of that rarity at all. Each copy is promised to one trade only.
-    const keep = Object.fromEntries(settings.map((s) => [s.rarity, s.to_keep]))
-    const tradeRarities = new Set(cover.trade.map((c) => c.rarity))
-    const owned = [...main]
-      .filter(([, row]) => row.amount_owned > 0)
-      .flatMap(([id, row]) => {
-        const card = getCardByInternalId(id)
-        return card && canMoveToMain(card) && tradeRarities.has(card.rarity)
-          ? [{ card, left: row.amount_owned, spare: row.amount_owned - (row.amount_wanted ?? keep[card.rarity] ?? defaultRaritySettings.to_keep) }]
-          : []
-      })
-      .sort((a, b) => valueSortKey(a.card.card_id) - valueSortKey(b.card.card_id))
-    const trades = cover.trade.map((card) => {
-      const fits = (o: (typeof owned)[number]) => o.card.rarity === card.rarity && o.card.internal_id !== card.internal_id && o.left > 0
-      const pick = owned.find((o) => fits(o) && o.spare > 0) ?? owned.find(fits)
-      if (pick) {
-        pick.left--
-        pick.spare--
-      }
-      return { card, back: pick?.card, spare: pick ? pick.spare >= 0 : false, leaves: pick?.left ?? 0 }
-    })
-
     return {
       cover,
       toAlt,
       packPick: bestAltPacks(main, settings, alt),
-      trades,
-      mainUnlock: { progress: mainUnlock, pending: mainUnlock.missing.filter((c) => !altCanGive(c)) },
-      altUnlock: { progress: altUnlock, pending: altUnlock.missing.filter((c) => !toAltIds.has(c.internal_id)) },
+      trades: planSpares(main, settings, alt).trades,
+      mainUnlock: { progress: mainUnlock, pending: mainUnlock.missing.filter((c) => !altCanGive(c)), allTwoStars: allTwoStarsRegistered(main) },
+      altUnlock: { progress: altUnlock, pending: altUnlock.missing.filter((c) => !toAltIds.has(c.internal_id)), allTwoStars: allTwoStarsRegistered(alt) },
     }
   }, [main, alt, mainAccount])
 
@@ -366,12 +402,14 @@ export default function AltHelper() {
                 progress={data.mainUnlock.progress}
                 pending={data.mainUnlock.pending}
                 covered={data.mainUnlock.progress.missing.length - data.mainUnlock.pending.length}
+                allTwoStars={data.mainUnlock.allTwoStars}
               />
               <UnlockCard
                 title="Alt"
                 progress={data.altUnlock.progress}
                 pending={data.altUnlock.pending}
                 covered={data.altUnlock.progress.missing.length - data.altUnlock.pending.length}
+                allTwoStars={data.altUnlock.allTwoStars}
                 showBestPack={false}
               />
             </div>
@@ -428,38 +466,14 @@ export default function AltHelper() {
           <Section
             icon={<Repeat className="size-5 text-sky-400" />}
             title="Trade to main"
-            note="Tap a trade to check it and finalize. Main sends back its least valuable spare of that rarity, or its least valuable card of that rarity if it has no spare. Both accounts pay Shinedust, so only for cards main needs."
+            note={`Tap a trade to check it and finalize. Main sends back its least valuable spare of that rarity: the alt never trades it on, so a spare other players want (score ${KEEP_FOR_TRADING}+ for its rarity) is kept for trading with them, and a trade waits until a cheap spare turns up. Both accounts pay Shinedust, so only for cards main needs.`}
           >
             {data.trades.length === 0 ? (
               <p className="py-6 text-center text-neutral-500">The alt has no ☆-and-up cards that main needs.</p>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {data.trades.map(({ card, back, spare, leaves }) => (
-                  <Link
-                    key={card.internal_id}
-                    to={`/trade/check?${new URLSearchParams({ ...(back && { give: back.card_id }), get: card.card_id, alt: '1' })}`}
-                    className="flex items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-2 transition-colors hover:border-neutral-600 hover:bg-neutral-800/60"
-                  >
-                    <TradeImage card={card} badge={countsForUnlock(main as Collection, card) && <UnlockBadge />} />
-                    <ArrowRight className="size-4 shrink-0 rotate-180 text-neutral-500" aria-label="for" />
-                    {back ? (
-                      <TradeImage card={back} />
-                    ) : (
-                      <div className="flex aspect-[367/512] w-16 shrink-0 items-center justify-center rounded-md border border-dashed border-neutral-700 text-center text-[11px] text-neutral-400">
-                        no spare
-                      </div>
-                    )}
-                    <div className="flex min-w-0 grow flex-col gap-1.5 text-sm">
-                      <span className="truncate font-medium">
-                        {name(card)} <span className="text-neutral-400">{card.rarity}</span>
-                      </span>
-                      <span className="truncate text-xs text-neutral-400">{back ? `main gives ${name(back)}` : `main has no ${card.rarity} to send back`}</span>
-                      {back && !spare && <span className="truncate text-xs text-amber-400">not a spare: leaves {leaves}</span>}
-                      <span className="text-xs text-neutral-500 tabular-nums">
-                        {shinedustCost[card.rarity as TradableRarity]?.toLocaleString()} Shinedust per account
-                      </span>
-                    </div>
-                  </Link>
+                {data.trades.map((trade) => (
+                  <TradeRow key={trade.card.internal_id} trade={trade} main={main as Collection} />
                 ))}
               </div>
             )}

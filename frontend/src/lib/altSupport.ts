@@ -8,10 +8,12 @@
 // They reportedly stop once the account owns every ☆☆ of the set. Sources are in FORK.md, "Alt account".
 import { allCards, basicRarities, expansions, getCardByInternalId, tradableExpansions } from '@/lib/CardsDB'
 import { pullRate, pullRateForSpecificCard } from '@/lib/stats'
+import { FAIR_BAND } from '@/lib/tradeFairness'
 import { getWantedCards } from '@/lib/utils'
 import { valueSortKey } from '@/lib/ValueDB'
+import { cardScore } from '@/pages/trade/tradeCheckData'
 import type { Profile } from '@/services/profile/useProfile'
-import { type Card, type Collection, type Expansion, type Pack, type Rarity, type RaritySettingsRow, tradableRarities } from '@/types'
+import { type Card, type Collection, defaultRaritySettings, type Expansion, type Pack, type Rarity, type RaritySettingsRow, tradableRarities } from '@/types'
 
 export const today = () => new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time
 /** localStorage key for the day the last gift to `to` was logged on /alt, so the next one waits for tomorrow. */
@@ -150,6 +152,67 @@ export function withAltCards(main: Collection, alt: Collection | undefined): Col
     }
   }
   return merged
+}
+
+/**
+ * A spare scoring this or higher (percentile among cards of its rarity, lib/tradeFairness) is worth more in a trade with
+ * another player than as the card main sends the alt back, which never leaves the alt. Below it, a spare is hard to
+ * trade with anyone else, and the alt takes any card of the rarity, so that's where it goes.
+ */
+export const KEEP_FOR_TRADING = 50
+
+export const tradeScore = (card: Card) => cardScore(card).score ?? 0 // no value data: nobody lists it, so it's alt fodder
+export const keepForTrading = (card: Card) => tradeScore(card) >= KEEP_FOR_TRADING
+
+export interface AltTrade {
+  card: Card // ☆ and up main needs and the alt owns
+  back?: Card // main's low-value spare it sends back; undefined while main has none of this rarity
+  outside?: Card // waiting only: main's high-value spare that could get this card from another player instead
+}
+
+export interface SparePlan {
+  trades: AltTrade[] // in altCovers' order (unlock cards first, then rarest and most valuable)
+  forAlt: Map<number, number> // internal_id → spare copies main sends back in the trades above
+}
+
+/**
+ * Which of main's spares go to the alt and which stay for trading with other players. Each alt trade gets main's
+ * lowest-scoring spare of that rarity below KEEP_FOR_TRADING; a copy is promised to one trade only, and a card main
+ * would keep is never offered. A trade with no such spare waits rather than spend a high-value spare on the alt, and
+ * names one that could get the card from another player instead: the cheapest that's still roughly fair for it.
+ */
+export function planSpares(main: Collection, mainSettings: RaritySettingsRow[], alt: Collection): SparePlan {
+  const keep = Object.fromEntries(mainSettings.map((s) => [s.rarity, s.to_keep]))
+  const cover = altCovers(main, mainSettings, alt)
+  const rarities = new Set(cover.trade.map((c) => c.rarity))
+  const spares = [...main].flatMap(([id, row]) => {
+    const card = getCardByInternalId(id)
+    if (!card || !rarities.has(card.rarity) || !canMoveToMain(card)) {
+      return []
+    }
+    const left = row.amount_owned - (row.amount_wanted ?? keep[card.rarity] ?? defaultRaritySettings.to_keep)
+    return left > 0 ? [{ card, left, score: tradeScore(card) }] : []
+  })
+  const low = spares.filter((s) => s.score < KEEP_FOR_TRADING).sort((a, b) => a.score - b.score)
+  const high = spares.filter((s) => s.score >= KEEP_FOR_TRADING).sort((a, b) => a.score - b.score)
+
+  const forAlt = new Map<number, number>()
+  const trades = cover.trade.map((card): AltTrade => {
+    const fits = (s: (typeof spares)[number]) => s.card.rarity === card.rarity && s.card.internal_id !== card.internal_id && s.left > 0
+    const back = low.find(fits)
+    if (back) {
+      back.left--
+      forAlt.set(back.card.internal_id, (forAlt.get(back.card.internal_id) ?? 0) + 1)
+      return { card, back: back.card }
+    }
+    const wanted = tradeScore(card)
+    const outside = high.find((s) => fits(s) && s.score >= wanted - FAIR_BAND) ?? high.findLast(fits)
+    if (outside) {
+      outside.left--
+    }
+    return { card, outside: outside?.card }
+  })
+  return { trades, forAlt }
 }
 
 /** Main can take one gift a day, so once the alt holds this many ◊–◊◊◊◊ main needs, more of them add nothing for weeks. */
