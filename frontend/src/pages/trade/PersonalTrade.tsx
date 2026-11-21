@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatRarity } from '@/components/utils'
 import { ValueDataAge } from '@/components/ValueDataAge'
 import { useUrlFilters } from '@/hooks/useUrlFilters'
+import { planSpares } from '@/lib/altSupport'
 import { expansions, getCardByInternalId, getExpansionById } from '@/lib/CardsDB'
 import { getCardNameByLang, getExtraCards, getWantedCards } from '@/lib/utils'
 import { demandScore, getCardValue, valueSortKey } from '@/lib/ValueDB'
@@ -93,11 +94,13 @@ export default function PersonalTrade() {
         },
       ]
     }
+    // copies promised to an alt trade aren't offered to other players
+    const forAlt = altCollection ? planSpares(collection, account.trade_rarity_settings, altCollection).forAlt : new Map<number, number>()
     const lf = wanted.flatMap((id) => toItem(id, { alt: (altCollection?.get(id)?.amount_owned ?? 0) > 0 }, false))
     // main's spares only: the alt doesn't trade with other people, that just spends Shinedust
     const ft = getExtraCards(collection, account.trade_rarity_settings).flatMap((id) => {
       const card = getCardByInternalId(id)
-      return card ? toItem(id, { count: spareCount(id, card.rarity) }, true) : []
+      return card ? toItem(id, { count: spareCount(id, card.rarity), forAlt: forAlt.get(id) }, true) : []
     })
     const altHas = lf.filter((i) => i.alt).length
     return { lf: markHot(showAltHas ? lf : lf.filter((i) => !i.alt), ratioOf), ft: markHot(ft, ratioOf), altHas }
@@ -135,7 +138,12 @@ export default function PersonalTrade() {
   const ft = groupBySet(items.ft.filter(matches), view.mode, false)
   const count = (groups: typeof lf) => groups.reduce((n, g) => n + g.items.length, 0)
   const spareCopies = ft.reduce((n, g) => n + g.items.reduce((m, i) => m + (i.count ?? 0), 0), 0)
-  const messages = useDiscordMessages(lf, ft)
+  const altCopies = ft.reduce((n, g) => n + g.items.reduce((m, i) => m + (i.forAlt ?? 0), 0), 0)
+  // the Discord list offers only copies no alt trade needs
+  const offered = ft
+    .map((g) => ({ ...g, items: g.items.flatMap((i) => ((i.count ?? 0) > (i.forAlt ?? 0) ? [{ ...i, count: (i.count ?? 0) - (i.forAlt ?? 0) }] : [])) }))
+    .filter((g) => g.items.length > 0)
+  const messages = useDiscordMessages(lf, offered)
 
   // one message copies straight away; several need picking, so open the export section
   const copyForDiscord = async () => {
@@ -244,7 +252,12 @@ export default function PersonalTrade() {
             <TradeGrid side="lf" groups={lf} empty="Nothing you're looking for matches these filters." />
           ) : (
             <>
-              {spareCopies > 0 && <p className="-mt-2 mb-4 text-sm text-neutral-400">{spareCopies} spare copies in total.</p>}
+              {spareCopies > 0 && (
+                <p className="-mt-2 mb-4 text-sm text-neutral-400">
+                  {spareCopies} spare copies in total
+                  {altCopies > 0 && `, ${altCopies} of them for trades to the alt (low value, left out of the Discord list)`}.
+                </p>
+              )}
               <TradeGrid side="ft" groups={ft} empty="No spares match these filters." />
             </>
           )}

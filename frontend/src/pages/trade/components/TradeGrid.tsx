@@ -46,7 +46,7 @@ export function TradeGrid({ groups, empty, side }: { groups: SetGroup[]; empty: 
                   card={item.card}
                   label={item.count !== undefined ? `×${item.count}` : undefined}
                   badge={
-                    (item.hot || item.alt) && (
+                    (item.hot || item.alt || item.forAlt) && (
                       <span className="flex items-center gap-1">
                         {item.hot && (
                           <span title={hotLabel[side]} className="flex rounded-full bg-orange-500 p-0.5 text-white shadow">
@@ -59,6 +59,14 @@ export function TradeGrid({ groups, empty, side }: { groups: SetGroup[]; empty: 
                             className="rounded-full bg-amber-500 px-1.5 text-[10px] font-semibold leading-4 text-neutral-950 shadow"
                           >
                             alt
+                          </span>
+                        )}
+                        {!!item.forAlt && (
+                          <span
+                            title={`${item.forAlt === 1 ? 'One copy goes' : `${item.forAlt} copies go`} to the alt in a trade on the Alt page: too few people want it to trade it elsewhere. Left out of the Discord list.`}
+                            className="rounded-full bg-amber-500 px-1.5 text-[10px] font-semibold leading-4 text-neutral-950 shadow"
+                          >
+                            for alt
                           </span>
                         )}
                       </span>

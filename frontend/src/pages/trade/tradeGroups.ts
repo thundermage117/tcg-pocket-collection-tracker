@@ -14,6 +14,7 @@ export interface TradeItem {
   number: number
   count?: number // FT only: spare copies
   alt?: boolean // personal fork, LF only: the alt has it and can gift or trade it to main
+  forAlt?: number // personal fork, FT only: spare copies main sends the alt back in a planned trade (lib/altSupport)
   key: number // value (LF) or demand (FT), higher first
   hot?: boolean // top quarter by demand: FT is easy to trade away, LF is scarce
 }
