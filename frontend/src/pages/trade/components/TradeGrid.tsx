@@ -63,7 +63,7 @@ export function TradeGrid({ groups, empty, side }: { groups: SetGroup[]; empty: 
                         )}
                         {!!item.forAlt && (
                           <span
-                            title={`${item.forAlt === 1 ? 'One copy goes' : `${item.forAlt} copies go`} to the alt in a trade on the Alt page: too few people want it to trade it elsewhere. Left out of the Discord list.`}
+                            title={`${item.forAlt === 1 ? 'One copy goes' : `${item.forAlt} copies go`} to the alt in a trade on the Alt page. Left out of the Discord list.`}
                             className="rounded-full bg-amber-500 px-1.5 text-[10px] font-semibold leading-4 text-neutral-950 shadow"
                           >
                             for alt

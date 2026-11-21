@@ -166,53 +166,69 @@ export const keepForTrading = (card: Card) => tradeScore(card) >= KEEP_FOR_TRADI
 
 export interface AltTrade {
   card: Card // ☆ and up main needs and the alt owns
-  back?: Card // main's low-value spare it sends back; undefined while main has none of this rarity
-  outside?: Card // waiting only: main's high-value spare that could get this card from another player instead
+  back?: Card // the spare main sends back; undefined while every spare of this rarity is worth clearly more (waiting)
+  even?: boolean // `back` scores KEEP_FOR_TRADING or more but no more than `card` plus FAIR_BAND: a fair swap by market value
 }
 
 export interface SparePlan {
   trades: AltTrade[] // in altCovers' order (unlock cards first, then rarest and most valuable)
   forAlt: Map<number, number> // internal_id → spare copies main sends back in the trades above
+  outside: Map<Rarity, Card> // for waiting trades: main's cheapest spare of the rarity, better traded with other players
 }
 
+/** Whether main giving `give` to the alt for `get` wastes it: other players would give clearly more for it. */
+export const wastedOnAlt = (give: Card, get: Card) => keepForTrading(give) && tradeScore(give) > tradeScore(get) + FAIR_BAND
+
 /**
- * Which of main's spares go to the alt and which stay for trading with other players. Each alt trade gets main's
- * lowest-scoring spare of that rarity below KEEP_FOR_TRADING; a copy is promised to one trade only, and a card main
- * would keep is never offered. A trade with no such spare waits rather than spend a high-value spare on the alt, and
- * names one that could get the card from another player instead: the cheapest that's still roughly fair for it.
+ * Which of main's spares go to the alt and which stay for trading with other players. A copy is promised to one trade
+ * only, and a card main would keep is never offered.
+ * 1. Low-value spares (below KEEP_FOR_TRADING) first, cheapest first: few players want them, so they cost nothing.
+ * 2. Trades still open, most valuable card first, take the cheapest spare that isn't wasted on it (wastedOnAlt): about
+ *    what another player would ask for that card anyway.
+ * 3. The rest wait. Main's spares of that rarity are worth more than these cards, so they belong in trades with other
+ *    players (for cards main needs that score as high), and `outside` names the cheapest one.
  */
 export function planSpares(main: Collection, mainSettings: RaritySettingsRow[], alt: Collection): SparePlan {
   const keep = Object.fromEntries(mainSettings.map((s) => [s.rarity, s.to_keep]))
   const cover = altCovers(main, mainSettings, alt)
   const rarities = new Set(cover.trade.map((c) => c.rarity))
-  const spares = [...main].flatMap(([id, row]) => {
-    const card = getCardByInternalId(id)
-    if (!card || !rarities.has(card.rarity) || !canMoveToMain(card)) {
-      return []
-    }
-    const left = row.amount_owned - (row.amount_wanted ?? keep[card.rarity] ?? defaultRaritySettings.to_keep)
-    return left > 0 ? [{ card, left, score: tradeScore(card) }] : []
-  })
-  const low = spares.filter((s) => s.score < KEEP_FOR_TRADING).sort((a, b) => a.score - b.score)
-  const high = spares.filter((s) => s.score >= KEEP_FOR_TRADING).sort((a, b) => a.score - b.score)
+  const spares = [...main]
+    .flatMap(([id, row]) => {
+      const card = getCardByInternalId(id)
+      if (!card || !rarities.has(card.rarity) || !canMoveToMain(card)) {
+        return []
+      }
+      const left = row.amount_owned - (row.amount_wanted ?? keep[card.rarity] ?? defaultRaritySettings.to_keep)
+      return left > 0 ? [{ card, left, score: tradeScore(card) }] : []
+    })
+    .sort((a, b) => a.score - b.score)
 
   const forAlt = new Map<number, number>()
-  const trades = cover.trade.map((card): AltTrade => {
-    const fits = (s: (typeof spares)[number]) => s.card.rarity === card.rarity && s.card.internal_id !== card.internal_id && s.left > 0
-    const back = low.find(fits)
-    if (back) {
-      back.left--
-      forAlt.set(back.card.internal_id, (forAlt.get(back.card.internal_id) ?? 0) + 1)
-      return { card, back: back.card }
+  const trades: AltTrade[] = cover.trade.map((card) => ({ card }))
+  const assign = (trade: AltTrade, ok: (s: (typeof spares)[number]) => boolean) => {
+    const spare = spares.find((s) => s.left > 0 && s.card.rarity === trade.card.rarity && s.card.internal_id !== trade.card.internal_id && ok(s))
+    if (spare) {
+      spare.left--
+      forAlt.set(spare.card.internal_id, (forAlt.get(spare.card.internal_id) ?? 0) + 1)
+      trade.back = spare.card
+      trade.even = spare.score >= KEEP_FOR_TRADING
     }
-    const wanted = tradeScore(card)
-    const outside = high.find((s) => fits(s) && s.score >= wanted - FAIR_BAND) ?? high.findLast(fits)
-    if (outside) {
-      outside.left--
+  }
+  for (const trade of trades) {
+    assign(trade, (s) => s.score < KEEP_FOR_TRADING)
+  }
+  for (const trade of trades.filter((t) => !t.back).sort((a, b) => tradeScore(b.card) - tradeScore(a.card))) {
+    assign(trade, (s) => !wastedOnAlt(s.card, trade.card))
+  }
+
+  const outside = new Map<Rarity, Card>()
+  for (const trade of trades) {
+    const spare = !trade.back && !outside.has(trade.card.rarity) && spares.find((s) => s.left > 0 && s.card.rarity === trade.card.rarity)
+    if (spare) {
+      outside.set(trade.card.rarity, spare.card)
     }
-    return { card, outside: outside?.card }
-  })
-  return { trades, forAlt }
+  }
+  return { trades, forAlt, outside }
 }
 
 /** Main can take one gift a day, so once the alt holds this many ◊–◊◊◊◊ main needs, more of them add nothing for weeks. */

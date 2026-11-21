@@ -8,7 +8,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { ValueDataAge } from '@/components/ValueDataAge'
 import { useUndoTransferToast } from '@/hooks/useUndoToast'
-import { KEEP_FOR_TRADING, keepForTrading, tradeScore } from '@/lib/altSupport'
+import { tradeScore, wastedOnAlt } from '@/lib/altSupport'
 import { getCardById, getCardByInternalId, getExpansionById } from '@/lib/CardsDB'
 import { getLocalizedImagePath } from '@/lib/imageLocales'
 import { bestAsks, type CardScore, duplicateShinedust, judgeTrade, PACK_POINTS_PER_PACK, packPointCost, shareLabel, shinedustCost } from '@/lib/tradeFairness'
@@ -239,9 +239,9 @@ export default function TradeCheck() {
             ? { text: `You have ${g.owned} of ${name(get)} (keeping ${g.keep}), so this gets you closer.` }
             : { text: `You already have ${g.owned} of ${name(get)} (keeping ${g.keep}), so this would be a spare.`, warn: true },
       )
-      if (isAlt && keepForTrading(give)) {
+      if (isAlt && wastedOnAlt(give, get)) {
         context.push({
-          text: `${name(give)} scores ${Math.round(tradeScore(give))} (${shareLabel(tradeScore(give))} of ${give.rarity}, keep line ${KEEP_FOR_TRADING}): the alt never trades it on, so it's worth more in a trade with another player. Send the alt a less wanted ${give.rarity}.`,
+          text: `${name(give)} scores ${Math.round(tradeScore(give))} (${shareLabel(tradeScore(give))} of ${give.rarity}), well above ${name(get)}'s ${Math.round(tradeScore(get))}: the alt never trades it on, so another player would give you more for it. Send the alt a less wanted ${give.rarity}.`,
           warn: true,
         })
       }

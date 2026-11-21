@@ -126,13 +126,14 @@ The alt's rows live in the same tables as main's, under the key `alt:<login emai
 - **What the alt can hand over:** ◊–◊◊◊◊ by Share (each account receives one gift a day), ☆ and up by trading (both accounts
   pay Shinedust), both only from tradable sets. `/alt` lists them. "Gifted" moves a gift between the two collections; a trade opens
   in Trade check (`/trade/check?…&alt=1`), whose "Finalize trade" moves both cards. The alt never trades with other people.
-- **Which spare main sends back** (`planSpares` in `lib/altSupport.ts`): what the alt gets is never traded on, so it should be a
-  card other players don't want. Each spare gets its trade score (percentile within its rarity, `lib/tradeFairness.ts`). Below
-  `KEEP_FOR_TRADING` (50) it can go to the alt, cheapest first, one trade per copy. At 50 or above it stays for trading with
-  other players. A trade with no low-value spare **waits** rather than spend a valuable one, and links a roughly fair outside
-  trade for the same card instead. A card main would keep is never offered. The Trade page tags the copies set aside as "for alt"
-  and leaves them out of the Discord list; Trade check warns when an alt trade gives away a spare at 50 or above; the today
-  panel names only a trade that's ready.
+- **Which spare main sends back** (`planSpares` in `lib/altSupport.ts`): what the alt gets is never traded on, so main should
+  never give it more than the card is worth. Each spare gets its trade score (percentile within its rarity,
+  `lib/tradeFairness.ts`). Spares below `KEEP_FOR_TRADING` (50) go first, cheapest first, one trade per copy. Trades still
+  open, most valuable card first, then take the cheapest spare that isn't worth clearly more than the card (more than
+  `FAIR_BAND` above it, `wastedOnAlt`): about what another player would ask anyway. The rest **wait**, folded into one line per
+  rarity on `/alt` with a link to what main's cheapest spare of it could get from other players. A card main would keep is
+  never offered. The Trade page tags the copies set aside as "for alt" and leaves them out of the Discord list; Trade check
+  warns when an alt trade wastes a spare; the today panel names only a trade that's ready.
 - **Latest-set unlock** (community-tested, not official): with every ◊–◊◊◊◊ of the newest openable set registered, an account's
   24-hour Wonder Picks show its missing ☆ / ☆☆; with every ☆ too, only ☆☆. `/alt` tracks this for both accounts, puts those
   cards first in both gift queues (main can gift the alt its spares too) and names the best pack for what's left.

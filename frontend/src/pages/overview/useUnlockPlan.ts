@@ -25,7 +25,7 @@ export function useUnlockPlan() {
       main,
       progress,
       cover,
-      // the first trade main has a cheap spare for; the rest wait (lib/altSupport, planSpares)
+      // the first trade main has a spare for; the rest wait (lib/altSupport, planSpares)
       readyTrade: planSpares(main, mainAccount.trade_rarity_settings, alt).trades.find((t) => t.back)?.card,
       // nothing left for the Wonder Picks to show
       finished: progress.missing.length === 0 && allTwoStarsRegistered(main),

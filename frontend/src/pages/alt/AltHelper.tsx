@@ -20,7 +20,6 @@ import {
   countsForUnlock,
   giftKey,
   giftsToAlt,
-  KEEP_FOR_TRADING,
   latestExpansion,
   planSpares,
   readGiftDate,
@@ -187,52 +186,61 @@ function TradeImage({ card, badge }: { card: Card; badge?: ReactNode }) {
 
 const rowClass = 'flex items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-2'
 
-/** One alt-to-main trade: a link to Trade check when main has a cheap spare to send back, else what to do meanwhile. */
-function TradeRow({ trade: { card, back, outside }, main }: { trade: AltTrade; main: Collection }) {
+/** A trade main has a spare for: links to Trade check, which finalizes it. */
+function TradeRow({ trade: { card, back, even }, main }: { trade: AltTrade & { back: Card }; main: Collection }) {
   const { i18n } = useTranslation()
   const name = (c: Card) => getCardNameByLang(c, i18n.language)
-  const image = <TradeImage card={card} badge={countsForUnlock(main, card) && <UnlockBadge />} />
-  const title = (
-    <span className="truncate font-medium">
-      {name(card)} <span className="text-neutral-400">{card.rarity}</span>
-    </span>
-  )
-  const cost = (
-    <span className="text-xs text-neutral-500 tabular-nums">{shinedustCost[card.rarity as TradableRarity]?.toLocaleString()} Shinedust per account</span>
-  )
-
-  if (back) {
-    return (
-      <Link
-        to={`/trade/check?${new URLSearchParams({ give: back.card_id, get: card.card_id, alt: '1' })}`}
-        className={`${rowClass} transition-colors hover:border-neutral-600 hover:bg-neutral-800/60`}
-      >
-        {image}
-        <ArrowRight className="size-4 shrink-0 rotate-180 text-neutral-500" aria-label="for" />
-        <TradeImage card={back} />
-        <div className="flex min-w-0 grow flex-col gap-1.5 text-sm">
-          {title}
-          <span className="truncate text-xs text-neutral-400">main gives {name(back)}</span>
-          {cost}
-        </div>
-      </Link>
-    )
-  }
   return (
-    <div className={rowClass}>
-      {image}
+    <Link
+      to={`/trade/check?${new URLSearchParams({ give: back.card_id, get: card.card_id, alt: '1' })}`}
+      className={`${rowClass} transition-colors hover:border-neutral-600 hover:bg-neutral-800/60`}
+    >
+      <TradeImage card={card} badge={countsForUnlock(main, card) && <UnlockBadge />} />
       <ArrowRight className="size-4 shrink-0 rotate-180 text-neutral-500" aria-label="for" />
-      <div className="flex aspect-[367/512] w-16 shrink-0 items-center justify-center rounded-md border border-dashed border-neutral-700 p-1 text-center text-[11px] text-neutral-400">
-        waiting
-      </div>
+      <TradeImage card={back} />
       <div className="flex min-w-0 grow flex-col gap-1.5 text-sm">
-        {title}
-        <span className="text-xs text-neutral-400">Main has no low-value {card.rarity} spare to send back yet.</span>
-        {outside && (
-          <Link to={`/trade/check?${new URLSearchParams({ give: outside.card_id, get: card.card_id })}`} className="text-xs text-sky-400 hover:underline">
-            Or trade {name(outside)} with another player for it
-          </Link>
+        <span className="truncate font-medium">
+          {name(card)} <span className="text-neutral-400">{card.rarity}</span>
+        </span>
+        <span className="truncate text-xs text-neutral-400">main gives {name(back)}</span>
+        {even && <span className="text-xs text-neutral-500">about what another player would ask for it</span>}
+        <span className="text-xs text-neutral-500 tabular-nums">{shinedustCost[card.rarity as TradableRarity]?.toLocaleString()} Shinedust per account</span>
+      </div>
+    </Link>
+  )
+}
+
+/** Trades of one rarity that wait: main's spares of it are worth more with other players, or it has none. */
+function WaitingTrades({ cards, outside, main }: { cards: Card[]; outside?: Card; main: Collection }) {
+  const { i18n } = useTranslation()
+  const { setSelectedCardId } = useSelectedCard()
+  const rarity = cards[0].rarity
+  return (
+    <div className="rounded-xl border border-dashed border-neutral-800 p-3">
+      <p className="text-sm text-neutral-300">
+        Waiting · {rarity} <span className="text-neutral-500 tabular-nums">({cards.length})</span>
+      </p>
+      <p className="mt-0.5 mb-3 text-xs text-neutral-400">
+        {outside ? (
+          <>
+            Main's {rarity} spares are worth more than these to other players.{' '}
+            <Link to={`/trade/check?${new URLSearchParams({ give: outside.card_id })}`} className="text-sky-400 hover:underline">
+              See what {getCardNameByLang(outside, i18n.language)} could get you
+            </Link>
+          </>
+        ) : (
+          `Main has no ${rarity} spare to send back yet.`
         )}
+      </p>
+      <div className="grid grid-cols-5 gap-2 sm:grid-cols-8 lg:grid-cols-12">
+        {cards.map((card) => (
+          <CardThumb
+            key={card.internal_id}
+            card={card}
+            badge={countsForUnlock(main, card) && <UnlockBadge />}
+            onClick={() => setSelectedCardId(card.internal_id)}
+          />
+        ))}
       </div>
     </div>
   )
@@ -320,7 +328,7 @@ export default function AltHelper() {
       cover,
       toAlt,
       packPick: bestAltPacks(main, settings, alt),
-      trades: planSpares(main, settings, alt).trades,
+      spares: planSpares(main, settings, alt),
       mainUnlock: { progress: mainUnlock, pending: mainUnlock.missing.filter((c) => !altCanGive(c)), allTwoStars: allTwoStarsRegistered(main) },
       altUnlock: { progress: altUnlock, pending: altUnlock.missing.filter((c) => !toAltIds.has(c.internal_id)), allTwoStars: allTwoStarsRegistered(alt) },
     }
@@ -358,6 +366,14 @@ export default function AltHelper() {
       </main>
     )
   }
+
+  const ready = (data?.spares.trades ?? []).filter((t): t is AltTrade & { back: Card } => t.back !== undefined)
+  const waiting = [
+    ...Map.groupBy(
+      (data?.spares.trades ?? []).filter((t) => !t.back),
+      (t) => t.card.rarity,
+    ),
+  ].map(([rarity, trades]) => [rarity, trades.map((t) => t.card)] as const)
 
   const giftNote = (to: Profile, rule: string) =>
     giftDates[to] === today() ? <span className="text-emerald-400">Today's gift to {to} is marked as sent; the next one is tomorrow.</span> : rule
@@ -466,14 +482,21 @@ export default function AltHelper() {
           <Section
             icon={<Repeat className="size-5 text-sky-400" />}
             title="Trade to main"
-            note={`Tap a trade to check it and finalize. Main sends back its least valuable spare of that rarity: the alt never trades it on, so a spare other players want (score ${KEEP_FOR_TRADING}+ for its rarity) is kept for trading with them, and a trade waits until a cheap spare turns up. Both accounts pay Shinedust, so only for cards main needs.`}
+            note="Tap a trade to check it and finalize. Main sends back its cheapest spare of that rarity, since the alt never trades it on. A spare worth clearly more than the card stays for trading with other players, so that trade waits. Both accounts pay Shinedust, so only for cards main needs."
           >
-            {data.trades.length === 0 ? (
+            {data.spares.trades.length === 0 ? (
               <p className="py-6 text-center text-neutral-500">The alt has no ☆-and-up cards that main needs.</p>
             ) : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {data.trades.map((trade) => (
-                  <TradeRow key={trade.card.internal_id} trade={trade} main={main as Collection} />
+              <div className="flex flex-col gap-3">
+                {ready.length > 0 && (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {ready.map((trade) => (
+                      <TradeRow key={trade.card.internal_id} trade={trade} main={main as Collection} />
+                    ))}
+                  </div>
+                )}
+                {waiting.map(([rarity, cards]) => (
+                  <WaitingTrades key={rarity} cards={cards} outside={data.spares.outside.get(rarity)} main={main as Collection} />
                 ))}
               </div>
             )}
